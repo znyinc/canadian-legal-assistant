@@ -7,7 +7,7 @@
   - ✅ Set up basic unit testing framework (defer property-based testing setup)
   - _Requirements: 1.1, 1.2, 9.3_
 
-- [ ] 2. Implement Authority Registry and Source Access Control
+- [x] 2. Implement Authority Registry and Source Access Control
   - [x] 2.1 Create Authority Registry data model and storage
     - ✅ Implement Authority interface with versioning support
     - ✅ Create registry storage with update cadence tracking
@@ -66,7 +66,7 @@
     - ✅ Create prompts for limitation and appeal timeline verification
     - _Requirements: 1.7, 1.8_
 
-- [ ] 5. Build UPL Compliance System (moved up for MVP)
+- [x] 5. Build UPL Compliance System (moved up for MVP)
   - [x] 5.1 Implement disclaimer and boundary enforcement
     - ✅ Create legal information disclaimer generation
     - ✅ Build multi-pathway presentation logic
@@ -167,6 +167,10 @@
     - ✅ Build one golden-path integration test
     - _Requirements: User interaction requirements_
 
+  - [ ] 12.3 Register domain modules and bootstrap shared DomainModuleRegistry
+    - Ensure server bootstrap registers Insurance, LTB and new domain modules and passes shared registry into IntegrationAPI and route handlers
+    - Add tests to validate registry is used by routes rather than relying on test-only registration
+
 - [x] 13. Final Checkpoint - Ensure all tests pass
   - ✅ Ensure all tests pass, ask the user if questions arise.
 
@@ -218,7 +222,7 @@
     - _Requirements: User experience requirements_
 
 - [ ] 15. Final UI Integration and Testing
-  - [ ] 15.1 Connect UI to backend APIs
+  - [ ] 15.1 Connect UI to backend APIs (in progress)
     - Wire all frontend components to existing API endpoints
     - Implement proper error handling and loading states
     - Add client-side validation that matches backend validation
@@ -272,13 +276,13 @@
     - Build "Can't afford filing fees?" proactive suggestions
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
-  - [ ] 17.6 Build Ontario-Specific Domain Modules
-    - Create motor vehicle accident module with DC-PD system explanation
-    - Build enhanced LTB module with T1, T2, T6 application guidance
-    - Implement OCPP filing module for Toronto Region with format requirements
-    - Add municipal property damage module with 10-day notice emphasis
-    - Create employment law router (ESA vs wrongful dismissal distinction)
-    - Build tree damage classifier (municipal vs private property)
+  - [x] 17.6 Build Ontario-Specific Domain Modules
+    - [x] Create motor vehicle accident module with DC-PD system explanation
+    - [ ] Build enhanced LTB module with T1, T2, T6 application guidance
+    - [ ] Implement OCPP filing module for Toronto Region with format requirements
+    - [ ] Add municipal property damage module with 10-day notice emphasis
+    - [ ] Create employment law router (ESA vs wrongful dismissal distinction)
+    - [ ] Build tree damage classifier (municipal vs private property)
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7_
 
   - [ ] 17.7 Update System with October 2025 Ontario Court Reforms
@@ -326,6 +330,17 @@
   - Test progressive disclosure and anxiety-reduction features
   - Confirm all UPL boundaries are properly enforced
   - Verify complete audit trail and source tracking functionality
+
+---
+
+## Immediate next steps (high priority)
+- [ ] Register domain modules globally and ensure server bootstrap uses shared DomainModuleRegistry (see 12.3)
+- [ ] Complete UI-backend integration and API wiring (15.1) — prioritize Matter overview, Documents generation, Evidence upload flows
+- [ ] Add end-to-end tests for the golden path (intake → evidence → classification → generate package → download) (15.2)
+- [ ] Implement Four Pillars classifier design and start pillar mapping (Criminal, Civil, Administrative, Quasi-criminal) (17.1)
+- [ ] Add forumMap/UI alignment: ensure backend returns primary/alternatives/escalation/rationale and frontend renders it on overview
+
+---
 
 ## Phase 2: Expansion (Deferred)
 
