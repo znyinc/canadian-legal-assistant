@@ -1,0 +1,99 @@
+// Prisma schema for Canadian Legal Assistant
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Matter {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  // Intake data
+  description      String
+  province         String    @default("ON")
+  domain           String    // insurance, landlordTenant, employment, etc.
+  disputeAmount    Float?
+  
+  // Classification results (JSON)
+  classification   String?   // JSON: MatterClassification
+  forumMap         String?   // JSON: ForumMap
+  
+  // Metadata
+  legalHold        Boolean   @default(false)
+  legalHoldReason  String?
+  retentionDays    Int       @default(60)
+  retentionReason  String?
+  
+  // Relations
+  evidence         Evidence[]
+  documents        Document[]
+  auditEvents      AuditEvent[]
+  
+  @@index([createdAt])
+  @@index([domain])
+}
+
+model Evidence {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  
+  matterId         String
+  matter           Matter    @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  
+  // File data
+  filename         String
+  mimeType         String
+  filePath         String    // Path to stored file
+  fileSize         Int
+  fileHash         String    // SHA-256
+  
+  // Metadata (JSON)
+  metadata         String?   // JSON: extracted metadata
+  
+  // Evidence index data (JSON)
+  evidenceIndex    String?   // JSON: EvidenceIndex
+  
+  @@index([matterId])
+  @@index([createdAt])
+}
+
+model Document {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  
+  matterId         String
+  matter           Matter    @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  
+  // Package data
+  packageId        String
+  packagePath      String    // Path to package directory
+  
+  // Package contents (JSON)
+  packageData      String    // JSON: DocumentPackage
+  
+  @@index([matterId])
+  @@index([packageId])
+}
+
+model AuditEvent {
+  id               String    @id @default(cuid())
+  timestamp        DateTime  @default(now())
+  
+  matterId         String?
+  matter           Matter?   @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  
+  // Event data
+  action           String    // created, classified, evidenceUploaded, documentGenerated, exported, deleted
+  userId           String?   // Optional for future auth
+  details          String?   // JSON: additional event details
+  
+  @@index([timestamp])
+  @@index([matterId])
+  @@index([action])
+}
