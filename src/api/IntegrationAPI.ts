@@ -235,6 +235,11 @@ export class IntegrationAPI {
     return this.registry.get(domain);
   }
 
+  // Expose registered modules for introspection/testing
+  listRegisteredModules(): DomainModule[] {
+    return this.registry.list();
+  }
+
   private buildEvidenceManifest(index: EvidenceIndex): EvidenceManifest {
     return this.manifests.buildEvidenceManifest(index);
   }

@@ -9,7 +9,10 @@ import { config } from '../config.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const api = new IntegrationAPI();
+// Use IntegrationAPI instance attached to app.locals when available
+function getApi(req: Request) {
+  return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -66,11 +69,21 @@ router.post('/:id', upload.single('file'), async (req: Request, res: Response) =
     const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     // Upload to IntegrationAPI
-    const result = await api.uploadEvidence(matter.id, {
+    const mimeToType = (mimetype: string) => {
+      if (mimetype === 'application/pdf') return 'PDF';
+      if (mimetype === 'image/png') return 'PNG';
+      if (mimetype === 'image/jpeg') return 'JPG';
+      if (mimetype === 'text/plain') return 'TXT';
+      // EML/MSG handling
+      if (mimetype === 'message/rfc822' || mimetype === 'application/vnd.ms-outlook') return 'EML';
+      return 'OTHER';
+    };
+
+    const result = getApi(req).uploadEvidence({
       filename: req.file.originalname,
-      buffer: fileBuffer,
-      mimeType: req.file.mimetype,
-      uploadedAt: new Date(),
+      content: fileBuffer,
+      type: mimeToType(req.file.mimetype) as any,
+      provenance: 'user-provided',
     });
 
     // Store in database

@@ -5,7 +5,10 @@ import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const api = new IntegrationAPI();
+// Use IntegrationAPI instance attached to app.locals when available
+function getApi(req: Request) {
+  return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();
+}
 
 const generateSchema = z.object({
   userConfirmedFacts: z.array(z.string()).optional(),
@@ -41,7 +44,7 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
     summary: 'Evidence for matter',
   };
 
-  const result = api.generateDocuments({
+  const result = getApi(req).generateDocuments({
     classification,
     forumMap,
     timeline: '{}',

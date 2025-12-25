@@ -5,7 +5,10 @@ import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const api = new IntegrationAPI();
+// Use IntegrationAPI instance attached to app.locals when available
+function getApi(req: Request) {
+  return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();
+}
 
 // Validation schemas
 const createMatterSchema = z.object({
@@ -136,7 +139,7 @@ router.post('/:id/classify', async (req: Request, res: Response, next: NextFunct
         : undefined,
     };
 
-    const result = api.intake({ classification: classificationInput });
+    const result = getApi(req).intake({ classification: classificationInput });
 
     await prisma.matter.update({
       where: { id: matter.id },
