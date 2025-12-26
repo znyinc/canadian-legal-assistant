@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  pull_request:  # Triggers on PRs to ANY branch
 
 jobs:
   unit-tests:
