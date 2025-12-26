@@ -296,9 +296,10 @@
       - [x] Create demand/notice templates
       - [x] Add Small Claims (Form 7A) scaffold and evidence checklist
       - [x] Add municipal notice support (10-day detection)
-    - [ ] Add criminal (info-only) module (assault / uttering threats)
-      - [ ] Add release-conditions checklist and victim impact scaffold
-      - [ ] Add police/crown process guidance (informational only)
+    - [x] Add criminal (info-only) module (assault / uttering threats)
+      - [x] Add release-conditions checklist and victim impact scaffold
+      - [x] Add police/crown process guidance (informational only)
+      - [x] Registered with DomainModuleRegistry; 'criminal' added to Domain type
     - [ ] Build enhanced LTB module with T1, T2, T6 application guidance
     - [ ] Implement OCPP filing module for Toronto Region with format requirements
     - [ ] Add municipal property damage module with 10-day notice emphasis
@@ -366,7 +367,16 @@
   - ✅ Vitest rerun after security patches (81/81 tests passing)
   - ✅ Journey tracker E2E test added (`tests/e2e/journey.spec.ts`); reload persistence verified
   - ✅ PR #2 created for CI testing (https://github.com/znyinc/canadian-legal-assistant/pull/2)
-  - **Next:** Run full Playwright E2E suite locally; monitor PR CI when workflows configured
+  - ✅ Full E2E suite passing (5/5 tests: golden-path, journey, pillar, pillar-ambiguous)
+- [x] **17.2.3 Backend Build & TypeScript Fixes** ✅ COMPLETED (2025-12-26)
+  - ✅ Fixed backend tsconfig.json to allow workspace root imports (rootDir: "../", baseUrl, paths)
+  - ✅ Installed @types/archiver; aligned type schemas (AccessMethod, SourceManifest.entries)
+  - ✅ Added 'criminal' to Domain type; refactored CriminalDomainModule to implement buildDrafts()
+  - ✅ Simplified caselaw routes to use actual CitationFormatter methods
+  - ✅ Fixed schema mismatches in backend routes (evidenceIndex, sourceManifest)
+  - ✅ Backend build: 0 TypeScript errors (was 59); root workspace: 0 TypeScript errors
+  - ✅ Commit `4a605ad` pushed to `ci/trigger/upgrade-multer-archiver` branch
+  - **Next:** Monitor GitHub Actions CI on PR #2; investigate 2 failing pillar tests (returns 'Unknown' instead of 'Civil')
 - [ ] **17.3 Plain Language Translation Layer** (NEXT PRIORITY)
   - Create legal term dictionary with plain language translations
   - Implement inline explanation system
