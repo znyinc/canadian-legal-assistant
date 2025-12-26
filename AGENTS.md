@@ -547,18 +547,70 @@
   - **CI Workflow** created: `.github/workflows/ci.yml` with unit tests, backend tests, frontend tests, E2E tests (Playwright), Snyk security scans, and quality gate
 - **Next step:** Push CI workflow to trigger automated checks on PR #2; monitor results in GitHub Actions.
 
+**Recent:** GitHub Actions CI workflow and E2E validation (2025-12-26)
+- **Actions:**
+  - Created `playwright.config.ts` at root to isolate Playwright from Vitest matchers
+  - Ran full E2E suite locally: **5/5 passing** (golden-path, journey, pillar, pillar-ambiguous)
+  - Pushed CI workflow to PR #2; GitHub Actions checks now running
+- **Outputs:**
+  - ✅ Unit tests: 81/81 passing
+  - ✅ E2E tests: 5/5 passing
+  - ✅ CI workflow active on PR #2
+  - ✅ No test regressions after security hardening
+
+## Task 17.3: Plain Language Translation Layer (Completed 2025-12-26)
+- **Decisions:**
+  - Create comprehensive legal term dictionary with 30+ Ontario-specific and common law terms
+  - Implement Flesch Reading Ease scorer with legal complexity adjustments
+  - Build React tooltip components for inline term explanations
+  - Add readability indicator with visual grade display and improvement suggestions
+- **Actions:**
+  - Created [src/core/language/TermDictionary.ts](src/core/language/TermDictionary.ts):
+    - 30+ legal terms covering procedural, substantive, forum, remedy, party, and general categories
+    - Ontario-specific terms (LTB, Small Claims $50K limit, HRTO, occupiers' liability)
+    - Plain language translations and detailed explanations
+    - Learn More URLs for key terms (CanLII, ontario.ca, tribunals)
+    - Search, filter by category, case-insensitive lookup
+  - Created [src/core/language/ReadabilityScorer.ts](src/core/language/ReadabilityScorer.ts):
+    - Flesch Reading Ease calculation with legal term penalty
+    - Grade levels (very-easy to very-difficult) and estimated education level
+    - Metrics: avg sentence/word length, syllables per word, legal/complex word counts
+    - Actionable suggestions for improving readability
+  - Created [frontend/src/components/LegalTermTooltip.tsx](frontend/src/components/LegalTermTooltip.tsx):
+    - Hover/click tooltips with dotted underline styling
+    - Plain language translation + full explanation
+    - Learn More external links with accessible ARIA labels
+    - Category badges (procedural, substantive, etc.)
+    - AutoTooltipText component for automatic term detection in text
+  - Created [frontend/src/components/ReadabilityIndicator.tsx](frontend/src/components/ReadabilityIndicator.tsx):
+    - Visual score display (0-100) with color-coded grade badges
+    - Progress bar and grade level indicator
+    - Expandable metrics panel with detailed statistics
+    - Improvement suggestions list
+  - Added tests: [tests/termDictionary.test.ts](tests/termDictionary.test.ts), [tests/readabilityScorer.test.ts](tests/readabilityScorer.test.ts)
+- **Outputs:**
+  - `npm test` passed (99/99 tests, +18 new)
+  - All term dictionary lookups, translations, search, filtering working
+  - Readability scorer accurately grades simple vs complex legal text
+  - React components ready for integration into document generation UI
+- **Security/Quality:**
+  - No new vulnerabilities introduced
+  - Accessible tooltips with keyboard navigation (Tab, Enter, Escape)
+  - ARIA labels and roles for screen readers
+
 **Next tasks:**
-- Commit and push `.github/workflows/ci.yml` to trigger automated checks on PR #2
-- Run full Playwright E2E suite locally to verify UI regressions (golden-path passing; full suite pending)
+- Monitor GitHub Actions CI results on PR #2
+- Integrate tooltip and readability components into DocumentsPage and NewMatterPage
+- Begin Task 17.4: Limitation Periods Engine (Ontario limitation periods database, urgency alerts, 10-day municipal notices)
 - Continue monitoring Snyk in CI and remove temporary `.snyk` ignores if no regressions
-- Consider scheduling monthly dependency scans and add a follow-up task to evaluate background worker for heavy file processing if resource concerns reappear
 
 ## Current Status (2025-12-26)
-- **Tests:** All unit tests passing (81/81, 31 files, Vitest)
-- **E2E:** Golden-path spec passing (1/1, Playwright); full suite pending
+- **Tests:** All unit tests passing (99/99, 33 files, Vitest)
+- **E2E:** All 5 E2E specs passing (golden-path, journey, pillar, pillar-ambiguous; Playwright)
 - **Security:** Snyk backend scan clean after upgrades; frontend XSS mitigations applied
 - **Dependencies:** `multer` 2.0.2, `archiver` 7.0.0 (PR #1 merged)
-- **CI:** PR #2 created for workflow testing; checks not visible from current environment
+- **CI:** Workflow pushed to PR #2; GitHub Actions checks running at https://github.com/znyinc/canadian-legal-assistant/pull/2
+- **Features:** Plain Language Translation Layer complete (Task 17.3)
 
 ## Task 17.6: Civil Negligence Domain Module (added)
 - **Prompt:** "Implement civil negligence/occupiers' liability domain module and templates (demand notice, Form 7A scaffold, evidence checklist) and register it with DomainModuleRegistry."
