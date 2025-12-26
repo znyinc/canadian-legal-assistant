@@ -57,8 +57,8 @@ function startService(name, cwd) {
   const frontend = startService('frontend', frontendDir);
 
   try {
-    await waitForPort(3010);
-    console.log('[start-e2e] Backend ready on port 3010');
+    await waitForPort(3001);
+    console.log('[start-e2e] Backend ready on port 3001');
   } catch (e) {
     console.error('[start-e2e] Backend failed to start:', e.message);
     backend.kill();
