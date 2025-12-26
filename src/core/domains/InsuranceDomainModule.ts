@@ -57,9 +57,9 @@ export class InsuranceDomainModule extends BaseDomainModule {
   }
 
   private detectMotorVehicleAccident(input: DomainModuleInput): boolean {
-    const desc = input.classification.description?.toLowerCase() || '';
-    const summary = input.evidenceIndex.summary?.toLowerCase() || '';
-    const combined = `${desc} ${summary}`;
+    const notes = (input.classification.notes || []).join(' ').toLowerCase();
+    const itemSummaries = (input.evidenceIndex.items || []).map(i => i.summary || '').join(' ').toLowerCase();
+    const combined = `${notes} ${itemSummaries}`;
     
     const mvKeywords = ['accident', 'collision', 'vehicle', 'car', 'truck', 'motor', 'parked', 'damage', 'crashed', 'hit', 'rear-end', 'side-swipe'];
     return mvKeywords.some(keyword => combined.includes(keyword));

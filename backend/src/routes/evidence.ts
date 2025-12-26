@@ -101,11 +101,15 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
 
     // Prevent symlink escape: resolve real path and verify it's within expected dir
     const realPath = await fs.realpath(normalizedPath).catch(async () => {
-      await fs.unlink(req.file.path).catch(() => {});
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(() => {});
+      }
       return null;
     });
     if (!realPath || !realPath.startsWith(expectedDir)) {
-      await fs.unlink(req.file.path).catch(() => {});
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(() => {});
+      }
       return res.status(400).json({ error: 'Invalid file path' });
     }
 
@@ -149,7 +153,7 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
           fileSize: req.file.size,
           fileHash,
           evidenceIndex: JSON.stringify(result.index),
-          metadata: JSON.stringify(result.index.metadata),
+          metadata: JSON.stringify(result.index),
         },
       });
 
@@ -168,7 +172,6 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
         evidence,
         timeline: result.timeline,
         gaps: result.gaps,
-        alerts: result.alerts,
       });
     } finally {
       (global as any)._concurrentFileReads -= 1;

@@ -1,0 +1,1 @@
+{"version":3,"file":"ManifestBuilder.d.ts","sourceRoot":"","sources":["ManifestBuilder.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,aAAa,EAAE,gBAAgB,EAAwB,WAAW,EAAE,cAAc,EAAE,MAAM,WAAW,CAAC;AAE/G,qBAAa,eAAe;IAC1B,mBAAmB,CAAC,OAAO,EAAE,WAAW,EAAE,EAAE,KAAK,CAAC,EAAE,MAAM,EAAE,GAAG,cAAc;IAQ7E,qBAAqB,CAAC,KAAK,EAAE,aAAa,EAAE,KAAK,CAAC,EAAE,MAAM,EAAE,GAAG,gBAAgB;CAiBhF"}

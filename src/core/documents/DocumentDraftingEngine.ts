@@ -85,7 +85,7 @@ export class DocumentDraftingEngine {
 
   private buildCitations(sections: DraftSection[], evidenceIndex: EvidenceIndex): Citation[] {
     const citations: Citation[] = [];
-    const sources = evidenceIndex.sourceManifest?.sources || [];
+    const sources = evidenceIndex.sourceManifest?.entries || [];
 
     sections.forEach((section) => {
       section.evidenceRefs.forEach((ref) => {

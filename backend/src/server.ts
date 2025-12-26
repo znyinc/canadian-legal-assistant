@@ -62,7 +62,7 @@ function createApp() {
 }
 
 // Start server when not in test mode
-let server: ReturnType<typeof createApp.listen> | undefined;
+let server: any;
 if (process.env.NODE_ENV !== 'test') {
   const serverApp = createApp();
   server = serverApp.listen(config.port, () => {

@@ -1,0 +1,1 @@
+{"version":3,"file":"DomainModuleRegistry.d.ts","sourceRoot":"","sources":["DomainModuleRegistry.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,YAAY,EAAE,MAAM,WAAW,CAAC;AAEjD,qBAAa,oBAAoB;IAC/B,OAAO,CAAC,OAAO,CAAmC;IAElD,QAAQ,CAAC,MAAM,EAAE,YAAY,GAAG,IAAI;IAIpC,GAAG,CAAC,MAAM,EAAE,MAAM,GAAG,YAAY,GAAG,SAAS;IAI7C,IAAI,IAAI,YAAY,EAAE;CAGvB"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"CitationEnforcer.d.ts","sourceRoot":"","sources":["CitationEnforcer.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,mBAAmB;IAClC,EAAE,EAAE,OAAO,CAAC;IACZ,MAAM,EAAE,MAAM,EAAE,CAAC;IACjB,QAAQ,EAAE,MAAM,EAAE,CAAC;CACpB;AAID,qBAAa,gBAAgB;IAC3B,eAAe,CAAC,IAAI,EAAE,MAAM,EAAE,WAAW,EAAE,OAAO,GAAG,mBAAmB;IAgBxE,eAAe,CAAC,aAAa,CAAC,EAAE,MAAM,GAAG,mBAAmB;CAU7D"}

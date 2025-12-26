@@ -61,7 +61,7 @@ export class DocumentPackager {
     Object.entries(domainTemplates).forEach(([id, content]) => {
       const safePath = `templates/${id}.md`;
       if (!files.find((f) => f.path === safePath)) {
-        files.push({ path: safePath, content });
+        files.push({ path: safePath, content: String(content || '') });
       }
     });
 

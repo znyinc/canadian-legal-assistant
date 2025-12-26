@@ -47,7 +47,10 @@ export class EvidenceIndexer {
     return {
       items: this.indexItems,
       generatedAt: new Date().toISOString(),
-      sourceManifest: { sources: this.sources }
+      sourceManifest: { 
+        entries: this.sources,
+        compiledAt: new Date().toISOString()
+      }
     };
   }
 

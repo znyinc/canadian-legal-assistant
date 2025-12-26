@@ -45,9 +45,9 @@ export class TimelineAssessor {
     // Heuristic keywords suggesting municipal responsibility
     const municipalKeywords = ['municipal', 'city of', 'town of', 'municipality', 'public road', 'boulevard', 'street tree', 'municipal tree', 'roadside', 'council'];
 
-    const foundInDescription = municipalKeywords.some((k) => description.includes(k));
-    const foundInTags = tags.some((t) => municipalKeywords.some((k) => t.includes(k)));
-    const foundInParties = partyNames.some((n) => municipalKeywords.some((k) => n.includes(k)));
+    const foundInDescription = municipalKeywords.some((k: string) => description.includes(k));
+    const foundInTags = tags.some((t: string) => municipalKeywords.some((k: string) => t.includes(k)));
+    const foundInParties = partyNames.some((n: string) => municipalKeywords.some((k: string) => n.includes(k)));
 
     // Evidence check: filenames or summaries mentioning municipality
     let foundInEvidence = false;

@@ -26,7 +26,8 @@ import {
   SourceManifest,
   EvidenceManifest,
   DocumentPackage,
-  DocumentDraft
+  DocumentDraft,
+  AccessMethod
 } from '../core/models';
 
 export interface IntakeRequest {
@@ -53,7 +54,7 @@ export interface EvidenceUploadRequest {
   filename: string;
   content: Buffer;
   type: EvidenceType;
-  provenance: 'user-provided' | 'official-api' | 'official-link';
+  provenance: AccessMethod;
   sources?: SourceManifest['entries'];
 }
 

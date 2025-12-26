@@ -1,13 +1,12 @@
 import { BaseDomainModule } from './BaseDomainModule';
 import { TemplateLibrary } from '../templates/TemplateLibrary';
-import { DocumentPackager } from '../documents/DocumentPackager';
-import { MatterClassification, DocumentPackage, SourceManifest } from '../models';
+import { DomainModuleInput, DocumentDraft } from '../models';
 
 /**
  * Criminal (info-only) domain module for assault and uttering threats.
  * Provides release conditions checklist, victim impact scaffold, and police/crown process guidance.
  * 
- * Activation: classification.domain === 'criminal' and subCategory in ['assault', 'uttering-threats']
+ * Activation: classification.domain === 'criminal' and notes contain assault/threat keywords
  */
 export class CriminalDomainModule extends BaseDomainModule {
   readonly domain = 'criminal' as const;
@@ -23,92 +22,76 @@ export class CriminalDomainModule extends BaseDomainModule {
   }
 
   /**
-   * Check if this module applies to the given classification
+   * Check if this module applies to the given domain
    */
-  isApplicable(classification: MatterClassification): boolean {
-    if (!classification || classification.domain !== 'criminal') return false;
-    
-    const subCat = (classification.subCategory || '').toLowerCase();
-    return subCat.includes('assault') || subCat.includes('threat');
+  isApplicable(domain: string): boolean {
+    return domain === 'criminal';
   }
 
   /**
-   * Generate crime-specific documents
+   * Build crime-specific draft documents
    */
-  async generateDocuments(
-    classification: MatterClassification,
-    _forumMap: any,
-    _timelineEvents: any,
-    evidenceManifest?: any,
-    _journeyMap?: any,
-  ): Promise<{ drafts: any[]; manifests: any[] }> {
-    const drafts: any[] = [];
-    const manifests: any[] = [];
-
-    const mkDraft = (title: string, sections: { heading: string; content: string }[]): any => {
-      return {
-        id: `draft-${Date.now()}-${title.replace(/\s+/g, '-').toLowerCase()}`,
-        title,
-        sections: sections.map((s) => ({ heading: s.heading, content: s.content, evidenceRefs: [], confirmed: false })),
-        citations: [],
-        disclaimer: undefined
-      };
-    };
+  protected buildDrafts(input: DomainModuleInput): DocumentDraft[] {
+    const drafts: DocumentDraft[] = [];
+    const classification = input.classification;
+    
+    if (!classification || classification.domain !== 'criminal') {
+      return drafts;
+    }
 
     const templateLib = new TemplateLibrary();
     const templates = templateLib.domainTemplates();
+    const notes = (classification.notes || []).join(' ').toLowerCase();
+    const isUtteringThreats = notes.includes('threat') || notes.includes('uttering');
+    const isAssault = notes.includes('assault') || notes.includes('violence');
+
+    // Helper to create document draft
+    const mkDraft = (title: string, sections: { heading: string; content: string }[]): DocumentDraft => {
+      return {
+        id: `draft-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        title,
+        sections: sections.map((s) => ({ 
+          heading: s.heading, 
+          content: s.content, 
+          evidenceRefs: [], 
+          confirmed: false 
+        })),
+        citations: [],
+        disclaimer: undefined,
+        missingConfirmations: []
+      };
+    };
 
     // Release conditions checklist
     if (templates['criminal/release_conditions_checklist']) {
+      const partyName = classification.parties?.names?.[0] || 'Accused';
       const checklist = templateLib.renderTemplate('criminal/release_conditions_checklist', {
         date: new Date().toISOString().split('T')[0],
-        fullName: classification.partyName || 'Accused',
+        fullName: partyName,
       });
       drafts.push(mkDraft('Release Conditions Checklist', [{ heading: 'Conditions', content: checklist }]));
     }
 
-    // Victim impact statement scaffold
-    if (templates['criminal/victim_impact_scaffold']) {
+    // Victim impact statement scaffold (if applicable)
+    if (isAssault && templates['criminal/victim_impact_scaffold']) {
       const scaffold = templateLib.renderTemplate('criminal/victim_impact_scaffold', {
         date: new Date().toISOString().split('T')[0],
-        victimRole: classification.claimantType || 'Victim',
+        victimRole: 'Victim',
       });
       drafts.push(mkDraft('Victim Impact Statement (Scaffold)', [{ heading: 'Impact Areas', content: scaffold }]));
     }
 
     // Police/crown process guidance
     if (templates['criminal/police_crown_process_guide']) {
+      const offense = isUtteringThreats ? 'uttering threats' : 'assault';
       const guide = templateLib.renderTemplate('criminal/police_crown_process_guide', {
-        offense: classification.subCategory === 'uttering-threats' ? 'uttering threats' : 'assault',
+        offense,
         province: 'Ontario',
       });
       drafts.push(mkDraft('Police and Crown Process Guide (Information)', [{ heading: 'Process', content: guide }]));
     }
 
-    // Build evidence manifest if not provided
-    if (!evidenceManifest) {
-      evidenceManifest = this.buildEvidenceManifest([]);
-    }
-
-    // Package documents
-    const packager = new DocumentPackager();
-    const sourceManifest: SourceManifest = {
-      sources: [],
-      accessLog: [],
-      compiledAt: new Date(),
-    };
-
-    const packageOutput = packager.assemble({
-      packageName: `criminal-${classification.subCategory}`,
-      forumMap: '# Criminal Justice System Overview\n\nCanadian criminal law information.',
-      timeline: '# Timeline\n\nNo events recorded.',
-      missingEvidenceChecklist: '# Missing Evidence\n\nNone identified.',
-      drafts,
-      sourceManifest,
-      evidenceManifest,
-    });
-
-    manifests.push(packageOutput.evidenceManifest);
-    return { drafts, manifests };
+    return drafts;
   }
 }
+

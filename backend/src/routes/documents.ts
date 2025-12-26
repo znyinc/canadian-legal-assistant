@@ -42,7 +42,12 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
       const parsed = JSON.parse(e.evidenceIndex || '{}');
       return parsed.items || [];
     }).flat(),
-    summary: 'Evidence for matter',
+    generatedAt: new Date().toISOString(),
+    sourceManifest: {
+      entries: [],
+      accessLog: [],
+      compiledAt: new Date().toISOString(),
+    },
   };
 
   const result = getApi(req).generateDocuments({
@@ -53,7 +58,8 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
     evidenceIndex,
     sourceManifest: {
       entries: [],
-      summary: 'Sources for matter',
+      accessLog: [],
+      compiledAt: new Date().toISOString(),
     },
     requestedTemplates: data.requestedTemplates as string[] | undefined
   });

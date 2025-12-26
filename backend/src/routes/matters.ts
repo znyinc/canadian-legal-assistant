@@ -140,7 +140,11 @@ router.post('/:id/classify', async (req: Request, res: Response, next: NextFunct
     };
 
     // Include the original description so heuristics (e.g., pillar detection) have text to analyze
-    const result = getApi(req).intake({ classification: { ...classificationInput, description: data.description } });
+    const classificationWithNotes = {
+      ...classificationInput,
+      notes: [data.description].filter(Boolean)
+    };
+    const result = getApi(req).intake({ classification: classificationWithNotes as any });
 
     // persist pillar explanation with classification for later display
     (result.classification as any).pillarExplanation = result.pillarExplanation;
