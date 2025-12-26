@@ -2,10 +2,16 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+
+// Mock MatterDeadlineAlerts to avoid React hook mismatch in jsdom
+vi.mock('../../frontend/src/components/MatterDeadlineAlerts', () => ({
+  MatterDeadlineAlerts: () => <div data-testid="matter-deadline-alerts">Deadline alerts</div>,
+}));
+
 import OverviewTab from '../../frontend/src/components/OverviewTab';
 
-// TODO: Fix React version mismatch for MatterDeadlineAlerts component
-describe.skip('OverviewTab (UI): pillar explanation display', () => {
+describe('OverviewTab (UI): pillar explanation display', () => {
   it('shows pillar explanation with burden and overview and next steps', () => {
     const classification = { domain: 'civil-negligence', pillar: 'Civil' };
     const forumMap = { primaryForum: { name: 'Small Claims Court', type: 'court' }, alternatives: [] };
