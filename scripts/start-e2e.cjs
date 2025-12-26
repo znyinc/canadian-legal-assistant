@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const fs = require('fs');
 const net = require('net');
 const path = require('path');
 
@@ -52,6 +53,44 @@ function startService(name, cwd) {
   const frontendDir = path.join(root, 'frontend');
 
   console.log('[start-e2e] Starting backend and frontend...');
+
+  // Helper to run a one-off command and wait for completion
+  function runOnce(name, cwd, cmd, args) {
+    return new Promise((resolve, reject) => {
+      const child = spawn(cmd, args, { cwd, stdio: 'pipe', shell: true, windowsHide: false });
+      if (child.stdout) child.stdout.on('data', (d) => process.stdout.write(`[${name}] ${d}`));
+      if (child.stderr) child.stderr.on('data', (d) => process.stderr.write(`[${name}] ${d}`));
+      child.on('error', (err) => reject(err));
+      child.on('exit', (code) => {
+        if (code !== 0) {
+          reject(new Error(`${name} process '${cmd} ${args.join(' ')}' exited with code ${code}`));
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  // Ensure dependencies are installed (especially in CI) and DB is ready
+  try {
+    const backendNodeModules = path.join(backendDir, 'node_modules');
+    const frontendNodeModules = path.join(frontendDir, 'node_modules');
+
+    if (process.env.CI || !fs.existsSync(backendNodeModules)) {
+      console.log('[start-e2e] Installing backend dependencies (npm ci)...');
+      await runOnce('backend', backendDir, 'npm', ['ci']);
+    }
+    if (process.env.CI || !fs.existsSync(frontendNodeModules)) {
+      console.log('[start-e2e] Installing frontend dependencies (npm ci)...');
+      await runOnce('frontend', frontendDir, 'npm', ['ci']);
+    }
+
+    console.log('[start-e2e] Preparing Prisma database (db:push)...');
+    await runOnce('backend', backendDir, 'npm', ['run', 'db:push']);
+  } catch (prepErr) {
+    console.error('[start-e2e] Preflight failed:', prepErr.message);
+    process.exit(1);
+  }
 
   const backend = startService('backend', backendDir);
   const frontend = startService('frontend', frontendDir);
