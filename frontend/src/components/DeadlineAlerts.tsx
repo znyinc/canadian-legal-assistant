@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface DeadlineAlert {
   urgency: 'critical' | 'warning' | 'caution' | 'info';
   daysRemaining: number;

@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ReadabilityScore {
   score: number;
   grade: 'very-easy' | 'easy' | 'moderate' | 'difficult' | 'very-difficult';

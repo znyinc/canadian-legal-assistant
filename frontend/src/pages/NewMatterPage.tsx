@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { SmartText } from '../components/SmartText';
 
 export default function NewMatterPage() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function NewMatterPage() {
           </label>
           <textarea
             id="description"
+            name="description"
             required
             aria-required="true"
             minLength={10}
@@ -71,7 +73,7 @@ export default function NewMatterPage() {
             aria-describedby="description-hint"
           />
           <p id="description-hint" className="mt-1 text-sm text-gray-500">
-            Be as specific as possible. Include dates, parties involved, and key events. Minimum 10 characters.
+            <SmartText text="Be as specific as possible. Include dates, parties involved, and key events. If you have a limitation period concern (like municipal notice requirements), mention relevant keywords like 'municipal,' 'city,' or 'tree damage.' Minimum 10 characters." />
           </p>
         </div>
 
@@ -82,6 +84,7 @@ export default function NewMatterPage() {
           </label>
           <select
             id="domain"
+            name="domain"
             required
             aria-required="true"
             value={formData.domain}
@@ -92,6 +95,7 @@ export default function NewMatterPage() {
             <option value="insurance">Insurance</option>
             <option value="landlordTenant">Landlord & Tenant</option>
             <option value="employment">Employment</option>
+            <option value="civil-negligence">Civil Negligence</option>
           </select>
         </div>
 
@@ -102,6 +106,7 @@ export default function NewMatterPage() {
           </label>
           <select
             id="province"
+            name="province"
             required
             aria-required="true"
             value={formData.province}
@@ -130,6 +135,7 @@ export default function NewMatterPage() {
             <span className="absolute left-3 top-2 text-gray-500">$</span>
             <input
               id="disputeAmount"
+              name="disputeAmount"
               type="number"
               min="0"
               step="0.01"
@@ -140,7 +146,7 @@ export default function NewMatterPage() {
             />
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            If applicable, enter the amount in dispute (e.g., insurance claim, unpaid wages, damage claim).
+            <SmartText text="If applicable, enter the amount in dispute (e.g., insurance claim, unpaid wages, damage claim). This helps determine the appropriate forum and jurisdiction." />
           </p>
         </div>
 
