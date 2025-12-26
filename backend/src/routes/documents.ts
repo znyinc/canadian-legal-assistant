@@ -12,6 +12,7 @@ function getApi(req: Request) {
 
 const generateSchema = z.object({
   userConfirmedFacts: z.array(z.string()).optional(),
+  requestedTemplates: z.array(z.string()).optional()
 });
 
 // POST /api/matters/:id/generate - Generate documents
@@ -54,6 +55,7 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
       entries: [],
       summary: 'Sources for matter',
     },
+    requestedTemplates: data.requestedTemplates as string[] | undefined
   });
 
   // Generate package ID

@@ -38,6 +38,7 @@ export class MatterClassifier {
   private resolveDomain(hint?: string): Domain {
     if (!hint) return 'other';
     const h = hint.toLowerCase();
+    if (h === 'civil-negligence' || h.includes('negligence') || h.includes('tort')) return 'civil-negligence';
     if (h.includes('tenant') || h.includes('ltb') || h.includes('landlord')) return 'landlordTenant';
     if (h.includes('insurance') || h.includes('claim')) return 'insurance';
     if (h.includes('employment') || h.includes('work')) return 'employment';

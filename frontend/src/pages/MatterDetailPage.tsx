@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useParams, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, Matter } from '../services/api';
+import { safeText } from '../utils/sanitize';
 import EvidencePage from './EvidencePage';
 import DocumentsPage from './DocumentsPage';
+import OverviewTab from '../components/OverviewTab';
 
 export default function MatterDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -10,9 +12,15 @@ export default function MatterDetailPage() {
   const [matter, setMatter] = useState<Matter | null>(null);
   const [classification, setClassification] = useState<any>(null);
   const [forumMap, setForumMap] = useState<any>(null);
+  const [pillarExplanation, setPillarExplanation] = useState<any>(null);
+  const [pillarMatches, setPillarMatches] = useState<string[] | null>(null);
+  const [pillarAmbiguous, setPillarAmbiguous] = useState<boolean>(false);
+  const [journey, setJourney] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [classifying, setClassifying] = useState(false);
   const [error, setError] = useState('');
+  const [generatingForm7A, setGeneratingForm7A] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
@@ -28,7 +36,12 @@ export default function MatterDetailPage() {
       setMatter(data);
 
       if (data.classification) {
-        setClassification(JSON.parse(data.classification));
+        const c = JSON.parse(data.classification);
+        setClassification(c);
+        if (c.pillarExplanation) setPillarExplanation(c.pillarExplanation);
+        if (Array.isArray(c.pillarMatches)) setPillarMatches(c.pillarMatches);
+        if (c.pillarAmbiguous) setPillarAmbiguous(!!c.pillarAmbiguous);
+        if (c.journey) setJourney(c.journey);
       }
       if (data.forumMap) {
         setForumMap(JSON.parse(data.forumMap));
@@ -53,6 +66,8 @@ export default function MatterDetailPage() {
       const result = await api.classifyMatter(id);
       setClassification(result.classification);
       setForumMap(result.forumMap);
+      if (result.pillarExplanation) setPillarExplanation(result.pillarExplanation);
+      if (result.journey) setJourney(result.journey);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Classification failed');
     } finally {
@@ -74,6 +89,21 @@ export default function MatterDetailPage() {
 
   const isOverviewPage = location.pathname === `/matters/${id}` || location.pathname === `/matters/${id}/`;
 
+  const handleGenerateForm7A = async () => {
+    if (!id) return;
+    setGeneratingForm7A(true);
+    try {
+      await api.generateDocuments(id, undefined, ['civil/small_claims_form7a']);
+      // navigate to documents tab to let user download
+      navigate(`/matters/${id}/documents`);
+    } catch (err) {
+      console.error('Generate Form 7A failed', err);
+      alert('Failed to generate Form 7A');
+    } finally {
+      setGeneratingForm7A(false);
+    }
+  };
+
   return (
     <div>
       {/* Matter Header */}
@@ -89,10 +119,23 @@ export default function MatterDetailPage() {
             </span>
           )}
         </div>
-        <p className="text-gray-900 mb-2">{matter.description}</p>
+        <p className="text-gray-900 mb-2">{safeText(matter.description)}</p>
         <p className="text-sm text-gray-500">
           Created {new Date(matter.createdAt).toLocaleDateString()}
         </p>
+
+        {/* Quick action for civil matters: Generate Form 7A */}
+        {classification?.domain === 'civil-negligence' && (
+          <div className="mt-4">
+            <button
+              onClick={handleGenerateForm7A}
+              disabled={generatingForm7A}
+              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              {generatingForm7A ? 'Generating Form 7A...' : 'Generate Form 7A'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Navigation Tabs */}
@@ -142,94 +185,10 @@ export default function MatterDetailPage() {
 
       {/* Tab Content */}
       <Routes>
-        <Route index element={<OverviewTab classification={classification} forumMap={forumMap} classifying={classifying} onClassify={handleClassify} />} />
+        <Route index element={<OverviewTab classification={classification} forumMap={forumMap} classifying={classifying} onClassify={handleClassify} pillarExplanation={pillarExplanation} pillarMatches={pillarMatches || undefined} pillarAmbiguous={pillarAmbiguous} journey={journey} />} />
         <Route path="evidence" element={<EvidencePage matterId={id!} />} />
         <Route path="documents" element={<DocumentsPage matterId={id!} />} />
       </Routes>
-    </div>
-  );
-}
-
-function OverviewTab({ classification, forumMap, classifying, onClassify }: { classification: any; forumMap: any; classifying: boolean; onClassify: () => void }) {
-  if (classifying) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <p className="text-blue-800 font-medium">🤖 AI is analyzing your matter...</p>
-        </div>
-        <p className="text-blue-700 text-sm mt-2">Classifying legal domain, identifying applicable forums, and assessing urgency.</p>
-      </div>
-    );
-  }
-
-  if (!classification || !forumMap) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <p className="text-yellow-800 mb-4">Classification pending. This matter needs to be analyzed.</p>
-        <button
-          onClick={onClassify}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          🤖 Classify Now with AI
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Classification */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Classification</h2>
-        <dl className="grid grid-cols-2 gap-4">
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Domain</dt>
-            <dd className="text-gray-900">{classification.domain}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Sub-category</dt>
-            <dd className="text-gray-900">{classification.subCategory || 'N/A'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Urgency</dt>
-            <dd className="text-gray-900">{classification.urgency || 'Standard'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Jurisdiction</dt>
-            <dd className="text-gray-900">{classification.jurisdiction}</dd>
-          </div>
-        </dl>
-      </div>
-
-      {/* Forum Routing */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended Forums</h2>
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Primary Recommendation</h3>
-            <p className="text-gray-700">{forumMap.recommended}</p>
-          </div>
-
-          {forumMap.pathways && forumMap.pathways.length > 0 && (
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Available Pathways</h3>
-              <ol className="list-decimal list-inside space-y-2">
-                {forumMap.pathways.map((pathway: string, index: number) => (
-                  <li key={index} className="text-gray-700">{pathway}</li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          {forumMap.rationale && (
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Rationale</h3>
-              <p className="text-gray-700">{forumMap.rationale}</p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

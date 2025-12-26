@@ -35,13 +35,28 @@ export default function EvidencePage({ matterId }: EvidencePageProps) {
     }
   };
 
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [alerts, setAlerts] = useState<string[]>([]);
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUploading(true);
     setError('');
+    setAlerts([]);
 
     try {
       for (const file of acceptedFiles) {
-        await api.uploadEvidence(matterId, file);
+        setProgressMap((p) => ({ ...p, [file.name]: 0 }));
+        const res = await api.uploadEvidence(matterId, file, (percent) => {
+          setProgressMap((p) => ({ ...p, [file.name]: percent }));
+        });
+
+        // show any alerts returned (redaction, municipal flags, missing metadata)
+        if (res.alerts && res.alerts.length) {
+          setAlerts((a) => [...a, ...res.alerts]);
+        }
+        if ((res as any).redactedPreview) {
+          setAlerts((a) => [...a, `Redaction preview: ${(res as any).redactedPreview}`]);
+        }
       }
       await loadEvidence();
       await loadTimeline();
@@ -49,6 +64,7 @@ export default function EvidencePage({ matterId }: EvidencePageProps) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
+      setProgressMap({});
     }
   }, [matterId]);
 
@@ -106,6 +122,18 @@ export default function EvidencePage({ matterId }: EvidencePageProps) {
         </div>
       )}
 
+      {/* Alerts (redaction / detection) */}
+      {alerts.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800 font-medium mb-2">Alerts</p>
+          <ul className="text-sm text-yellow-800 space-y-1">
+            {alerts.map((a, idx) => (
+              <li key={idx}>• {a}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Evidence List */}
       {evidence.length > 0 && (
         <div className="bg-white rounded-lg shadow">
@@ -130,6 +158,19 @@ export default function EvidencePage({ matterId }: EvidencePageProps) {
                           <span>Credibility: {index.credibilityScore}/100</span>
                         )}
                       </div>
+
+                      {/* Show upload progress if available */}
+                      {progressMap[item.filename] !== undefined && (
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded"
+                              style={{ width: `${progressMap[item.filename]}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Uploading: {progressMap[item.filename]}%</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

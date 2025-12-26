@@ -2,6 +2,9 @@ import { Buffer } from 'node:buffer';
 import { MatterClassifier } from '../core/triage/MatterClassifier';
 import { ForumRouter } from '../core/triage/ForumRouter';
 import { TimelineAssessor } from '../core/triage/TimelineAssessor';
+import { PillarClassifier } from '../core/triage/PillarClassifier';
+import { PillarExplainer } from '../core/triage/PillarExplainer';
+import { JourneyTracker, JourneyProgress } from '../core/triage/JourneyTracker';
 import { AuthorityRegistry } from '../core/authority/AuthorityRegistry';
 import { validateFile } from '../core/evidence/Validator';
 import { redactPII } from '../core/evidence/PIIRedactor';
@@ -31,9 +34,19 @@ export interface IntakeRequest {
 }
 
 export interface IntakeResponse {
-  classification: MatterClassification;
-  forumMap: string;
+  classification: MatterClassification & { pillar?: string; pillarMatches?: string[]; pillarAmbiguous?: boolean };
+  forumMap: any; // structured ForumMap object
   timelineAssessment: string;
+  pillar?: string;
+  pillarMatches?: string[];
+  pillarAmbiguous?: boolean;
+  pillarExplanation?: {
+    burdenOfProof: string;
+    overview: string;
+    nextSteps: string[];
+  };
+  alerts?: string[];
+  journey?: JourneyProgress;
 }
 
 export interface EvidenceUploadRequest {
@@ -59,6 +72,7 @@ export interface DocumentRequest {
   missingEvidence: string;
   evidenceIndex: EvidenceIndex;
   sourceManifest: SourceManifest;
+  requestedTemplates?: string[];
 }
 
 export interface DocumentResponse {
@@ -84,6 +98,9 @@ export class IntegrationAPI {
   private classifier: MatterClassifier;
   private router: ForumRouter;
   private assessor: TimelineAssessor;
+  private pillar: PillarClassifier;
+  private explainer: PillarExplainer;
+  private journey: JourneyTracker;
   private authorities: AuthorityRegistry;
   private validator: typeof validateFile;
   private redactor: typeof redactPII;
@@ -100,6 +117,9 @@ export class IntegrationAPI {
     classifier?: MatterClassifier;
     router?: ForumRouter;
     assessor?: TimelineAssessor;
+    pillar?: PillarClassifier;
+    explainer?: PillarExplainer;
+    journey?: JourneyTracker;
     authorities?: AuthorityRegistry;
     validator?: typeof validateFile;
     redactor?: typeof redactPII;
@@ -116,6 +136,9 @@ export class IntegrationAPI {
     this.classifier = options?.classifier ?? new MatterClassifier();
     this.router = options?.router ?? new ForumRouter(this.authorities);
     this.assessor = options?.assessor ?? new TimelineAssessor();
+    this.pillar = options?.pillar ?? new PillarClassifier();
+    this.explainer = options?.explainer ?? new PillarExplainer();
+    this.journey = options?.journey ?? new JourneyTracker();
     this.validator = options?.validator ?? validateFile;
     this.redactor = options?.redactor ?? redactPII;
     this.indexer = options?.indexer ?? new EvidenceIndexer();
@@ -132,13 +155,44 @@ export class IntegrationAPI {
     const classification = this.classifier.classify(req.classification);
     const forumMap = this.router.route(classification);
     const timelineAssessment = this.assessor.assess(classification.timeline?.keyDates || []);
+    // Preserve descriptive hints from the original request when running heuristics
+    const mergedForDetection = { ...classification, ...req.classification } as any;
+    const municipal = this.assessor.detectMunicipalNotice(mergedForDetection, undefined);
 
-    this.audit.log('source-access', 'system', 'Matter intake processed', { domain: classification.domain });
+    // Pillar classification and explanation
+    const pillar = this.pillar.classify((mergedForDetection.description as string) || classification.notes?.join(' ') || '');
+    const matches = this.pillar.detectAllPillars((mergedForDetection.description as string) || classification.notes?.join(' ') || '');
+    const ambiguous = matches.length > 1;
+    const expl = this.explainer.explain(pillar);
+
+    const journey = this.journey.buildProgress({
+      classification,
+      forumMap,
+      evidenceCount: 0,
+      documentsGenerated: false
+    });
+
+    // attach pillar info to classification object for persistence
+    (classification as any).pillar = pillar;
+    (classification as any).pillarMatches = matches;
+    (classification as any).pillarAmbiguous = ambiguous;
+    (classification as any).journey = journey;
+
+    this.audit.log('source-access', 'system', 'Matter intake processed', { domain: classification.domain, pillar, pillarMatches: matches });
+
+    const alerts: string[] = [];
+    if (municipal.required && municipal.message) alerts.push(municipal.message);
 
     return {
       classification,
-      forumMap: JSON.stringify(forumMap),
-      timelineAssessment: JSON.stringify(timelineAssessment)
+      forumMap,
+      timelineAssessment: JSON.stringify(timelineAssessment),
+      pillar,
+      pillarMatches: matches.length ? matches : undefined,
+      pillarAmbiguous: ambiguous || undefined,
+      pillarExplanation: { burdenOfProof: expl.burdenOfProof, overview: expl.overview, nextSteps: expl.nextSteps },
+      journey,
+      alerts: alerts.length ? alerts : undefined
     };
   }
 
@@ -168,7 +222,7 @@ export class IntegrationAPI {
     const evidenceManifest = this.buildEvidenceManifest(req.evidenceIndex);
 
     if (domainModule) {
-      const result = domainModule.generate({
+      let result = domainModule.generate({
         classification: req.classification,
         forumMap: req.forumMap,
         timeline: req.timeline,
@@ -177,7 +231,34 @@ export class IntegrationAPI {
         sourceManifest: req.sourceManifest,
         evidenceManifest
       });
+
       this.audit.log('export', 'system', 'Documents generated', { domain: domainModule.domain });
+
+      // If caller requested specific templates, filter drafts and package files
+      if (req.requestedTemplates && req.requestedTemplates.length) {
+        const requested = req.requestedTemplates;
+        const keywords = requested.map((r) => r.split('/').pop()?.replace(/_/g, ' ').toLowerCase() || r.toLowerCase());
+        const normalize = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+        const filteredDrafts = result.drafts.filter((d) => {
+          const t = normalize(d.title);
+          return keywords.some((k) => {
+            const tokens = k.split(/\s+/).filter(Boolean);
+            return tokens.every((tok) => t.includes(normalize(tok)));
+          });
+        });
+        // Reassemble package with filtered drafts
+        const pkg = this.packager.assemble({
+          packageName: req.classification.domain,
+          forumMap: req.forumMap,
+          timeline: req.timeline,
+          missingEvidenceChecklist: req.missingEvidence,
+          drafts: filteredDrafts,
+          sourceManifest: req.sourceManifest,
+          evidenceManifest
+        });
+        result = { drafts: filteredDrafts, package: pkg, warnings: pkg.warnings };
+      }
+
       return result;
     }
 

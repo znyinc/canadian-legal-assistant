@@ -15,6 +15,7 @@ const app = express();
 const prisma = new PrismaClient();
 
 // Middleware
+app.disable('x-powered-by');
 app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json());
 app.use(apiKeyAuth);
@@ -25,16 +26,20 @@ app.get('/health', (req, res) => {
 });
 
 // Create and register domain modules and a shared IntegrationAPI
-import { DomainModuleRegistry } from '../../../src/core/domains/DomainModuleRegistry.js';
-import { InsuranceDomainModule } from '../../../src/core/domains/InsuranceDomainModule.js';
-import { LandlordTenantDomainModule } from '../../../src/core/domains/LandlordTenantDomainModule.js';
-import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
+import { DomainModuleRegistry } from '../../src/core/domains/DomainModuleRegistry';
+import { InsuranceDomainModule } from '../../src/core/domains/InsuranceDomainModule';
+import { LandlordTenantDomainModule } from '../../src/core/domains/LandlordTenantDomainModule';
+import { CivilNegligenceDomainModule } from '../../src/core/domains/CivilNegligenceDomainModule';
+import { CriminalDomainModule } from '../../src/core/domains/CriminalDomainModule';
+import { IntegrationAPI } from '../../src/api/IntegrationAPI';
 
 function createApp() {
   // Register domain modules in a shared registry
   const registry = new DomainModuleRegistry();
   registry.register(new InsuranceDomainModule());
   registry.register(new LandlordTenantDomainModule());
+  registry.register(new CivilNegligenceDomainModule());
+  registry.register(new CriminalDomainModule());
 
   // Create shared IntegrationAPI instance with registry
   const integrationApi = new IntegrationAPI({ registry });
@@ -57,9 +62,10 @@ function createApp() {
 }
 
 // Start server when not in test mode
+let server: ReturnType<typeof createApp.listen> | undefined;
 if (process.env.NODE_ENV !== 'test') {
   const serverApp = createApp();
-  const server = serverApp.listen(config.port, () => {
+  server = serverApp.listen(config.port, () => {
     console.log(`🚀 Canadian Legal Assistant API running on port ${config.port}`);
     console.log(`📝 Environment: ${config.nodeEnv}`);
     console.log(`🔐 API key auth: ${config.apiKeyEnabled ? 'enabled' : 'disabled'}`);
@@ -72,16 +78,20 @@ export { createApp };
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, closing server...');
-  server.close(async () => {
-    await prisma.$disconnect();
-    process.exit(0);
-  });
+  if (server) {
+    server.close(async () => {
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  }
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, closing server...');
-  server.close(async () => {
-    await prisma.$disconnect();
-    process.exit(0);
-  });
+  if (server) {
+    server.close(async () => {
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  }
 });

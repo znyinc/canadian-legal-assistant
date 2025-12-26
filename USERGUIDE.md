@@ -13,6 +13,7 @@
 6. [Data Lifecycle](#data-lifecycle)
 7. [Domain-Specific Features](#domain-specific-features)
 8. [Compliance & Limitations](#compliance--limitations)
+9. [What Pillars Mean](#what-pillars-mean)
 
 ---
 
@@ -95,6 +96,18 @@ The Canadian Legal Assistant follows a structured workflow to help you understan
 - **Delete**: Request deletion (blocked if legal hold active)
 - **Legal hold**: Prevent deletion during active litigation
 - **Retention**: 60-day default, extendable for legal matters
+
+---
+
+## What Pillars Mean
+
+- **Criminal**: Offences prosecuted by the state (e.g., assault, theft). Burden: beyond a reasonable doubt. Seek police help and consider legal advice for safety/urgency.
+- **Civil**: Disputes between people or businesses (e.g., negligence, contract breach). Burden: balance of probabilities. Often about money or repairs.
+- **Administrative**: Tribunal or regulator processes (e.g., LTB, HRTO, licensing, benefits). Burden often balance of probabilities or statute-specific tests.
+- **Quasi-criminal**: Regulatory or by-law offences (e.g., parking/provincial offence tickets). Burden: statute-specific, can include fines or penalties.
+- **Unknown/Ambiguous**: Provide more facts. When in doubt or facing deadlines, contact a lawyer or community legal clinic.
+- Examples: “Slip and fall at a store” → Civil; “Eviction notice for non-payment” → Administrative (LTB); “Assault plus parking ticket” → Ambiguous (Criminal + Quasi-criminal).
+- Limits: Information-only; not legal advice. Do not rely on this tool for emergencies or where court/tribunal deadlines are imminent—seek legal assistance.
 
 ---
 
@@ -231,6 +244,29 @@ All include:
 - RTA citations with section numbers and URLs
 - Tribunal procedure references
 - Missing evidence checklist
+
+#### Civil Negligence Domain (New)
+Generates:
+1. **Demand for Repair / Compensation** (demand/notice letter)
+2. **Small Claims Court — Form 7A scaffold** (statement of claim scaffold)
+3. **Evidence Checklist — Property Damage**
+
+Template IDs (available in `TemplateLibrary`): `civil/demand_notice`, `civil/small_claims_form7a`, `civil/evidence_checklist`.
+
+How to generate:
+- From UI: Open the Matter, confirm facts, click **Generate Documents** → choose 'Civil Negligence' outputs.
+- Via API: Call `IntegrationAPI.generateDocuments(matterId, { classification, evidenceIndex, forumMap, timeline })` and the domain module will produce drafts and a package.
+
+Notes:
+- Confirm exact amounts, dates, and names before finalizing or filing forms.
+- Form 7A scaffold requires manual completion of exact dates and amounts before filing in Small Claims Court.
+
+Municipal 10-day notice detection:
+- The system heuristically detects when a municipal 10-day notice may be required (e.g., damage to municipal trees, public road, or municipal property). When detected, an alert appears in the classification results advising to send a formal notice to the municipal clerk within 10 days and to verify local by-laws.
+
+Generate Form 7A quick action:
+- From the Matter Overview page, if the matter is classified as civil negligence, click **Generate Form 7A** to create a focused Form 7A scaffold package. This action will navigate to the Documents tab where you can download the generated package and review the scaffold before filing.
+
 
 ### Generic Drafting (Fallback)
 

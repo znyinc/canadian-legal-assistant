@@ -1,0 +1,33 @@
+{
+  "version": "v1",
+  "ignore": {
+    "javascript/DOMXSS": [
+      {
+        "reason": "False positive: user-supplied/display content is sanitized using DOMPurify and safeText before rendering. See docs/SNYK_REMEDIATION_REPORT.md for details and test coverage.",
+        "expires": "2026-03-26T00:00:00.000Z",
+        "paths": [
+          "frontend/src/pages/CaseLawPage.tsx",
+          "frontend/src/pages/DocumentsPage.tsx",
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "created": "2025-12-26T00:00:00.000Z"
+      }
+    ],
+    "javascript/PT": [
+      {
+        "reason": "Path traversal issue mitigated: file uploads validated with path.resolve, fs.realpath verification, and sanitized stored filename. See docs/SNYK_REMEDIATION_REPORT.md.",
+        "expires": "2026-03-26T00:00:00.000Z",
+        "paths": ["backend/src/routes/evidence.ts"],
+        "created": "2025-12-26T00:00:00.000Z"
+      }
+    ],
+    "javascript/NoRateLimitingForExpensiveWebOperation": [
+      {
+        "reason": "Mitigated via per-IP upload rate limiting and a small concurrent read cap. Plan: move heavy processing to background worker in Phase 2 if necessary.",
+        "expires": "2026-03-26T00:00:00.000Z",
+        "paths": ["backend/src/routes/evidence.ts"],
+        "created": "2025-12-26T00:00:00.000Z"
+      }
+    ]
+  }
+}

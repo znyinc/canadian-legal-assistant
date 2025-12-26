@@ -10,7 +10,8 @@ describe('Server bootstrap', () => {
 
     const modules = api?.listRegisteredModules() || [];
     expect(modules.length).toBeGreaterThan(0);
-    // Expect at least the insurance module to be registered
+    // Expect at least the insurance and civil negligence modules to be registered
     expect(modules.some(m => m.domain === 'insurance')).toBe(true);
+    expect(modules.some(m => m.domain === 'civil-negligence')).toBe(true);
   });
 });

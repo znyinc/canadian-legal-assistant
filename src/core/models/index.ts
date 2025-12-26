@@ -1,4 +1,4 @@
-export type Domain = 'insurance' | 'landlordTenant' | 'employment' | 'humanRights' | 'other';
+export type Domain = 'insurance' | 'landlordTenant' | 'employment' | 'humanRights' | 'civil-negligence' | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;
 export type EvidenceType = 'PDF' | 'PNG' | 'JPG' | 'EML' | 'MSG' | 'TXT';
@@ -36,6 +36,7 @@ export interface ForumMap {
   primaryForum: AuthorityRef;
   alternatives: AuthorityRef[];
   escalation: AuthorityRef[];
+  rationale?: string;
 }
 
 export interface EvidenceItem {
