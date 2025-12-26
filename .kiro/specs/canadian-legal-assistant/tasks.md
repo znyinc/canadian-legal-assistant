@@ -273,12 +273,12 @@
     - [x] Add "Learn More" expandable sections for deeper understanding
     - _Requirements: 11.2, 11.4_
 
-  - [ ] 17.4 Implement Limitation Periods Engine with Ontario Specifics
-    - Build comprehensive Ontario limitation periods database
-    - Create urgency-based alert system (Critical/Warning/Caution/Info)
-    - Implement 10-day municipal notice detection and alerts
-    - Add deadline consequence explanations in plain language
-    - Build encouraging (not alarming) deadline messaging
+  - [x] 17.4 Implement Limitation Periods Engine with Ontario Specifics
+    - [x] Build comprehensive Ontario limitation periods database
+    - [x] Create urgency-based alert system (Critical/Warning/Caution/Info)
+    - [x] Implement 10-day municipal notice detection and alerts
+    - [x] Add deadline consequence explanations in plain language
+    - [x] Build encouraging (not alarming) deadline messaging
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7_
 
   - [ ] 17.5 Create Cost Calculator and Risk Assessment System

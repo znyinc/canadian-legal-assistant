@@ -598,19 +598,47 @@
   - Accessible tooltips with keyboard navigation (Tab, Enter, Escape)
   - ARIA labels and roles for screen readers
 
+## Task 17.4: Limitation Periods Engine (Completed 2025-12-26)
+- **Decisions:**
+  - Build comprehensive Ontario limitation periods database (12 periods covering general, municipal, employment, L/T, human rights)
+  - Implement urgency-based alert system (Critical/Warning/Caution/Info)
+  - Add municipal 10-day notice detection from matter description/tags
+  - Use encouraging (not alarming) deadline messaging with actionable steps
+- **Actions:**
+  - Created [src/core/limitation/LimitationPeriodsEngine.ts](src/core/limitation/LimitationPeriodsEngine.ts):
+    - 12 Ontario limitation periods (general 2-year, municipal 10-day, employment, LTB, HRTO, personal injury, contract, property, ultimate 15-year)
+    - Each period includes: triggers, exceptions, consequences, Learn More URLs
+    - Urgency calculator: Critical (<10 days), Warning (11-30), Caution (31-90), Info (>90)
+    - Municipal notice detection via keywords (municipal, city, town, road, tree, sidewalk, etc.)
+    - Domain-specific period lookup (employment → ESA + wrongful dismissal, L/T → LTB, etc.)
+    - Encouraging messages: "Don't panic", "You're taking the right step", "You have time"
+  - Created [frontend/src/components/DeadlineAlerts.tsx](frontend/src/components/DeadlineAlerts.tsx):
+    - Color-coded urgency badges (red/orange/yellow/blue)
+    - Expandable details with consequence explanations and Learn More links
+    - Accessible design with ARIA roles and keyboard navigation
+    - Action-oriented messaging (what to do, not just what's wrong)
+  - Added tests: [tests/limitationPeriodsEngine.test.ts](tests/limitationPeriodsEngine.test.ts) (17 new tests)
+- **Outputs:**
+  - `npm test` passed (116/116 tests, +17 new)
+  - All limitation period lookups, urgency calculations, municipal detection working
+  - Deadline alerts component ready for integration into matter overview/evidence pages
+- **Security/Quality:**
+  - No new vulnerabilities introduced
+  - Encouraging tone avoids legal panic while maintaining urgency clarity
+
 **Next tasks:**
 - Monitor GitHub Actions CI results on PR #2
-- Integrate tooltip and readability components into DocumentsPage and NewMatterPage
-- Begin Task 17.4: Limitation Periods Engine (Ontario limitation periods database, urgency alerts, 10-day municipal notices)
+- Integrate plain language tooltips, readability indicator, and deadline alerts into UI
+- Begin Task 17.5: Cost Calculator and Risk Assessment System
 - Continue monitoring Snyk in CI and remove temporary `.snyk` ignores if no regressions
 
 ## Current Status (2025-12-26)
-- **Tests:** All unit tests passing (99/99, 33 files, Vitest)
+- **Tests:** All unit tests passing (116/116, 34 files, Vitest)
 - **E2E:** All 5 E2E specs passing (golden-path, journey, pillar, pillar-ambiguous; Playwright)
 - **Security:** Snyk backend scan clean after upgrades; frontend XSS mitigations applied
 - **Dependencies:** `multer` 2.0.2, `archiver` 7.0.0 (PR #1 merged)
 - **CI:** Workflow pushed to PR #2; GitHub Actions checks running at https://github.com/znyinc/canadian-legal-assistant/pull/2
-- **Features:** Plain Language Translation Layer complete (Task 17.3)
+- **Features:** Plain Language Translation Layer (17.3), Limitation Periods Engine (17.4) complete
 
 ## Task 17.6: Civil Negligence Domain Module (added)
 - **Prompt:** "Implement civil negligence/occupiers' liability domain module and templates (demand notice, Form 7A scaffold, evidence checklist) and register it with DomainModuleRegistry."
