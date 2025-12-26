@@ -281,13 +281,14 @@
     - [x] Build encouraging (not alarming) deadline messaging
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7_
 
-  - [ ] 17.5 Create Cost Calculator and Risk Assessment System
-    - Build cost exposure calculator by forum type
-    - Implement fee waiver eligibility detection and guidance
-    - Create financial risk explanations with plain language
-    - Add cost comparison between different legal pathways
-    - Build "Can't afford filing fees?" proactive suggestions
-    - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
+  - [x] 17.5 Create Cost Calculator and Risk Assessment System
+    - [x] Build cost exposure calculator by forum type
+    - [x] Implement fee waiver eligibility detection and guidance
+    - [x] Create financial risk explanations with plain language
+    - [x] Add cost comparison between different legal pathways
+    - [x] Build "Can't afford filing fees?" proactive suggestions
+    - [x] Create React UI components (CostEstimateCard, FeeWaiverGuidance, FinancialRiskIndicator, PathwayComparison)
+    - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_ ✅
 
   - [x] 17.6 Build Ontario-Specific Domain Modules
     - [x] Create motor vehicle accident module with DC-PD system explanation
