@@ -1,47 +1,63 @@
+---
+alwaysApply: true
+description: "GitHub Copilot instructions for Canadian Legal Assistant - an information-only legal assistant for Ontario/Canada"
+version: "1.0.0"
+---
+
 # Copilot Instructions for Canadian Legal Assistant
 
-- Purpose: build an information-only legal assistant answering "Do I go to court?" with Ontario-first, Canada-wide coverage; no legal advice.
-- Core references: design in [.kiro/specs/canadian-legal-assistant/design.md](.kiro/specs/canadian-legal-assistant/design.md), requirements in [.kiro/specs/canadian-legal-assistant/requirements.md](.kiro/specs/canadian-legal-assistant/requirements.md), implementation plan in [.kiro/specs/canadian-legal-assistant/tasks.md](.kiro/specs/canadian-legal-assistant/tasks.md).
+## Quick Start
 
-Architecture and components
+- **Purpose**: build an information-only legal assistant answering "Do I go to court?" with Ontario-first, Canada-wide coverage; no legal advice.
+- **Tech Stack**: TypeScript, Node.js 20+, Express.js, React, Vite, Tailwind CSS, Prisma, SQLite
+- **Core References**: 
+  - Design: [.kiro/specs/canadian-legal-assistant/design.md](.kiro/specs/canadian-legal-assistant/design.md)
+  - Requirements: [.kiro/specs/canadian-legal-assistant/requirements.md](.kiro/specs/canadian-legal-assistant/requirements.md)
+  - Implementation Plan: [.kiro/specs/canadian-legal-assistant/tasks.md](.kiro/specs/canadian-legal-assistant/tasks.md)
+- **Build/Test**: 
+  - Core library: `npm test` (81 tests across 27 files)
+  - Backend: `cd backend && npm run dev` (port 3001)
+  - Frontend: `cd frontend && npm run dev` (port 5173)
+
+## Architecture and Components
 - Modular services: triage engine, forum router, evidence processor, case law referencer, document generator, authority registry, source access controller; domain modules per legal area (insurance, L/T, employment, etc.).
 - Data layer expected to hold RAG indices, evidence store, authority DB, audit log; keep interfaces domain-agnostic and extensible.
 - Core data models are TypeScript-like (e.g., MatterClassification, ForumMap, EvidenceIndex, AuthorityRegistry, SourceAccessPolicy) and should stay consistent with schemas in the design doc.
 
-Compliance and boundaries
+## Compliance and Boundaries
 - Always include legal-information disclaimers; present multiple lawful pathways instead of one recommendation.
 - Refuse uncited legal statements; require authoritative sources or user-provided evidence. Switch to options-based guidance when asked for advice.
 - Enforce UPL boundaries: factual, restrained language; no strategy recommendations; cite uncertainties explicitly.
 
-Source access rules
+## Source Access Rules
 - Allowed methods only: official browse/download, official API (e.g., CanLII), or user-provided documents. Default to deny if unclear.
 - CanLII: API and linking only—no scraping or reconstruction of full text. e-Laws/Justice Laws: include currency/retrieval dates. Record retrieval dates for court/tribunal guidance.
 - Log/manifest all access decisions; maintain versioned authority registry and cite which entries trigger routing decisions.
 
-Evidence handling
+## Evidence Handling
 - Accept formats: PDF, PNG, JPG, EML, MSG, TXT. Extract metadata (dates, sender/recipient, type), hash files, and compute credibility scores.
 - Generate evidence_index.yaml with attachment IDs, filenames, dates, summaries, provenance labels, tags, hashes; timeline.md must be chronological and flag missing artifacts.
 - Label email screenshots as visual evidence (unverified headers); prompt for EML/MSG. Auto-redact PII (addresses, phone numbers, policy/account numbers, DOB, SIN).
 
-Document generation
+## Document Generation
 - Base all factual claims on user evidence or user-confirmed facts; require confirmation before inclusion.
 - Package outputs with forum map, timeline, missing-evidence checklist, draft documents, source manifest, evidence manifest; use standardized folder naming.
 - Use domain-specific templates (e.g., insurance: internal complaint + ombudsman + GIO + FSRA drafts; landlord/tenant: LTB intake checklists, notices, evidence packs).
 
-Testing and quality
+## Testing and Quality
 - Dual testing approach: unit tests plus property-based tests (Hypothesis) mapping to correctness properties in the design doc. Each property gets one property-based test tagged with the specified feature/property comment format.
 - Prefer real integration over heavy mocking; include at least one golden-path integration test when API layer exists.
 
-Workflows and priorities
+## Workflows and Priorities
 - Follow staged implementation plan in tasks.md (authority registry and source access control first, evidence processing, triage/router, UPL compliance, templates, CanLII integration, then document generation and domain modules).
 - Track auditability and data lifecycle early: manifests, logging, export/delete flows, retention defaults (60 days) with legal hold exceptions.
 - No build system present yet; expect TypeScript services with planned API endpoints for intake, evidence upload, generation, export/delete.
 
-Style and tone
+## Style and Tone
 - Outputs should be concise, evidence-grounded, and cite sources with URLs + retrieval/currency dates; include routing rationale and uncertainty notes.
 - Prefer structured artifacts (YAML manifests, Markdown timelines) and standardized naming across packages.
 
-Security
+## Security
 - Do not attempt prohibited access methods; log enforcement actions. Honor tenant isolation and encryption expectations from requirements.
 
 # AI Coding Assistant - Enhanced Instructions
