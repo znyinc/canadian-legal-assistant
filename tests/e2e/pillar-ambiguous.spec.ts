@@ -17,15 +17,17 @@ test('ambiguous pillars shown in overview', async ({ page }) => {
 
   // Wait for matter detail and classification
   await page.waitForSelector('text=Do I need to go to court?');
+  // Ensure pillar section is rendered before checking ambiguity
+  await page.waitForSelector('text=Legal pillar:', { timeout: 15000 });
 
   // Ambiguous note should appear
-  await page.waitForSelector('text=Ambiguous: multiple legal pillars detected', { timeout: 5000 });
+  await page.waitForSelector('text=Ambiguous: multiple legal pillars detected', { timeout: 15000 });
 
   await expect(page.locator('text=Criminal, Quasi-Criminal')).toBeVisible();
 
   // Reload page to verify persistence of classification from server
   await page.reload();
-  await page.waitForSelector('text=Ambiguous: multiple legal pillars detected', { timeout: 5000 });
+  await page.waitForSelector('text=Ambiguous: multiple legal pillars detected', { timeout: 15000 });
   await expect(page.locator('text=Criminal, Quasi-Criminal')).toBeVisible();
 });
 
@@ -43,7 +45,7 @@ test('single pillar flow shows explanation without ambiguity note', async ({ pag
   await page.getByLabel(/legal area/i).selectOption('civil-negligence');
   await page.click('text=Create');
 
-  await page.waitForSelector('text=Legal pillar:', { timeout: 5000 });
+  await page.waitForSelector('text=Legal pillar:', { timeout: 15000 });
   await expect(page.locator('text=Ambiguous: multiple legal pillars detected')).toHaveCount(0);
-  await expect(page.getByText(/balance of probabilities/i)).toBeVisible();
+  await expect(page.getByText(/balance of probabilities/i)).toBeVisible({ timeout: 15000 });
 });

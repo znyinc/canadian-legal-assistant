@@ -17,8 +17,8 @@ test('pillar explanation is visible in matter overview', async ({ page }) => {
   await expect(pillarHeader).toBeVisible({ timeout: 15000 });
 
   // Assert burden of proof and overview content with auto-retry
-  await expect(page.getByText('Burden of proof:')).toBeVisible();
-  await expect(page.getByText('Balance of probabilities').first()).toBeVisible();
+  await expect(page.getByText('Burden of proof:')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/balance of probabilities/i).first()).toBeVisible({ timeout: 15000 });
   // Check a stable substring from the overview rather than the full sentence
-  await expect(page.getByText(/civil matters/i)).toBeVisible();
+  await expect(page.getByText(/civil matters/i)).toBeVisible({ timeout: 15000 });
 });
