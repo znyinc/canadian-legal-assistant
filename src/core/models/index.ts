@@ -7,6 +7,7 @@ export type Domain =
   | 'municipalPropertyDamage'
   | 'criminal'
   | 'ocppFiling'
+  | 'tree-damage'
   | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;
