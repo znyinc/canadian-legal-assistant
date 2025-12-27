@@ -3,8 +3,8 @@
 # Kills processes on ports 3010 (backend) and 5173/5174 (frontend)
 
 $ErrorActionPreference = "SilentlyContinue"
-$BackendPort = 3010
-$FrontendPort = 5174
+$BackendPort = 3001
+$FrontendPort = 5173
 
 Write-Host ""
 Write-Host "[SHUTDOWN] Canadian Legal Assistant - Shutdown Script" -ForegroundColor Cyan

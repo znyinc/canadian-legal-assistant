@@ -7,8 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "SilentlyContinue"
-$BackendPort = 3010
-$FrontendPort = 5174
+$BackendPort = 3001
+$FrontendPort = 5173
 # Prefer script directory; fall back to current working directory
 $RootDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommandPath) { Split-Path -Parent $MyInvocation.MyCommandPath } else { Get-Location }
 

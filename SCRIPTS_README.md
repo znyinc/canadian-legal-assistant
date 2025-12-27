@@ -4,7 +4,7 @@ Quick start/stop scripts for the Canadian Legal Assistant application.
 
 ## Overview
 
-- **startup.ps1** - Starts backend (port 3010) and frontend (port 5173/5174) dev servers
+- **startup.ps1** - Starts backend (port 3001) and frontend (port 5173) dev servers
 - **startup.bat** - Windows batch wrapper for startup.ps1 (easier from cmd.exe)
 - **shutdown.ps1** - Stops both dev servers gracefully
 - **shutdown.bat** - Windows batch wrapper for shutdown.ps1 (easier from cmd.exe)
@@ -49,8 +49,8 @@ shutdown.bat
 5. Displays URLs to access the application
 
 **Default ports:**
-- Backend: `http://localhost:3010`
-- Frontend: `http://localhost:5173` (or 5174 if 5173 is in use)
+- Backend: `http://localhost:3001`
+- Frontend: `http://localhost:5173`
 
 ### Shutdown
 
@@ -83,8 +83,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 
 Check manually:
 ```powershell
-# Find what's running on port 3010
-Get-NetTCPConnection -LocalPort 3010 | Select-Object OwningProcess
+# Find what's running on port 3001
+Get-NetTCPConnection -LocalPort 3001 | Select-Object OwningProcess
 Get-Process -Id <PID>
 
 # Kill it if needed
