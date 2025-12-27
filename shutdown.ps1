@@ -1,9 +1,9 @@
 # Canadian Legal Assistant - Shutdown Script
 # Gracefully stops backend and frontend dev servers
-# Kills processes on ports 3010 (backend) and 5173/5174 (frontend)
+# Kills processes on ports 3001 (backend) and 5173/5174 (frontend)
 
 $ErrorActionPreference = "SilentlyContinue"
-$BackendPort = 3010
+$BackendPort = 3001
 $FrontendPort = 5174
 
 Write-Host ""
@@ -64,7 +64,7 @@ if (-not $BackendCheck -and -not $FrontendCheck -and -not $Frontend5173Check) {
 } else {
     Write-Host ""
     Write-Host "[WARNING] Some services may still be running:" -ForegroundColor Yellow
-    if ($BackendCheck) { Write-Host "  - Backend (port 3010)" -ForegroundColor Yellow }
+    if ($BackendCheck) { Write-Host "  - Backend (port 3001)" -ForegroundColor Yellow }
     if ($FrontendCheck) { Write-Host "  - Frontend (port 5174)" -ForegroundColor Yellow }
     if ($Frontend5173Check) { Write-Host "  - Frontend (port 5173)" -ForegroundColor Yellow }
 }

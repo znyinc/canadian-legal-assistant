@@ -1,5 +1,5 @@
 # Canadian Legal Assistant - Startup Script
-# Starts backend (port 3010) and frontend (port 5173/5174) dev servers
+# Starts backend (port 3001) and frontend (port 5173/5174) dev servers
 # Automatically kills any existing processes on those ports
 
 param(
@@ -7,7 +7,7 @@ param(
 )
 
 $ErrorActionPreference = "SilentlyContinue"
-$BackendPort = 3010
+$BackendPort = 3001
 $FrontendPort = 5174
 # Prefer script directory; fall back to current working directory
 $RootDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommandPath) { Split-Path -Parent $MyInvocation.MyCommandPath } else { Get-Location }
@@ -111,7 +111,7 @@ Write-Host "=" * 50 -ForegroundColor Cyan
 Write-Host "[SUCCESS] Both servers started successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your application:" -ForegroundColor Cyan
-Write-Host "  Backend API:  http://localhost:3010" -ForegroundColor White
+Write-Host "  Backend API:  http://localhost:3001" -ForegroundColor White
 Write-Host "  Frontend UI:  http://localhost:5173 (or 5174)" -ForegroundColor White
 Write-Host ""
 Write-Host "To stop servers, run: .\shutdown.ps1" -ForegroundColor Cyan
