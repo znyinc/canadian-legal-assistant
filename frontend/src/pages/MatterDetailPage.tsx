@@ -66,7 +66,10 @@ export default function MatterDetailPage() {
       const result = await api.classifyMatter(id);
       setClassification(result.classification);
       setForumMap(result.forumMap);
+      // Populate pillar-related UI state from classification result
       if (result.pillarExplanation) setPillarExplanation(result.pillarExplanation);
+      if (Array.isArray(result.pillarMatches)) setPillarMatches(result.pillarMatches);
+      if (typeof result.pillarAmbiguous !== 'undefined') setPillarAmbiguous(!!result.pillarAmbiguous);
       if (result.journey) setJourney(result.journey);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Classification failed');

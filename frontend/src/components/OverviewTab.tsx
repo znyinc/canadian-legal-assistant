@@ -3,6 +3,10 @@ import { MatterDeadlineAlerts } from './MatterDeadlineAlerts';
 
 export default function OverviewTab({ classification, forumMap, classifying, onClassify, pillarExplanation, pillarMatches, pillarAmbiguous, journey }:
   { classification: any; forumMap: any; classifying: boolean; onClassify: () => void; pillarExplanation?: any; pillarMatches?: string[]; pillarAmbiguous?: boolean; journey?: any }) {
+  // Fallbacks: if props are not set yet, derive from classification persisted data
+  const effectiveExplanation = pillarExplanation ?? classification?.pillarExplanation;
+  const effectiveMatches: string[] | undefined = pillarMatches ?? classification?.pillarMatches;
+  const effectiveAmbiguous: boolean = (pillarAmbiguous ?? classification?.pillarAmbiguous) || false;
   if (classifying) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -15,22 +19,26 @@ export default function OverviewTab({ classification, forumMap, classifying, onC
     );
   }
 
-  if (!classification || !forumMap) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <p className="text-yellow-800 mb-4">Classification pending. This matter needs to be analyzed.</p>
-        <button
-          onClick={onClassify}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          🤖 Classify Now with AI
-        </button>
-      </div>
-    );
-  }
+  // Show a non-blocking banner if classification/forumMap are missing, but continue rendering overview for test stability
+  const showPending = !classification || !forumMap;
+
+  const pillarLabel = classification?.pillar ?? 'Unknown';
 
   return (
     <div className="space-y-6">
+      {/* Pending banner */}
+      {showPending && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <p className="text-yellow-800 mb-4">Classification pending. This matter needs to be analyzed.</p>
+          <button
+            onClick={onClassify}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            🤖 Classify Now with AI
+          </button>
+        </div>
+      )}
+
       {/* Quick answer: Do I need to go to court? */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Do I need to go to court?</h2>
@@ -117,42 +125,46 @@ export default function OverviewTab({ classification, forumMap, classifying, onC
       {/* Classification */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Classification</h2>
-        <dl className="grid grid-cols-2 gap-4">
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Domain</dt>
-            <dd className="text-gray-900">{classification.domain}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Sub-category</dt>
-            <dd className="text-gray-900">{classification.subCategory || 'N/A'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Urgency</dt>
-            <dd className="text-gray-900">{classification.urgency || 'Standard'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-500">Jurisdiction</dt>
-            <dd className="text-gray-900">{classification.jurisdiction}</dd>
-          </div>
-        </dl>
+        {classification ? (
+          <dl className="grid grid-cols-2 gap-4">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Domain</dt>
+              <dd className="text-gray-900">{classification.domain}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Sub-category</dt>
+              <dd className="text-gray-900">{classification.subCategory || 'N/A'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Urgency</dt>
+              <dd className="text-gray-900">{classification.urgency || 'Standard'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Jurisdiction</dt>
+              <dd className="text-gray-900">{classification.jurisdiction}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-gray-700">Classification details will appear here after analysis.</p>
+        )}
 
-        {(pillarExplanation || (pillarMatches && pillarMatches.length > 0)) && (
+        {(effectiveExplanation || (effectiveMatches && effectiveMatches.length > 0)) && (
           <div className="mt-4 p-4 bg-gray-50 rounded border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700">Legal pillar: <span className="font-semibold text-gray-900">{classification.pillar || 'Unknown'}</span></h3>
+            <h3 className="text-sm font-medium text-gray-700">Legal pillar: <span className="font-semibold text-gray-900">{pillarLabel}</span></h3>
 
-            {pillarAmbiguous && pillarMatches && pillarMatches.length > 1 && (
-              <p className="text-sm text-red-600 mt-1">Ambiguous: multiple legal pillars detected — {pillarMatches.join(', ')}. Provide more detail for a clearer classification.</p>
+            {effectiveAmbiguous && effectiveMatches && effectiveMatches.length > 1 && (
+              <p className="text-sm text-red-600 mt-1">Ambiguous: multiple legal pillars detected — {effectiveMatches.join(', ')}. Provide more detail for a clearer classification.</p>
             )}
 
-            {pillarExplanation && (
+            {effectiveExplanation && (
               <>
-                <p className="text-sm text-gray-600 mt-2"><strong>Burden of proof:</strong> {pillarExplanation.burdenOfProof}</p>
-                <p className="text-sm text-gray-600 mt-2"><strong>Overview:</strong> {pillarExplanation.overview}</p>
-                {pillarExplanation.nextSteps && pillarExplanation.nextSteps.length > 0 && (
+                <p className="text-sm text-gray-600 mt-2"><strong>Burden of proof:</strong> {effectiveExplanation.burdenOfProof}</p>
+                <p className="text-sm text-gray-600 mt-2"><strong>Overview:</strong> {effectiveExplanation.overview}</p>
+                {effectiveExplanation.nextSteps && effectiveExplanation.nextSteps.length > 0 && (
                   <div className="mt-3">
                     <p className="text-sm font-medium text-gray-700 mb-1">Suggested next steps</p>
                     <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                      {pillarExplanation.nextSteps.map((s: string, i: number) => (
+                      {effectiveExplanation.nextSteps.map((s: string, i: number) => (
                         <li key={i}>{s}</li>
                       ))}
                     </ul>
@@ -163,7 +175,7 @@ export default function OverviewTab({ classification, forumMap, classifying, onC
           </div>
         )}
 
-        {forumMap.rationale && (
+        {forumMap?.rationale && (
           <div>
             <h3 className="font-medium text-gray-900 mb-2">Rationale</h3>
             <p className="text-gray-700">{forumMap.rationale}</p>

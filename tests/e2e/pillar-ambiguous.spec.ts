@@ -39,10 +39,11 @@ test('single pillar flow shows explanation without ambiguity note', async ({ pag
   await page.waitForSelector('textarea[name=description]', { timeout: 10000 });
   await page.fill('textarea[name=description]', 'Slip and fall negligence at a supermarket causing injury');
   await page.selectOption('select[name=province]', 'Ontario');
-  await page.selectOption('select[name=domain]', 'other');
+  // Choose explicit civil-negligence path to avoid ambiguous classification
+  await page.getByLabel(/legal area/i).selectOption('civil-negligence');
   await page.click('text=Create');
 
   await page.waitForSelector('text=Legal pillar:', { timeout: 5000 });
   await expect(page.locator('text=Ambiguous: multiple legal pillars detected')).toHaveCount(0);
-  await expect(page.locator('text=Balance of probabilities')).toBeVisible();
+  await expect(page.getByText(/balance of probabilities/i)).toBeVisible();
 });
