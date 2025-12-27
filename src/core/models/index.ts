@@ -1,4 +1,13 @@
-export type Domain = 'insurance' | 'landlordTenant' | 'employment' | 'humanRights' | 'civil-negligence' | 'criminal' | 'other';
+export type Domain =
+  | 'insurance'
+  | 'landlordTenant'
+  | 'employment'
+  | 'humanRights'
+  | 'civil-negligence'
+  | 'municipalPropertyDamage'
+  | 'criminal'
+  | 'ocppFiling'
+  | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;
 export type EvidenceType = 'PDF' | 'PNG' | 'JPG' | 'EML' | 'MSG' | 'TXT';

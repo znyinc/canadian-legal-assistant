@@ -49,8 +49,63 @@ describe('LandlordTenantDomainModule', () => {
       sourceManifest
     });
 
-    expect(result.drafts.length).toBe(3);
+    expect(result.drafts.length).toBe(6); // Checklist, Notice, Evidence Pack + T1, T2, T6
     expect(result.package.files.some((f) => f.path.startsWith('drafts/'))).toBe(true);
     expect(result.package.sourceManifest.entries.length).toBeGreaterThan(0);
+  });
+
+  it('generates enhanced T1 application with filing guidance', () => {
+    const module = new LandlordTenantDomainModule();
+    const result = module.generate({
+      classification,
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidence: 'Missing evidence content',
+      evidenceIndex,
+      sourceManifest
+    });
+
+    const t1Draft = result.drafts.find((d) => d.title.includes('T1'));
+    expect(t1Draft).toBeDefined();
+    expect(t1Draft!.sections.some((s) => s.heading === 'When to Use Form T1')).toBe(true);
+    expect(t1Draft!.sections.some((s) => s.heading === 'Service Requirements')).toBe(true);
+    expect(t1Draft!.sections.some((s) => s.content.includes('Filing Deadline'))).toBe(true);
+  });
+
+  it('generates enhanced T2 application with harassment guidance', () => {
+    const module = new LandlordTenantDomainModule();
+    const result = module.generate({
+      classification,
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidence: 'Missing evidence content',
+      evidenceIndex,
+      sourceManifest
+    });
+
+    const t2Draft = result.drafts.find((d) => d.title.includes('T2'));
+    expect(t2Draft).toBeDefined();
+    expect(t2Draft!.sections.some((s) => s.content.includes('harassment'))).toBe(true);
+    expect(t2Draft!.sections.some((s) => s.content.includes('Medical records'))).toBe(true);
+    expect(t2Draft!.sections.some((s) => s.content.includes('Pattern of behavior'))).toBe(true);
+  });
+
+  it('generates enhanced T6 application with maintenance guidance', () => {
+    const module = new LandlordTenantDomainModule();
+    const result = module.generate({
+      classification,
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidence: 'Missing evidence content',
+      evidenceIndex,
+      sourceManifest
+    });
+
+    const t6Draft = result.drafts.find((d) => d.title.includes('T6'));
+    expect(t6Draft).toBeDefined();
+    expect(t6Draft!.sections.some((s) => s.heading === 'BEFORE Filing T6')).toBe(true);
+    expect(t6Draft!.sections.some((s) => s.content.includes('Municipal inspection'))).toBe(true);
+    expect(t6Draft!.sections.some((s) => s.heading === 'Remedies You Can Request')).toBe(true);
+    expect(t6Draft!.sections.some((s) => s.content.includes('rent abatement'))).toBe(true);
   });
 });

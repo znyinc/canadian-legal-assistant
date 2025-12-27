@@ -44,4 +44,32 @@ export class DisclaimerService {
     }
     return { redirected: false, message: 'Proceed with information-only guidance.' };
   }
+
+  // Empathy-focused boundary enforcement: What we CAN/CANNOT do
+  empathyBoundaries = (ctx: DisclaimerContext): string => buildEmpathyBoundaries(ctx);
+}
+
+export function buildEmpathyBoundaries(ctx: DisclaimerContext): string {
+  const audience = ctx.audience || 'self-represented';
+  const jurisdiction = ctx.jurisdiction || 'Ontario';
+  const canDo = [
+    'Explain general processes (tribunals, courts, complaint steps)',
+    'Summarize options with plain language and citations',
+    'Help organize evidence and timelines',
+    `Provide information-first guidance tailored to ${jurisdiction}`
+  ];
+  const cannotDo = [
+    'Tell you what to file or give legal advice',
+    'Draft legal arguments or strategy',
+    'Act as your representative or contact the other side for you',
+    'Override deadlines or rules'
+  ];
+  return [
+    `For ${audience} users:`,
+    'What We CAN Do:',
+    ...canDo.map((x) => `- ${x}`),
+    'What We CANNOT Do:',
+    ...cannotDo.map((x) => `- ${x}`),
+    'If you need advice or representation, contact a lawyer or licensed paralegal.'
+  ].join('\n');
 }

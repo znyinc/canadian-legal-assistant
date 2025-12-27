@@ -1,0 +1,60 @@
+PILLAR / OVERVIEW E2E STATUS LOG
+Date: 2025-12-26
+
+Summary
+- Goal: Stabilize overview rendering for pillar ambiguity and burden-of-proof checks in Playwright E2E and get CI green on PR #2.
+
+Steps Carried Out
+1) Guarded Overview rendering:
+   - Ensured the pillar section renders safely even when classification is pending.
+   - Files: frontend/src/components/OverviewTab.tsx; frontend/src/pages/MatterDetailPage.tsx.
+2) Updated pillar E2E specs to modern locators and explicit waits:
+   - Added waits for the overview header and pillar section before content assertions.
+   - Files: tests/e2e/pillar-ambiguous.spec.ts; tests/e2e/pillar.spec.ts.
+3) CI diagnostics:
+   - Tailed E2E job logs using GitHub CLI to isolate first failing assertions.
+   - Latest failing run ID observed: 20533045865; E2E job failed on ambiguity and burden text waits.
+4) Committed and pushed fixes:
+   - Branch: ci/trigger/upgrade-multer-archiver; Commit: test(e2e) timeouts and pillar guard.
+
+What Worked
+- Local E2E stability improved with explicit waits and label-based locators.
+- CI now reaches and passes the initial golden-path and journey specs consistently.
+- The ambiguity banner appears reliably after classification in local runs.
+
+New Errors From GitHub (CI)
+- Timeout waiting for text: "Ambiguous: multiple legal pillars detected" (5s too short).
+- Visibility check for "Balance of probabilities" failing due to slow classification in CI.
+- These occur specifically in pillar-ambiguous and pillar overview specs.
+
+Corrective Actions Applied
+- Increased timeouts to 15s for ambiguity banner and burden text.
+- Added a prerequisite wait for "Legal pillar:" before asserting ambiguity/burden text.
+
+Potential Follow-ups (if still flaky)
+- Add a global Playwright expect timeout (e.g., 15s) for these specs.
+- Wait for the classification spinner to disappear before pillar assertions.
+- Add a backend classification readiness wait by polling the matter API until pillar fields populate.
+
+Run/Artifact References
+ Latest CI run: 20533115951 (in progress)
+ E2E job ID: 58987282251 (logs pending until completion)
+ Previous failing run: 20533045865 (Playwright E2E failures captured)
+ Playwright report artifact (previous run): actions/runs/20533045865/artifacts/4973654792.
+
+Next Actions
+ Monitor the in-progress E2E job and capture logs upon completion.
+
+Synopsis:
+The Playwright test `pillar-ambiguous.spec.ts` is failing because the expected UI elements ("Do I need to go to court?", "Ambiguous: multiple legal pillars detected") are not appearing within the timeout period.
+This suggests that the `OverviewTab` component is either not rendering at all (due to a crash) or is stuck in a loading/pending state.
+A likely cause is an unsafe property access in `OverviewTab.tsx`:
+`Legal pillar: <span ...>{classification.pillar || 'Unknown'}</span>`
+If `classification` is null, accessing `classification.pillar` throws a TypeError, crashing the React component tree.
+Although logic was added to handle pending states, the condition `(effectiveExplanation || (effectiveMatches && effectiveMatches.length > 0))` could theoretically be true (via props) while `classification` is still null, triggering the crash.
+Additionally, the backend route `matters.ts` was modified to pass `description` to the classifier; if this caused a backend error (e.g. type mismatch), the frontend would receive an error and render the error state, which also doesn't match the expected "Do I need to go to court?" selector.
+
+Treatment:
+1.  **Fix Unsafe Access**: Modify `frontend/src/components/OverviewTab.tsx` to use optional chaining (`classification?.pillar`) to prevent rendering crashes.
+2.  **Verify Backend**: Ensure the changes to `backend/src/routes/matters.ts` are valid and don't cause 500 errors.
+3.  **Re-run Test**: Execute the E2E test again to confirm the fix.

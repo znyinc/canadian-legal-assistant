@@ -44,7 +44,7 @@
     - ✅ Build missing evidence detection logic
     - ✅ Implement screenshot handling with EML/MSG recommendations
     - _Requirements: 5.4, 5.5_
-- [x] 3. Build Evidence Processing System
+
 
  - [x] 4. Develop Triage Engine and Forum Router
   - ✅ 4.1 Create matter classification system
@@ -221,7 +221,7 @@
     - Create clear visual hierarchy and error messaging
     - _Requirements: User experience requirements_
 
-- [ ] 15. Final UI Integration and Testing
+- [x] 15. Final UI Integration and Testing
   - [x] 15.1 Connect UI to backend APIs (completed)
     - ✅ Overview: Matter overview shows forumMap and "Do I need to go to court?" card (implemented)
     - ✅ Wire evidence upload, document generation and download UIs to final endpoints and loading/error states
@@ -271,7 +271,7 @@
         - ✅ Identified root cause: backend port mismatch (3010 vs 3001)
         - ✅ Fixed `scripts/start-e2e.cjs` to wait for correct port
         - ✅ Committed and pushed fix (commit 87c0bda)
-        - _Status: Awaiting CI re-run to confirm tests pass_
+          - _Status: CI re-run pending; local E2E passes (5/5)_
 
       - [ ] 17.2.4.2 Investigate and resolve 2 failing pillar detection tests
         - ⏳ Tests return 'Unknown' instead of 'Civil' for pillar classification
@@ -394,14 +394,11 @@
   - ✅ Backend build: 0 TypeScript errors (was 59); root workspace: 0 TypeScript errors
   - ✅ Commit `4a605ad` pushed to `ci/trigger/upgrade-multer-archiver` branch
   - **Next:** Monitor GitHub Actions CI on PR #2; investigate 2 failing pillar tests (returns 'Unknown' instead of 'Civil')
-- [ ] **17.3 Plain Language Translation Layer** (NEXT PRIORITY)
-  - Create legal term dictionary with plain language translations
-  - Implement inline explanation system
-  - Build complexity scoring and readability assessment
-- [ ] **17.4 Limitation Periods Engine**
-  - Build Ontario limitation periods database
-  - Create urgency-based alert system
-  - Implement 10-day municipal notice detection and alerts
+- [ ] **Next Priorities**
+  - 17.2.4.2 Resolve 2 failing pillar unit tests (Unknown→Civil)
+  - 17.2.4.3 Monitor CI on PR #2 and merge when green
+  - 17.6 Ontario modules: enhanced LTB (T1/T2/T6) and municipal property damage
+  - 18.1 Empathy-focused UPL boundary enforcement
 
 ---
 

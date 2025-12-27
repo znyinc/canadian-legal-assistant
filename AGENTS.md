@@ -761,3 +761,18 @@
 - **Dependencies:** `multer` 2.0.2, `archiver` 7.0.0, `@types/archiver` 6.0.0
 - **CI:** E2E port fix deployed on PR #2 (commit 87c0bda); workflow should re-trigger automatically
 - **Branch:** `ci/trigger/upgrade-multer-archiver` (latest commit: 87c0bda)
+
+## Recent: Pillar Ambiguity E2E Fix (2025-12-26)
+- **Issue:** `tests/e2e/pillar-ambiguous.spec.ts` timed out waiting for overview selectors. Root cause was an unsafe dereference of `classification.pillar` in the overview before classification payload arrived.
+- **Fix:** Updated overview rendering to use fallbacks and optional access:
+  - In [frontend/src/components/OverviewTab.tsx](frontend/src/components/OverviewTab.tsx), derive `effectiveExplanation`, `effectiveMatches`, and `effectiveAmbiguous` from props or persisted `classification` fields, guard the classification section, and use `classification?.pillar` when rendering.
+  - In [frontend/src/pages/MatterDetailPage.tsx](frontend/src/pages/MatterDetailPage.tsx), ensure `handleClassify()` sets `pillarMatches` and `pillarAmbiguous` from the API result to render ambiguity state promptly.
+  - In [backend/src/routes/matters.ts](backend/src/routes/matters.ts), include `description` in classification input so pillar detection has text.
+- **Result:** `pillar-ambiguous.spec.ts` now passes (2/2). Overview remains stable even if classification is pending.
+- **Environment Note:** Prior failures were exacerbated by Playwright targeting a pre-existing Vite server without a backend. Ensure no stray dev server occupies port 5173 before E2E runs so `scripts/start-e2e.cjs` can start both services cleanly.
+
+### Next Actions
+- Run full Playwright E2E suite to confirm stability across scenarios.
+- Add a guard to `scripts/start-e2e.cjs` to detect and report if ports 3001/5173 are already bound by unrelated processes (fail-fast with actionable message).
+- Update CI workflow to start services via `scripts/start-e2e.cjs` and ensure clean environment (kill stray processes or use unique ports per run).
+- Monitor PR #2 and merge once all checks are green.

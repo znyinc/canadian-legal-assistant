@@ -209,6 +209,11 @@ Files Changed:
 2. ⏳ **Waiting for:** GitHub Actions to trigger CI workflows
 3. ⏳ **Monitor:** PR #2 checks section for real-time status
 
+### **Update (2025-12-26): Pillar Ambiguity E2E Stability Fix**
+- Resolved intermittent timeouts in `tests/e2e/pillar-ambiguous.spec.ts` by hardening overview rendering (safe fallbacks for classification fields and optional chaining).
+- Verified `pillar-ambiguous.spec.ts` passes locally (2/2).
+- Operational recommendation: ensure E2E runs start services via `scripts/start-e2e.cjs` and avoid reusing an already-running Vite dev server without the backend. Consider adding a preflight port check (3001/5173) to fail fast if occupied.
+
 ### **When CI Completes (~5-15 min)**
 1. **All checks passed?**
    - ✅ YES → Proceed to approval/merge
@@ -236,6 +241,11 @@ Files Changed:
 - [ ] All checks show ✅ green
 - [ ] PR shows "All conversations resolved"
 - [ ] Ready for approval/merge
+
+### Operational Checks (Ports)
+- [ ] Confirm no pre-existing dev server on 5173 before E2E
+- [ ] Confirm backend port 3001 is available
+- [ ] Use `scripts/start-e2e.cjs` to spin up both services
 
 ---
 

@@ -260,6 +260,91 @@ A victim impact statement allows the victim to describe how the crime affected t
 - Months 4-12+: Trial preparation and trial
 
 **Note:** This is informational only. Timelines vary by complexity, court workload, and circumstances. Consult with Crown counsel, victim services, or a lawyer for specific guidance.`
+    ,
+
+  // Landlord and Tenant Board (Ontario) templates
+  'ltb/t1_tenant_rights': `# LTB T1 — Tenant Rights Application (Scaffold)
+
+1) Tenant: {{tenantName}}
+2) Landlord: {{landlordName}}
+3) Rental address: {{rentalAddress}}
+4) Issues: {{issuesSummary}}
+5) Remedy sought: {{remedy}}
+
+Attachments:
+- Lease agreement
+- Rent receipts
+- Photos, communications
+
+Instructions: Verify current LTB forms and Rules. This scaffold is information-only; complete the official form before filing.`,
+
+  'ltb/t2_eviction': `# LTB T2 — Application about Tenant Rights (Eviction-related) (Scaffold)
+
+1) Tenant: {{tenantName}}
+2) Landlord: {{landlordName}}
+3) Grounds: {{grounds}}
+4) Remedy: {{remedy}}
+
+Evidence:
+- Notices served/received
+- Photos of conditions
+- Communication logs
+
+Note: Follow LTB Rules for service, timelines, and evidence.`,
+
+  'ltb/t6_repairs': `# LTB T6 — Maintenance (Repairs) Application (Scaffold)
+
+1) Tenant: {{tenantName}}
+2) Landlord: {{landlordName}}
+3) Problems: {{problems}}
+4) Dates of requests: {{requestDates}}
+5) Remedy requested: {{remedy}}
+
+Evidence:
+- Photos of issues
+- Work orders/receipts
+- Emails/texts to landlord
+
+Tip: Document dates and keep copies of all communications.`,
+
+  // Municipal property damage 10-day notice
+  'municipal/10_day_notice': `# Municipal 10-Day Notice (Ontario) — Property Damage
+
+To: Municipal Clerk — {{municipality}}
+
+From: {{claimantName}}
+Date of incident: {{incidentDate}}
+Location: {{location}}
+
+Summary:
+{{summary}}
+
+Notice:
+This letter provides notice within 10 days as required under applicable municipal statutes and by-laws for claims arising from road/sidewalk/tree maintenance.
+
+Attachments:
+- Photos
+- Estimates/receipts
+- Witness info
+
+Note: This is information-only. Confirm the correct statute/by-law and filing method.`,
+
+  'municipal/demand_notice': `# Municipal Demand Notice — Property Damage
+
+To: {{municipality}} — Risk Management / Clerk
+From: {{claimantName}}
+Incident date: {{incidentDate}}
+Damage: {{damageDescription}}
+Amount claimed: \${{amountClaimed}}
+
+Please respond within 10 days to arrange inspection, repair, or compensation. If not resolved, I may pursue Small Claims Court.
+
+Attachments:
+- Photos/videos
+- Estimates/receipts
+- Correspondence
+
+Reminder: Confirm legal timelines (10-day notice) and correct service address.`
     };
   }
 
