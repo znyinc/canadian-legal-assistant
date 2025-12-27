@@ -266,6 +266,23 @@
       - [x] PR CI monitoring: PR #2 created for CI testing (https://github.com/znyinc/canadian-legal-assistant/pull/2); checks pending workflow configuration
     - _Requirements: 11.3, 11.5, 11.6; Security: CWE-79, CWE-200, CWE-23, CWE-770_
 
+    - [ ] 17.2.4 CI/CD Pipeline Validation and E2E Testing
+      - [x] 17.2.4.1 Debug GitHub Actions E2E test failures
+        - ✅ Identified root cause: backend port mismatch (3010 vs 3001)
+        - ✅ Fixed `scripts/start-e2e.cjs` to wait for correct port
+        - ✅ Committed and pushed fix (commit 87c0bda)
+        - _Status: Awaiting CI re-run to confirm tests pass_
+
+      - [ ] 17.2.4.2 Investigate and resolve 2 failing pillar detection tests
+        - ⏳ Tests return 'Unknown' instead of 'Civil' for pillar classification
+        - ⏳ Review `MatterClassifier` heuristics and test inputs
+        - _Blocked by: E2E validation completion_
+
+      - [ ] 17.2.4.3 Monitor CI workflow and merge when all tests pass
+        - ⏳ Verify all 180+ unit tests pass
+        - ⏳ Confirm all 5 E2E specs pass in GitHub Actions
+        - ⏳ Merge PR #2 to main branch
+
   - [x] 17.3 Build Plain Language Translation Layer
     - [x] Create comprehensive legal term dictionary with plain language translations
     - [x] Implement inline explanation system with contextual help

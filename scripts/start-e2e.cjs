@@ -24,7 +24,7 @@ function waitForPort(port, timeoutMs = 60000) {
   });
 }
 
-function startService(name, cwd) {
+function startService(name, cwd, envOverrides = {}) {
   // Use shell to properly resolve npm on Windows
   const isWindows = process.platform === 'win32';
   const command = 'npm';
@@ -35,6 +35,7 @@ function startService(name, cwd) {
     stdio: 'pipe',
     shell: true,
     windowsHide: false,
+    env: { ...process.env, ...envOverrides },
   });
 
   if (child.stdout) child.stdout.on('data', (d) => process.stdout.write(`[${name}] ${d}`));
@@ -92,7 +93,8 @@ function startService(name, cwd) {
     process.exit(1);
   }
 
-  const backend = startService('backend', backendDir);
+  // Force backend to bind to the expected port regardless of ambient env
+  const backend = startService('backend', backendDir, { PORT: '3001' });
   const frontend = startService('frontend', frontendDir);
 
   try {

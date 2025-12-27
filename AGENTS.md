@@ -733,11 +733,31 @@
   - No new vulnerabilities introduced
 - **Status:** ✅ Completed - Backend now builds successfully, ready for CI validation
 
-## Current Status (2025-12-26 - Post Build Fix)
-- **Tests:** 178/180 unit tests passing (44 files, Vitest) - 2 pillar tests failing (pillar detection returns 'Unknown' instead of 'Civil')
-- **E2E:** All 5 E2E specs passing (golden-path, journey, pillar, pillar-ambiguous; Playwright)
+## Task 18: CI/CD Pipeline Debugging and E2E Port Fix (2025-12-26)
+- **Context:** GitHub Actions workflow run 20530792072 showed 5 E2E test failures with backend connection refused errors
+- **Root Cause:** E2E startup script `scripts/start-e2e.cjs` was waiting for backend on port 3010, but backend configured to run on port 3001
+- **Decisions:**
+  - Port configuration centralized in backend/src/config.ts (defaults to 3001)
+  - E2E startup script must match actual port
+  - Fix requires single-line update in start-e2e.cjs
+- **Actions:**
+  - Investigated workflow logs using GitHub CLI (gh run view commands)
+  - Extracted error patterns showing ECONNREFUSED on port 3010 connection attempts
+  - Read and analyzed three configuration files (playwright.config.ts, start-e2e.cjs, backend/src/config.ts)
+  - Updated [scripts/start-e2e.cjs](scripts/start-e2e.cjs) line 59: Changed `waitForPort(3010)` to `waitForPort(3001)`
+  - Committed fix: Commit `87c0bda` - "fix: correct backend port in E2E startup script from 3010 to 3001"
+  - Pushed to `ci/trigger/upgrade-multer-archiver` branch
+- **Outputs:**
+  - ✅ E2E startup script now waits for backend on correct port 3001
+  - ✅ CI workflow will re-run automatically on PR #2
+- **Expected Result:** All 5 previously failing E2E tests should now pass (golden-path, journey, pillar, pillar-ambiguous, and one additional spec)
+- **Status:** ✅ Fix deployed and committed; awaiting CI validation
+
+## Current Status (2025-12-26 - Post E2E Port Fix)
+- **Tests:** 178/180 unit tests passing (44 files, Vitest) - 2 pillar tests failing (pending investigation)
+- **E2E:** Fixed port configuration; awaiting CI re-run to confirm all 5 specs pass
 - **Build:** ✅ Backend and root workspace both compile with zero TypeScript errors
 - **Security:** Snyk backend scan clean; frontend XSS mitigations applied
 - **Dependencies:** `multer` 2.0.2, `archiver` 7.0.0, `@types/archiver` 6.0.0
-- **CI:** Ready for GitHub Actions validation on PR #2 (commit 4a605ad)
-- **Branch:** `ci/trigger/upgrade-multer-archiver` (latest commit: 4a605ad)
+- **CI:** E2E port fix deployed on PR #2 (commit 87c0bda); workflow should re-trigger automatically
+- **Branch:** `ci/trigger/upgrade-multer-archiver` (latest commit: 87c0bda)
