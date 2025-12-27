@@ -156,6 +156,15 @@ DATABASE_URL="file:./prisma/dev.db"
 
 ## Development
 
+### GitHub Copilot
+
+This repository includes customized [GitHub Copilot instructions](.github/copilot-instructions.md) to help AI assistants understand:
+- Project-specific legal compliance requirements (UPL boundaries, disclaimers, citations)
+- Architectural patterns (modular services, evidence handling, document generation)
+- Development workflows and best practices
+
+Additional instructions in [`.github/instructions/`](.github/instructions/) provide security scanning rules and other specialized guidance.
+
 ### Database Management
 ```bash
 cd backend
