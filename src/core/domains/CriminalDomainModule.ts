@@ -176,6 +176,12 @@ export class CriminalDomainModule extends BaseDomainModule {
       drafts.push(mkDraft('Your Role as Complainant — What to Expect', [{ heading: 'Your Role', content: roleGuide }]));
     }
 
+    // Criminal case next steps checklist (10-step comprehensive guide)
+    if (templates['criminal/next_steps_checklist']) {
+      const checklist = templateLib.renderTemplate('criminal/next_steps_checklist', {});
+      drafts.push(mkDraft('Criminal Case — 10-Step Next Steps Checklist', [{ heading: 'What to Do Next', content: checklist }]));
+    }
+
     return drafts;
   }
 }

@@ -459,7 +459,192 @@ If the accused contacts you (in violation of no-contact conditions):
 - Crime Stoppers (anonymous tips): 1-800-222-TIPS
 - Ontario Victim Services: https://www.ontario.ca/page/get-help-victim-services
 
-**Remember:** You did the right thing by reporting. The system is designed to protect you and pursue accountability.`
+**Remember:** You did the right thing by reporting. The system is designed to protect you and pursue accountability.`,
+
+      'criminal/next_steps_checklist': `# Criminal Case — 10-Step Next Steps Checklist (Information)
+
+This is a practical checklist of what typically needs to happen next in a criminal matter, based on Ontario law and procedure.
+
+---
+
+## 1. Immediate Criminal Process (Police & Crown)
+
+**Status of the Accused**
+- Police will either release the accused with conditions (undertaking/recognizance) OR hold them for a bail hearing within 24 hours
+
+**What to Confirm with Police**
+- [ ] Obtain the **police occurrence number** (file number) for reference
+- [ ] Confirm whether **release conditions** include:
+  - No contact / no communication with you
+  - No attendance near your residence
+  - Residence restrictions
+  - Curfew or other conditions
+- [ ] Confirm the **next court date** (first appearance)
+
+**Timeline:** This happens within 24-72 hours of arrest
+
+---
+
+## 2. Your Role as Complainant / Witness (Non-Prosecution)
+
+**Critical Concept:** You are **NOT prosecuting** the case; the **Crown Attorney** is.
+
+- [ ] Understand that the Crown Attorney decides whether to proceed
+- [ ] You cannot "drop charges" (only Crown can withdraw)
+- [ ] Your job is to provide evidence and possibly testify
+
+**Your Responsibilities:**
+- [ ] Provide a full written statement (if not already done)
+- [ ] Ensure police have all relevant evidence
+- [ ] Identify any witnesses
+
+---
+
+## 3. Medical & Documentation Steps (Very Important)
+
+Even if injuries seem minor, medical documentation strengthens the case.
+
+- [ ] Seek medical attention (ER, walk-in clinic, family doctor)
+- [ ] Request copies of:
+  - Medical notes
+  - Dated photographs of injuries
+- [ ] Keep medical records safely (digital copies + originals)
+
+**Why:** Medical evidence directly supports assault charges and Victim Impact Statement.
+
+---
+
+## 4. Victim Services (Strongly Recommended)
+
+Contact **Victim Services Ontario** or request a referral from police.
+
+**Contact Info:**
+- Toronto: 416-314-2447 or email vcars@ontario.ca
+- Other regions: Search "Victim/Witness Assistance Program" + your city
+- Online: https://www.ontario.ca/page/get-help-victim-services
+
+**Services Provided (Free):**
+- [ ] Court accompaniment at hearings
+- [ ] Case updates on bail conditions and trial progress
+- [ ] Help preparing a Victim Impact Statement
+- [ ] Safety planning
+- [ ] Referrals to counseling and emergency services
+
+---
+
+## 5. Peace Bond / Restraining Options (If Needed)
+
+Depending on the accused's release conditions:
+
+- [ ] Crown may seek stricter bail conditions
+- [ ] You may apply for a **Section 810 Peace Bond** (if ongoing fear)
+  - Civil court order requiring accused to keep the peace
+  - Stay away from you, your home, your workplace
+- [ ] Can also pursue a civil restraining order (separate from criminal case)
+
+**Typical for:** Neighbor disputes, escalating conflicts, safety concerns
+
+---
+
+## 6. Civil Liability (Separate Track – Optional)
+
+Criminal charges ≠ compensation. You may separately pursue damages.
+
+- [ ] Small Claims Court (Ontario) for:
+  - Property damage
+  - Medical expenses
+  - Related losses
+- [ ] Superior Court (if damages exceed $100,000)
+
+**Evidence Needed:**
+- [ ] Photos of damage
+- [ ] Repair/medical estimates
+- [ ] Invoices and receipts
+
+**Timeline:** Can file anytime while within limitation period (usually 2 years for assault)
+
+---
+
+## 7. Victim Impact Statement (Later Stage)
+
+If the accused is convicted or pleads guilty, you may submit a **Victim Impact Statement (VIS)**.
+
+- [ ] Start keeping notes now on:
+  - Physical injuries and recovery
+  - Emotional impact (fear, stress, sleep disruption)
+  - Impact on daily life (work, relationships, property use)
+  - Financial costs
+  - Ongoing safety concerns
+
+**How It Works:**
+- [ ] Victim Services will help you draft it
+- [ ] You can read it in court or have Victim Services read it
+- [ ] Judge considers it at sentencing
+
+---
+
+## 8. What You Should Avoid
+
+- [ ] **Do NOT contact the accused directly** — violates no-contact conditions and jeopardizes case
+- [ ] **Do NOT post publicly about the incident** on social media — can undermine your credibility
+- [ ] **Do NOT delete messages, photos, or evidence** — preserve everything as-is
+- [ ] **Do NOT alter the scene** before police documentation is complete
+- [ ] **Do NOT downplay injuries later** — consistency matters in court
+- [ ] **Do NOT discuss the case with the accused's friends** or mutual contacts
+
+---
+
+## 9. Likely Legal Trajectory (High-Level Overview)
+
+Based on typical Ontario criminal charges:
+
+**Assault (Section 266):**
+- **Strength:** Strong, especially with medical documentation and witnesses
+- **Likely Outcomes:**
+  - Peace bond with no-contact conditions
+  - Probation with conditions (anger management, counseling, restitution)
+  - Possible jail time (depending on severity and record)
+
+**Uttering Threats (Section 264.1):**
+- **Strength:** Credible, especially if specific and arson-related
+- **Likely Outcomes:**
+  - Peace bond
+  - Probation with conditions
+  - Alcohol-related conditions
+
+**Combined Charges:**
+- Typically result in probation + conditions
+- Anger management and/or alcohol counseling often required
+- No-contact orders standard
+
+---
+
+## 10. If You Want Next-Step Help
+
+The following are available to you:
+- [ ] Draft a timeline statement for police/Crown
+- [ ] Prepare your Victim Impact Statement (later, after conviction)
+- [ ] Understand criminal vs. civil strategy
+- [ ] Connect with Victim Services for ongoing support
+
+---
+
+## Important Contacts
+
+| Issue | Contact | Phone |
+|-------|---------|-------|
+| Victim Services | Toronto V/WAP | 416-314-2447 |
+| Police (emergency) | 911 | — |
+| Police (non-emergency) | Your local police | Check local listings |
+| Crown Attorney | Court office | Call your local Crown office |
+| Counseling | Mental Health Crisis | 1-833-456-4566 |
+| Assaulted Women | Women's Helpline | 1-866-863-0511 |
+
+---
+
+## Key Takeaway
+
+You've done the right thing by reporting. The system is designed to investigate, prosecute, and protect you. Work closely with police and Victim Services. The Crown handles prosecution — your role is to cooperate as a witness.`
     ,
 
   // Landlord and Tenant Board (Ontario) templates

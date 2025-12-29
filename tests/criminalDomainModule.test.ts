@@ -393,13 +393,50 @@ describe('Criminal Domain Templates', () => {
       evidenceManifest,
     );
 
-    // Should have: release conditions, victim impact, police/crown guide, victim services, evidence checklist, complainant role
-    expect(drafts.length).toBe(6);
+    // Should have: release conditions, victim impact, police/crown guide, victim services, evidence checklist, complainant role, 10-step checklist
+    expect(drafts.length).toBe(7);
     expect(drafts.some((d) => d.title.includes('Release Conditions'))).toBe(true);
     expect(drafts.some((d) => d.title.includes('Victim Impact'))).toBe(true);
     expect(drafts.some((d) => d.title.includes('Police and Crown'))).toBe(true);
     expect(drafts.some((d) => d.title.includes('Victim Services'))).toBe(true);
     expect(drafts.some((d) => d.title.includes('Evidence Checklist'))).toBe(true);
     expect(drafts.some((d) => d.title.includes('Complainant'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('10-Step'))).toBe(true);
+  });
+
+  it('generates comprehensive 10-step next steps checklist', async () => {
+    const criminalModule = new CriminalDomainModule();
+
+    const classification: Partial<MatterClassification> = {
+      id: 'assault-case',
+      domain: 'criminal',
+      jurisdiction: 'Ontario',
+      notes: ['Assault', 'Neighbor dispute'],
+      timeline: '2025-12-21',
+    };
+
+    const { drafts } = await criminalModule.generateDocuments(
+      classification as any,
+      {},
+      [],
+    );
+
+    // Find the 10-step checklist
+    const checklistDraft = drafts.find((d) => d.title.includes('10-Step'));
+    expect(checklistDraft).toBeDefined();
+    expect(checklistDraft?.title).toContain('10-Step Next Steps Checklist');
+
+    // Verify content includes all major sections
+    const content = checklistDraft?.sections?.[0]?.content || '';
+    expect(content).toContain('1. Immediate Criminal Process');
+    expect(content).toContain('2. Your Role as Complainant');
+    expect(content).toContain('3. Medical & Documentation Steps');
+    expect(content).toContain('4. Victim Services');
+    expect(content).toContain('5. Peace Bond / Restraining Options');
+    expect(content).toContain('6. Civil Liability');
+    expect(content).toContain('7. Victim Impact Statement');
+    expect(content).toContain('8. What You Should Avoid');
+    expect(content).toContain('9. Likely Legal Trajectory');
+    expect(content).toContain('10. If You Want Next-Step Help');
   });
 });
