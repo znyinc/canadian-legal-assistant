@@ -35,7 +35,7 @@ npm run build
 
 ### Test
 ```bash
-npm test
+npm test  # 327 tests across 51 files
 ```
 
 ---
@@ -62,6 +62,114 @@ The Canadian Legal Assistant follows a structured workflow to help you understan
 - **Matter Classification**: Legal domain, sub-category, urgency level, jurisdiction
 - **Forum Map**: Recommended forums in order (tribunal → court → alternative resolution)
 - **Next Steps**: Specific guidance on what to do next
+
+## Ontario Legal Navigator Features
+
+### Four Pillars Classification
+The system automatically classifies legal matters into four pillars:
+- **Criminal**: Offences against the Criminal Code (assault, theft, uttering threats)
+- **Family**: Domestic matters (divorce, custody, support) — Phase 2
+- **Civil**: Private disputes (negligence, contract, property damage)
+- **Administrative**: Regulatory and tribunal matters (L/T, employment, consumer protection)
+
+Classification uses keyword matching and legal domain inference. Ambiguous cases flag multiple pillars for user clarification.
+
+### Journey Tracker (5 Stages)
+Visual progress indicator showing where user is in the legal process:
+1. **Understand Your Situation**: Classify matter, gather facts
+2. **Explore Your Options**: Review pathways, assess costs/risks
+3. **Prepare Your Case**: Collect evidence, generate documents
+4. **Take Action**: File with appropriate forum, follow procedures
+5. **Resolution**: Settlement, hearing, judgment
+
+Each stage shows completion status and suggested next actions.
+
+### Plain Language Translation
+**30+ legal terms** with plain language explanations:
+- **Categories**: Procedural, Substantive, Forum-specific, Remedy, Party, General
+- **Ontario-specific terms**: LTB (Landlord and Tenant Board), Small Claims $50K limit, HRTO (Human Rights Tribunal), occupiers' liability
+- **Interactive tooltips**: Hover/click on legal terms for plain language translation, detailed explanation, and Learn More links (CanLII, ontario.ca, tribunals)
+- **AutoTooltipText component**: Automatically detects and highlights legal terms in document text
+
+**Readability Scorer**:
+- **Flesch Reading Ease**: 0-100 score with grade levels (very-easy to very-difficult)
+- **Legal complexity adjustments**: Penalty for legal/complex words
+- **Metrics**: Avg sentence/word length, syllables per word, legal word count
+- **Improvement suggestions**: Actionable feedback for plain language rewriting
+
+### Limitation Periods Engine
+**12 Ontario limitation periods** with urgency alerts:
+- **General**: 2 years from discovery (most civil claims)
+- **Municipal**: 10 days written notice + 2 years (Municipal Act, 2001)
+- **Employment**: ESA 2 years, wrongful dismissal 2 years
+- **Landlord/Tenant**: LTB application within 1 year
+- **Human Rights**: HRTO 1 year from incident
+- **Personal Injury**: 2 years from injury
+- **Ultimate**: 15 years from act/omission (absolute limit)
+
+**Urgency levels**:
+- **Critical**: <10 days remaining (red badge)
+- **Warning**: 11-30 days (orange badge)
+- **Caution**: 31-90 days (yellow badge)
+- **Info**: >90 days (blue badge)
+
+**Municipal 10-day notice detection**: Auto-flags municipal property damage (trees, roads, sidewalks) requiring formal notice to municipal clerk.
+
+### Cost Calculator & Risk Assessment
+**4 core methods**:
+1. **calculateCost()**: Filing fees + other costs (process server, photocopying, experts) + cost award risk
+   - Ontario Small Claims: $115-$315 tiered by amount claimed
+   - Superior Court: $270 filing fee
+   - LTB/HRTO: Free
+2. **assessFeeWaiver()**: Eligibility check based on LIM thresholds ($25K single, +$7K per household member)
+3. **assessFinancialRisk()**: Risk level classification (minimal <$1K, moderate <$5K, significant <$15K, substantial >$15K)
+4. **comparePathways()**: Side-by-side comparison with costs, timeframes, pros/cons for employment, insurance, L/T domains
+
+**React UI components**:
+- **CostEstimateCard**: Expandable cost breakdown with filing fees, other costs, risk assessment
+- **FeeWaiverGuidance**: Eligibility guidance with income thresholds, application steps
+- **FinancialRiskIndicator**: Visual risk badge with metrics breakdown
+- **PathwayComparison**: Table comparison of multiple options (MOL vs Small Claims, CPO vs Chargeback, etc.)
+
+### Action Plan Generator
+**6 core components** for action-first UX:
+1. **Acknowledgment**: Empathetic opening ("You're dealing with X. This can be stressful...")
+2. **Immediate Actions**: Prioritized steps with urgency levels (URGENT/SOON/WHEN READY) and timeframes
+3. **Your Role**: Clarification of what user IS and what user is NOT (e.g., "You are a witness, not the prosecutor")
+4. **Settlement Pathways**: Options with pros/cons, typical pathway flagged
+5. **What to Avoid**: Critical warnings by severity (CRITICAL/WARNING/CAUTION)
+6. **Next Step Offers**: Document generation offers with action labels
+
+**Domain-specific guidance**:
+- **Criminal**: Occurrence number, medical docs, victim services; complainant role; peace bond pathway; no-contact warnings
+- **Civil**: Evidence preservation, demand letter; plaintiff role with burden of proof; pre-trial settlement; photo-before-repair warnings
+- **Municipal**: 10-day notice (critical urgent); insurance subrogation pathway
+- **L/T**: LTB application, evidence gathering; tenant applicant role; no-rent-withholding warning
+- **Employment**: Documentation, MOL complaint; complainant role; negotiated severance pathway; no-release-signing warning
+
+**React UI components**:
+- **AcknowledgmentBanner**: Empathetic opening with domain-specific colors
+- **ImmediateActionsCard**: Prioritized action list with urgency badges
+- **YourRoleExplainer**: "You ARE" vs "You are NOT" sections
+- **SettlementPathwayCard**: Options with pros/cons, typical pathway highlighted
+- **WhatToAvoidSection**: Severity-based warnings with expandable details
+- **NextStepsOffer**: Document generation offers with action buttons
+
+### October 2025 Ontario Court Reforms
+**Small Claims Court**: Amount limit increased from $35,000 to **$50,000** (effective October 2025)
+
+**Ontario Consolidation Procedures Project (OCPP)**:
+- **Applies to**: Toronto Region Superior Court filings
+- **PDF/A format required**: PDF/A-1b or PDF/A-2b (archival format)
+- **File size limit**: 20MB maximum
+- **Page size**: 8.5" x 11" standard
+- **Naming conventions**: Uppercase alphanumeric + hyphens/underscores only
+
+**OCPP Validator**:
+- Automatic validation at intake for Toronto Region matters
+- Comprehensive 1,900+ word PDF/A conversion guide (LibreOffice, MS Word, Adobe Acrobat Pro)
+- Warning alerts in UI with checklist for compliance
+- ValidationReport includes: compliant status, errors, warnings, conversion guidance
 
 ### 2. Evidence Upload
 **Purpose**: Build a timeline and evidence index for your case.
@@ -219,59 +327,93 @@ Each evidence file is indexed with:
 
 ### Domain Modules
 
-Domain modules generate specialized document sets for specific legal areas.
+The system includes **10 specialized domain modules** for different legal areas:
 
-#### Insurance Domain
+#### 1. Insurance Domain
 Generates:
 1. **Internal complaint letter** (to insurer)
 2. **Ombudsman complaint** (OmbudService for Banking and Investment)
 3. **GIO complaint** (General Insurance OmbudService)
 4. **FSRA complaint** (Financial Services Regulatory Authority)
 
-All include:
-- Evidence references with attachment IDs
-- Timeline of key events
-- Legal authority citations with URLs
-- Required confirmations (policy number, dates, parties)
-
-#### Landlord/Tenant Domain
+#### 2. Landlord/Tenant Domain
 Generates:
 1. **LTB intake checklist** (Landlord and Tenant Board)
 2. **Notice templates** (N-forms, T-forms as applicable)
 3. **Evidence package** (timeline, correspondence, photos)
+4. **T1/T2/T6 application guidance** with form-specific evidence checklists
 
-All include:
-- RTA citations with section numbers and URLs
-- Tribunal procedure references
-- Missing evidence checklist
-
-#### Civil Negligence Domain (New)
+#### 3. Civil Negligence Domain
 Generates:
 1. **Demand for Repair / Compensation** (demand/notice letter)
 2. **Small Claims Court — Form 7A scaffold** (statement of claim scaffold)
 3. **Evidence Checklist — Property Damage**
+4. **Settlement guidance** (anticipate defense, insurance subrogation options)
 
-Template IDs (available in `TemplateLibrary`): `civil/demand_notice`, `civil/small_claims_form7a`, `civil/evidence_checklist`.
+Features:
+- **Municipal 10-day notice detection**: Auto-flags tree/municipal property damage requiring formal notice to municipal clerk
+- **Generate Form 7A quick action**: UI button for focused Form 7A package generation
 
-How to generate:
-- From UI: Open the Matter, confirm facts, click **Generate Documents** → choose 'Civil Negligence' outputs.
-- Via API: Call `IntegrationAPI.generateDocuments(matterId, { classification, evidenceIndex, forumMap, timeline })` and the domain module will produce drafts and a package.
+#### 4. Employment Law Router Module
+Generates:
+1. **MOL Complaint Guide** (Ministry of Labour for ESA violations)
+2. **Wrongful Dismissal Assessment** (Small Claims vs Superior Court routing)
+3. **Severance Package Review** (rights and negotiation guidance)
+4. **Multi-pathway comparison** (MOL → Small Claims → Superior Court)
 
-Notes:
-- Confirm exact amounts, dates, and names before finalizing or filing forms.
-- Form 7A scaffold requires manual completion of exact dates and amounts before filing in Small Claims Court.
+#### 5. Municipal Property Damage Module
+Generates:
+1. **10-Day Notice Template** (to municipal clerk)
+2. **Municipal Claim Process Guide** (Municipal Act, 2001 requirements)
+3. **Evidence Collection Checklist** (photos, reports, witness statements)
+4. **Critical deadline alerts** (10-day notice with urgency warnings)
 
-Municipal 10-day notice detection:
-- The system heuristically detects when a municipal 10-day notice may be required (e.g., damage to municipal trees, public road, or municipal property). When detected, an alert appears in the classification results advising to send a formal notice to the municipal clerk within 10 days and to verify local by-laws.
+#### 6. Criminal Domain (Informational Only)
+Generates:
+1. **Victim Services Ontario Guide** (V/WAP, safety planning, counseling)
+2. **Evidence Checklist for Complainants** (photos, 911 records, medical docs)
+3. **Your Role as Complainant** (witness not prosecutor, Crown's role, timeline expectations)
+4. **Release Conditions Checklist** and **Victim Impact Statement scaffold**
+5. **Police and Crown Process Guide** (disclosure, bail, trial dates)
+6. **Peace Bond (810 order) guidance**
 
-Generate Form 7A quick action:
-- From the Matter Overview page, if the matter is classified as civil negligence, click **Generate Form 7A** to create a focused Form 7A scaffold package. This action will navigate to the Documents tab where you can download the generated package and review the scaffold before filing.
+Note: Criminal domain provides **information only** — no legal strategy, no advice. Emphasizes seeking police help and legal counsel for safety/urgency.
 
+#### 7. Consumer Protection Domain
+Generates:
+1. **Consumer Protection Ontario Complaint Guide** (CPO filing process, phone 416-326-8800)
+2. **Chargeback Request Guide** (credit card dispute process, 60-120 day timeline)
+3. **Service Dispute Letter** (template with Consumer Protection Act, 2002 rights)
+4. **Unfair Practice Documentation Checklist** (false advertising, bait-and-switch, hidden fees)
 
-### Generic Drafting (Fallback)
+Features:
+- Multi-pathway presentation: CPO → Small Claims Court → Chargeback (if applicable) → BBB (informal)
+- Chargeback guidance includes timeframes, documentation requirements, outcomes
 
-If no domain module matches, system uses generic drafting engine:
-- Creates single general draft with evidence references
+#### 8. OCPP Filing Module (Toronto Region)
+Generates:
+1. **PDF/A Compliance Checklist** (format, page size, naming conventions)
+2. **PDF/A Conversion Guide** (LibreOffice, MS Word, Adobe Acrobat Pro instructions)
+3. **OCPP Validation Report** (file size ≤20MB, PDF/A-1b or PDF/A-2b, 8.5x11 pages)
+
+Features:
+- **October 2025 Ontario Court Reforms**: Validates Toronto Region Superior Court filings
+- Comprehensive 1,900+ word conversion guide with troubleshooting steps
+
+#### 9. Tree Damage Classifier Module
+Generates:
+1. **Municipal vs Private Liability Assessment** (ownership detection)
+2. **10-Day Notice Template** (if municipal tree)
+3. **Private Property Demand Letter** (if private tree)
+4. **Evidence Checklist** (arborist reports, contractor estimates, photos)
+
+Features:
+- Automatic ownership detection from matter description/tags
+- Routes to municipal process or civil negligence based on liability
+
+#### 10. Generic Domain (Fallback)
+- Used when no specialized module matches
+- Creates general draft with evidence references
 - Includes all citations and disclaimers
 - Requires user confirmation for all facts
 
@@ -341,7 +483,6 @@ await api.updateRetention(caseId, {
 ## Domain-Specific Features
 
 ### Insurance
-
 **Triggers**: Claims denial, coverage disputes, bad faith
 
 **Special handling**:
@@ -350,20 +491,81 @@ await api.updateRetention(caseId, {
 - Cites Insurance Act, FSRA guidelines, ombudsman terms of reference
 
 ### Landlord/Tenant
-
 **Triggers**: Rent disputes, maintenance issues, eviction notices, damage claims
 
 **Special handling**:
 - Routes through RTA self-help → LTB → Superior Court (judicial review)
-- Generates LTB-specific intake forms
+- Generates LTB-specific intake forms (T1, T2, T6 with form-specific guidance)
 - Cites Residential Tenancies Act sections with e-Laws URLs
-- Flags tribunal jurisdiction limits ($35,000)
+- Small Claims Court for monetary claims (≤50,000)
 
-### Employment (Future - Phase 2)
+### Employment
+**Triggers**: Wrongful dismissal, unpaid wages, ESA violations
 
-**Planned**: Wrongful dismissal, unpaid wages, human rights
+**Special handling**:
+- Routes through MOL complaint → Small Claims → Superior Court
+- ESA violations: Ministry of Labour (free, fast, limited scope)
+- Wrongful dismissal: Small Claims (<$50K) or Superior Court (>$50K)
+- Severance package assessment with negotiation guidance
 
-**Will include**: MOL complaint, HRTO application, Small Claims/Superior Court routing
+### Civil Negligence
+**Triggers**: Property damage, personal injury, breach of contract
+
+**Special handling**:
+- Demand letter first (settlement emphasis)
+- Small Claims Court for ≤50,000 (Ontario)
+- Superior Court for >$50,000
+- Municipal 10-day notice detection for municipal property
+- Settlement pathway presentation (pre-trial resolution common)
+
+### Municipal Property Damage
+**Triggers**: Tree damage, road defects, municipal property incidents
+
+**Special handling**:
+- **Critical 10-day notice requirement** (Municipal Act, 2001)
+- Municipal clerk notice template with delivery instructions
+- Small Claims Court for ≤50,000, Superior Court for >$50,000
+- Evidence requirements: photos before cleanup, witness statements
+
+### Criminal (Informational Only)
+**Triggers**: Assault, theft, uttering threats, other offences
+
+**Special handling**:
+- **Information only** — no legal advice or strategy
+- Routes to Ontario Court of Justice (ON-OCJ)
+- Victim services guidance (V/WAP, safety planning)
+- Complainant role explanation (witness not prosecutor)
+- No civil limitation periods (Crown controls timeline)
+- Emphasizes police involvement and legal counsel
+
+### Consumer Protection
+**Triggers**: Refund disputes, warranty claims, service complaints, unfair practices
+
+**Special handling**:
+- Consumer Protection Ontario (CPO) complaint pathway
+- Chargeback option for credit card payments (60-120 days)
+- Service dispute letter with Consumer Protection Act, 2002 rights
+- Multi-pathway: CPO → Small Claims → Chargeback → BBB
+- Unfair practice documentation (false advertising, hidden fees)
+
+### OCPP Filing (Toronto Region)
+**Triggers**: Toronto Region Superior Court filings (October 2025 reforms)
+
+**Special handling**:
+- PDF/A format validation (PDF/A-1b or PDF/A-2b)
+- File size limit: 20MB maximum
+- Page size enforcement: 8.5" x 11"
+- Naming convention validation: uppercase alphanumeric + hyphens/underscores
+- Comprehensive PDF/A conversion guide (LibreOffice, MS Word, Adobe Acrobat Pro)
+
+### Tree Damage Classifier
+**Triggers**: Fallen tree damage, negligent tree maintenance
+
+**Special handling**:
+- Automatic ownership detection (municipal vs private)
+- Municipal: 10-day notice + municipal claim process
+- Private: Civil negligence demand letter + Small Claims/Superior Court
+- Evidence requirements: arborist reports, contractor estimates, photos
 
 ---
 
