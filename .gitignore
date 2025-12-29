@@ -35,6 +35,11 @@ Thumbs.db
 # Coverage
 coverage/
 
+# Test artifacts
+test-results/
+**/test-results/
+playwright-report/
+
 # Misc
 *.zip
 *.tar
