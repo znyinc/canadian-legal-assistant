@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { api } from '../services/api';
+import { safeText, safeURL } from '../utils/sanitize';
 
 interface CaseResult {
   id: string;
@@ -54,10 +56,26 @@ export function CaseLawPage() {
     try {
       const data = await api.searchCaselaw(searchQuery);
 
-      setResults(data.results || []);
+      // Sanitize results before storing/displaying to prevent DOM-based XSS
+      const sanitizedResults = (data.results || []).map((r: any) => ({
+        ...r,
+        caseName: DOMPurify.sanitize(String(r.caseName || ''), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+        summary: DOMPurify.sanitize(String(r.summary || ''), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+        court: DOMPurify.sanitize(String(r.court || ''), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+        citation: DOMPurify.sanitize(String(r.citation || ''), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+        canliiLink: safeURL(r.canliiLink, ['canlii.org']) || '',
+      }));
+
+      setResults(sanitizedResults);
       if (data.failure) {
         setFailure(data.failure);
-        setAlternatives(data.alternatives || []);
+        const sanitizedAlts = (data.alternatives || []).map((a: any) => ({
+          ...a,
+          name: safeText(a.name),
+          description: safeText(a.description),
+          url: safeURL(a.url, undefined) || '',
+        }));
+        setAlternatives(sanitizedAlts);
       }
     } catch (err) {
       setFailure({
@@ -125,7 +143,7 @@ export function CaseLawPage() {
       {hasSearched && results.length > 0 && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Results for "{searchQuery}" ({results.length} found)
+            Results for "{safeText(searchQuery)}" ({results.length} found)
           </h2>
           <div className="space-y-4">
             {results.map((result) => (
@@ -136,36 +154,36 @@ export function CaseLawPage() {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-semibold text-blue-600 hover:text-blue-700">
                     <a
-                      href={result.canliiLink}
+                      href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline"
                     >
-                      {result.caseName}
+                      {safeText(result.caseName)}
                     </a>
                   </h3>
                   <span className="text-sm bg-gray-100 px-3 py-1 rounded-full text-gray-700">
-                    {result.year}
+                    {safeText(String(result.year))}
                   </span>
                 </div>
 
                 <p className="text-sm text-gray-600 mb-3">
-                  <strong>{result.court}</strong>
+                  <strong>{safeText(result.court)}</strong>
                 </p>
 
                 <p className="text-gray-700 mb-4">
-                  {result.summary}
+                  {safeText(result.summary)}
                 </p>
 
                 <div className="bg-gray-50 p-3 rounded border border-gray-200 mb-4">
                   <p className="text-xs text-gray-500 mb-1">Citation:</p>
                   <code className="text-sm text-gray-800 font-mono break-all">
-                    {result.citation}
+                    {safeText(result.citation)}
                   </code>
                   {result.citationWithURL && (
                     <p className="text-xs text-gray-500 mt-2">
                       <a
-                        href={result.canliiLink}
+                        href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-700"
@@ -179,7 +197,7 @@ export function CaseLawPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(result.citation);
+                      navigator.clipboard.writeText(safeText(result.citation));
                       alert('Citation copied to clipboard');
                     }}
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded transition-colors text-sm"
@@ -187,7 +205,7 @@ export function CaseLawPage() {
                     Copy Citation
                   </button>
                   <a
-                    href={result.canliiLink}
+                    href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition-colors text-sm"
@@ -267,8 +285,8 @@ export function CaseLawPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {items.map((alt) => (
                       <a
-                        key={alt.name}
-                        href={alt.url}
+                        key={safeText(alt.name)}
+                        href={safeURL(alt.url, undefined) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`block rounded-lg shadow p-4 hover:shadow-lg transition-shadow ${
@@ -280,9 +298,9 @@ export function CaseLawPage() {
                         <h4 className={`font-semibold mb-1 ${
                           alt.primary ? 'text-blue-700' : 'text-blue-600'
                         }`}>
-                          {alt.name}
+                          {safeText(alt.name)}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-2">{alt.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">{safeText(alt.description)}</p>
                         <span className="text-blue-600 text-sm font-medium">
                           {category === 'Primary Database' ? 'Search Now →' : 'Browse →'}
                         </span>

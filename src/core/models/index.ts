@@ -1,8 +1,19 @@
-export type Domain = 'insurance' | 'landlordTenant' | 'employment' | 'humanRights' | 'other';
+export type Domain =
+  | 'insurance'
+  | 'landlordTenant'
+  | 'employment'
+  | 'humanRights'
+  | 'civil-negligence'
+  | 'municipalPropertyDamage'
+  | 'criminal'
+  | 'ocppFiling'
+  | 'tree-damage'
+  | 'consumerProtection'
+  | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;
 export type EvidenceType = 'PDF' | 'PNG' | 'JPG' | 'EML' | 'MSG' | 'TXT';
-export type AccessMethod = 'official-api' | 'official-link' | 'user-provided';
+export type AccessMethod = 'official-api' | 'official-site' | 'user-provided';
 
 export interface MatterClassification {
   id: string;
@@ -36,6 +47,7 @@ export interface ForumMap {
   primaryForum: AuthorityRef;
   alternatives: AuthorityRef[];
   escalation: AuthorityRef[];
+  rationale?: string;
 }
 
 export interface EvidenceItem {
@@ -93,11 +105,12 @@ export interface DocumentDraft {
 export interface EvidenceIndex {
   items: EvidenceItem[];
   generatedAt: string; // ISO date
-  sourceManifest: { sources: SourceEntry[] };
+  sourceManifest: SourceManifest;
 }
 
 export interface SourceManifest {
   entries: SourceEntry[];
+  accessLog?: { service: string; method: AccessMethod; timestamp: string }[];
   compiledAt: string; // ISO date
   notes?: string[];
 }
@@ -169,6 +182,12 @@ export interface DomainModuleOutput {
   drafts: DocumentDraft[];
   package: DocumentPackage;
   warnings?: string[];
+  ocppValidation?: {
+    compliant: boolean;
+    errors: string[];
+    warnings: string[];
+    checklist: string;
+  };
 }
 
 export interface DomainModule {

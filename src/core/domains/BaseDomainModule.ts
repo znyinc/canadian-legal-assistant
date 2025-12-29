@@ -33,7 +33,9 @@ export abstract class BaseDomainModule implements DomainModule {
       missingEvidenceChecklist: input.missingEvidence,
       drafts,
       sourceManifest,
-      evidenceManifest
+      evidenceManifest,
+      jurisdiction: input.classification.jurisdiction,
+      domain: input.classification.domain
     });
 
     const warnings = [pkg.warnings || [], drafts.flatMap((d) => d.missingConfirmations || [])]

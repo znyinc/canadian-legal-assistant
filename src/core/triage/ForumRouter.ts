@@ -16,18 +16,27 @@ export class ForumRouter {
 
   route(input: RoutingInput): ForumMap {
     const primary = this.primaryForum(input);
-    const escalation = this.registry.getEscalationRoute(primary.id);
+    const escalation = this.registry
+      .getEscalationRoute(primary.id)
+      .map((a) => ({ id: a.id, name: a.name, type: a.type, jurisdiction: a.jurisdiction }));
     const alternatives: AuthorityRef[] = this.alternatives(input, primary);
+    const rationale = this.buildRationale(input, primary, escalation, alternatives);
 
     return {
       domain: input.domain,
       primaryForum: primary,
       alternatives,
-      escalation
+      escalation,
+      rationale
     };
   }
 
   private primaryForum(input: RoutingInput): AuthorityRef {
+    // Criminal matters go to Ontario Court of Justice
+    if (input.domain === 'criminal') {
+      return this.mustGet('ON-OCJ');
+    }
+
     // Tribunal prioritization for LTB and HRTO
     if (input.domain === 'landlordTenant') {
       return this.mustGet('ON-LTB');
@@ -46,9 +55,10 @@ export class ForumRouter {
       return this.mustGet('CA-FC');
     }
 
-    // Court level by amount (Ontario heuristic)
+    // Court level by amount (Ontario heuristic updated for $50,000 Small Claims limit)
     if (input.jurisdiction === 'Ontario') {
-      if ((input.disputeAmount || 0) <= 35000) return this.mustGet('ON-SC');
+      const amount = input.disputeAmount || 0;
+      if (amount <= 50000) return this.mustGet('ON-SMALL');
       return this.mustGet('ON-SC');
     }
 
@@ -74,5 +84,43 @@ export class ForumRouter {
     const a = this.registry.getById(id);
     if (!a) throw new Error(`Authority ${id} not found`);
     return { id: a.id, name: a.name, type: a.type, jurisdiction: a.jurisdiction };
+  }
+
+  private buildRationale(
+    input: RoutingInput,
+    primary: AuthorityRef,
+    escalation: AuthorityRef[],
+    alternatives: AuthorityRef[]
+  ): string {
+    const notes: string[] = [];
+
+    if (input.domain === 'landlordTenant') {
+      notes.push('Housing matters in Ontario route to the Landlord and Tenant Board first.');
+    }
+    if (input.domain === 'humanRights') {
+      notes.push('Human rights applications start at the HRTO before any court review.');
+    }
+
+    if (input.isAppeal) {
+      notes.push('Appeal flagged; routing directly to an appeal court.');
+    } else if (input.isJudicialReview) {
+      notes.push('Judicial review requested; routing to the reviewing court.');
+    } else if (input.jurisdiction === 'Ontario') {
+      const amount = input.disputeAmount || 0;
+      if (amount <= 50000) {
+        notes.push('Claim amount within Small Claims Court monetary threshold in Ontario ($50,000).');
+      } else {
+        notes.push('Higher-value claim defaults to Superior Court of Justice in Ontario.');
+      }
+    }
+
+    if (alternatives.length) {
+      notes.push('Alternative forum provided for review or secondary path.');
+    }
+    if (escalation.length) {
+      notes.push('Escalation route available for appeals or judicial review.');
+    }
+
+    return notes.join(' ');
   }
 }

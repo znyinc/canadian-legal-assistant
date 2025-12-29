@@ -14,7 +14,7 @@ function getApi(req: Request) {
 const createMatterSchema = z.object({
   description: z.string().min(10),
   province: z.string().default('ON'),
-  domain: z.enum(['insurance', 'landlordTenant', 'employment', 'other']),
+  domain: z.enum(['insurance', 'landlordTenant', 'employment', 'civil-negligence', 'other']),
   disputeAmount: z
     .preprocess((v) => {
       if (v === '' || v === undefined) return null;
@@ -139,13 +139,37 @@ router.post('/:id/classify', async (req: Request, res: Response, next: NextFunct
         : undefined,
     };
 
-    const result = getApi(req).intake({ classification: classificationInput });
+    // Include the original description so heuristics (e.g., pillar detection) have text to analyze
+    const classificationWithNotes = {
+      ...classificationInput,
+      // Provide raw description so pillar detection has text to analyze
+      description: data.description,
+      // Also preserve as notes for downstream components that rely on notes
+      notes: [data.description].filter(Boolean)
+    };
+    const result = getApi(req).intake({ classification: classificationWithNotes as any });
+
+    // Persist deadline alerts with classification so reloads can display them
+    if (result.deadlineAlerts && Array.isArray(result.deadlineAlerts)) {
+      (result.classification as any).deadlineAlerts = result.deadlineAlerts;
+    }
+
+    // Persist action plan with classification for later display
+    if (result.actionPlan) {
+      (result.classification as any).actionPlan = result.actionPlan;
+    }
+
+    // persist pillar explanation with classification for later display
+    (result.classification as any).pillarExplanation = result.pillarExplanation;
 
     await prisma.matter.update({
       where: { id: matter.id },
       data: {
         classification: JSON.stringify(result.classification),
         forumMap: JSON.stringify(result.forumMap),
+        pillar: result.pillar || null,
+        pillarMatches: result.pillarMatches ? JSON.stringify(result.pillarMatches) : null,
+        pillarAmbiguous: result.pillarAmbiguous ?? null
       },
     });
 

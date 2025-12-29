@@ -4,7 +4,7 @@
 
 $ErrorActionPreference = "SilentlyContinue"
 $BackendPort = 3001
-$FrontendPort = 5174
+$FrontendPorts = @(5173, 5174) # Vite uses 5173 by default and 5174 as a fallback
 
 Write-Host ""
 Write-Host "[SHUTDOWN] Canadian Legal Assistant - Shutdown Script" -ForegroundColor Cyan
@@ -49,24 +49,30 @@ Write-Host ""
 Write-Host "[CHECKING] Checking for running services..." -ForegroundColor Cyan
 
 Stop-ProcessOnPort -Port $BackendPort -ServiceName "Backend"
-Stop-ProcessOnPort -Port $FrontendPort -ServiceName "Frontend"
+foreach ($port in $FrontendPorts) {
+    Stop-ProcessOnPort -Port $port -ServiceName "Frontend"
+}
 
 # Verify ports are free
 Start-Sleep -Seconds 1
 
 $BackendCheck = Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue
-$FrontendCheck = Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue
-$Frontend5173Check = Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue
+$FrontendChecks = @()
+foreach ($port in $FrontendPorts) {
+    $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+    if ($conn) { $FrontendChecks += @{ Port = $port; Connection = $conn } }
+}
 
-if (-not $BackendCheck -and -not $FrontendCheck -and -not $Frontend5173Check) {
+if (-not $BackendCheck -and -not $FrontendChecks) {
     Write-Host ""
     Write-Host "[SUCCESS] All services stopped successfully" -ForegroundColor Green
 } else {
     Write-Host ""
     Write-Host "[WARNING] Some services may still be running:" -ForegroundColor Yellow
-    if ($BackendCheck) { Write-Host "  - Backend (port 3001)" -ForegroundColor Yellow }
-    if ($FrontendCheck) { Write-Host "  - Frontend (port 5174)" -ForegroundColor Yellow }
-    if ($Frontend5173Check) { Write-Host "  - Frontend (port 5173)" -ForegroundColor Yellow }
+    if ($BackendCheck) { Write-Host "  - Backend (port $BackendPort)" -ForegroundColor Yellow }
+    foreach ($frontend in $FrontendChecks) {
+        Write-Host "  - Frontend (port $($frontend.Port))" -ForegroundColor Yellow
+    }
 }
 
 Write-Host ""

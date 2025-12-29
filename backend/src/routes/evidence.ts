@@ -15,15 +15,39 @@ function getApi(req: Request) {
 }
 
 // Configure multer for file uploads
+// Simple in-memory rate limiter per IP for upload endpoint
+const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
+const uploadLimiterWindowMs = 15 * 60 * 1000; // 15 minutes
+const uploadLimiterMax = 20; // 20 uploads per window per IP
+function uploadLimiter(req: Request, res: Response, next: Function) {
+  const key = req.ip || 'unknown';
+  const now = Date.now();
+  const entry = uploadRateMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    uploadRateMap.set(key, { count: 1, resetAt: now + uploadLimiterWindowMs });
+    return next();
+  }
+  if (entry.count >= uploadLimiterMax) {
+    return res.status(429).json({ error: 'Too many uploads. Please try again later.' });
+  }
+  entry.count += 1;
+  uploadRateMap.set(key, entry);
+  return next();
+}
+
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadPath = path.join(config.uploadDir, req.params.id);
+    const safeId = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+    const uploadPath = path.join(config.uploadDir, safeId);
     await fs.mkdir(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    // Sanitize original name to prevent path traversal and strip problematic chars
+    const base = path.basename(file.originalname);
+    const safeBase = base.replace(/[\\/\x00]/g, '').replace(/[^\w.\- ]+/g, '_');
+    cb(null, `${uniqueSuffix}-${safeBase}`);
   },
 });
 
@@ -48,7 +72,7 @@ const upload = multer({
 });
 
 // POST /api/matters/:id/evidence - Upload evidence file
-router.post('/:id', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Request, res: Response) => {
   try {
     const matter = await prisma.matter.findUnique({
       where: { id: req.params.id },
@@ -65,58 +89,93 @@ router.post('/:id', upload.single('file'), async (req: Request, res: Response) =
     }
 
     // Read file and compute hash
-    const fileBuffer = await fs.readFile(req.file.path);
-    const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    // Ensure the file path is within the upload directory to prevent traversal
+    const normalizedPath = path.resolve(req.file.path);
+    const safeId = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+    const expectedDir = path.resolve(path.join(config.uploadDir, safeId));
+    const rel = path.relative(expectedDir, normalizedPath);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) {
+      await fs.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
 
-    // Upload to IntegrationAPI
-    const mimeToType = (mimetype: string) => {
-      if (mimetype === 'application/pdf') return 'PDF';
-      if (mimetype === 'image/png') return 'PNG';
-      if (mimetype === 'image/jpeg') return 'JPG';
-      if (mimetype === 'text/plain') return 'TXT';
-      // EML/MSG handling
-      if (mimetype === 'message/rfc822' || mimetype === 'application/vnd.ms-outlook') return 'EML';
-      return 'OTHER';
-    };
-
-    const result = getApi(req).uploadEvidence({
-      filename: req.file.originalname,
-      content: fileBuffer,
-      type: mimeToType(req.file.mimetype) as any,
-      provenance: 'user-provided',
+    // Prevent symlink escape: resolve real path and verify it's within expected dir
+    const realPath = await fs.realpath(normalizedPath).catch(async () => {
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(() => {});
+      }
+      return null;
     });
+    if (!realPath || !realPath.startsWith(expectedDir)) {
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(() => {});
+      }
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
 
-    // Store in database
-    const evidence = await prisma.evidence.create({
-      data: {
-        matterId: matter.id,
-        filename: req.file.originalname,
-        mimeType: req.file.mimetype,
-        filePath: req.file.path,
-        fileSize: req.file.size,
-        fileHash,
-        evidenceIndex: JSON.stringify(result.index),
-        metadata: JSON.stringify(result.index.metadata),
-      },
-    });
+    // Limit concurrent file reads to reduce resource exhaustion
+    const MAX_CONCURRENT_READS = 2;
+    if ((global as any)._concurrentFileReads == null) (global as any)._concurrentFileReads = 0;
+    if ((global as any)._concurrentFileReads >= MAX_CONCURRENT_READS) {
+      await fs.unlink(req.file.path).catch(() => {});
+      return res.status(503).json({ error: 'Server busy, try again later' });
+    }
 
-    await prisma.auditEvent.create({
-      data: {
-        matterId: matter.id,
-        action: 'evidenceUploaded',
-        details: JSON.stringify({
-          filename: req.file.originalname,
-          evidenceId: evidence.id,
-        }),
-      },
-    });
+    try {
+      (global as any)._concurrentFileReads += 1;
+      const fileBuffer = await fs.readFile(realPath);
+      const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
-    res.status(201).json({
-      evidence,
-      timeline: result.timeline,
-      gaps: result.gaps,
-      alerts: result.alerts,
-    });
+      const mimeToType = (mimetype: string) => {
+        if (mimetype === 'application/pdf') return 'PDF';
+        if (mimetype === 'image/png') return 'PNG';
+        if (mimetype === 'image/jpeg') return 'JPG';
+        if (mimetype === 'text/plain') return 'TXT';
+        if (mimetype === 'message/rfc822' || mimetype === 'application/vnd.ms-outlook') return 'EML';
+        return 'OTHER';
+      };
+
+      const safeBase = path.basename(req.file.originalname).replace(/[\\/\x00]/g, '').replace(/[^\w.\- ]+/g, '_');
+
+      const result = getApi(req).uploadEvidence({
+        filename: safeBase,
+        content: fileBuffer,
+        type: mimeToType(req.file.mimetype) as any,
+        provenance: 'user-provided',
+      });
+
+      const evidence = await prisma.evidence.create({
+        data: {
+          matterId: matter.id,
+          filename: safeBase,
+          mimeType: req.file.mimetype,
+          filePath: req.file.path,
+          fileSize: req.file.size,
+          fileHash,
+          evidenceIndex: JSON.stringify(result.index),
+          metadata: JSON.stringify(result.index),
+        },
+      });
+
+      await prisma.auditEvent.create({
+        data: {
+          matterId: matter.id,
+          action: 'evidenceUploaded',
+          details: JSON.stringify({
+            filename: safeBase,
+            evidenceId: evidence.id,
+          }),
+        },
+      });
+
+      res.status(201).json({
+        evidence,
+        timeline: result.timeline,
+        gaps: result.gaps,
+      });
+    } finally {
+      (global as any)._concurrentFileReads -= 1;
+    }
   } catch (error) {
     // Clean up uploaded file on error
     if (req.file) {

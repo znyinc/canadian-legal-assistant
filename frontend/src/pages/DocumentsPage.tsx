@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { api } from '../services/api';
+import { safeText } from '../utils/sanitize';
+import { SmartText } from '../components/SmartText';
 
 interface DocumentsPageProps {
   matterId: string;
@@ -9,6 +12,11 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
   const [documents, setDocuments] = useState<any[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [requestedTemplates, setRequestedTemplates] = useState<string[]>([]);
+  const [userConfirmedFacts, setUserConfirmedFacts] = useState<string[]>([]);
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [downloadingPackageId, setDownloadingPackageId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDocuments();
@@ -24,17 +32,34 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
   };
 
   const handleGenerate = async () => {
+    // Open confirmation modal
+    setRequestedTemplates([]);
+    setUserConfirmedFacts([]);
+    setConfirmChecked(false);
+    setShowConfirm(true);
+  };
+
+  const confirmGenerate = async () => {
+    if (!confirmChecked) {
+      setError('Please confirm the facts before generating documents.');
+      return;
+    }
+    setShowConfirm(false);
     setGenerating(true);
     setError('');
 
     try {
-      await api.generateDocuments(matterId);
+      await api.generateDocuments(matterId, userConfirmedFacts, requestedTemplates.length ? requestedTemplates : undefined);
       await loadDocuments();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate documents');
     } finally {
       setGenerating(false);
     }
+  };
+
+  const toggleTemplate = (tpl: string) => {
+    setRequestedTemplates((curr) => (curr.includes(tpl) ? curr.filter((t) => t !== tpl) : [...curr, tpl]));
   };
 
   const handleDownload = async (packageId: string, createdAt: string) => {
@@ -59,6 +84,13 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Plain Language Explanation */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-900">
+          <SmartText text="Document packages include forms, evidence manifests, timelines, and forum maps tailored to your legal matter. All documents are information-only and do not constitute legal advice." />
+        </p>
+      </div>
+
       {/* Generate Button */}
       {documents.length === 0 && (
         <div className="bg-white rounded-lg shadow p-6 text-center">
@@ -90,7 +122,7 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
             const packageData = JSON.parse(doc.packageData);
             const date = new Date(doc.createdAt).toLocaleDateString();
             const time = new Date(doc.createdAt).toLocaleTimeString();
-            const packageName = packageData.package?.packageName || 'Legal Documents';
+            const packageName = DOMPurify.sanitize(String(packageData.package?.packageName || 'Legal Documents'), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
             
             return (
               <div key={doc.id} className="bg-white rounded-lg shadow p-6">
@@ -102,10 +134,18 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                     </p>
                   </div>
                   <button 
-                    onClick={() => handleDownload(doc.packageId, doc.createdAt)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={async () => {
+                      setDownloadingPackageId(doc.packageId);
+                      try {
+                        await handleDownload(doc.packageId, doc.createdAt);
+                      } finally {
+                        setDownloadingPackageId(null);
+                      }
+                    }}
+                    disabled={downloadingPackageId === doc.packageId}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    Download
+                    {downloadingPackageId === doc.packageId ? 'Downloading...' : 'Download'}
                   </button>
                 </div>
 
@@ -122,7 +162,7 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                     <h4 className="font-medium text-gray-900 mb-2">Package Contents</h4>
                     <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
                       {packageData.package.files.map((file: any, index: number) => (
-                        <li key={index}>{file.path || file.filename || `Document ${index + 1}`}</li>
+                        <li key={index}>{safeText(file.path || file.filename || `Document ${index + 1}`)}</li>
                       ))}
                     </ul>
                   </div>
@@ -133,7 +173,7 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                     <p className="text-sm font-medium text-yellow-900 mb-1">⚠️ Warnings</p>
                     <ul className="text-sm text-yellow-800 space-y-1">
                       {packageData.warnings.map((warning: string, index: number) => (
-                        <li key={index}>• {warning}</li>
+                        <li key={index}>• {safeText(warning)}</li>
                       ))}
                     </ul>
                   </div>
@@ -151,6 +191,46 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
           </button>
         </div>
       )}
-    </div>
+
+      {/* Confirmation modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-2">Confirm facts & select templates</h3>
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700">User confirmed facts (optional)</label>
+              <textarea
+                name="userConfirmedFacts"
+                rows={3}
+                className="mt-1 block w-full rounded border-gray-300"
+                onChange={(e) => setUserConfirmedFacts(e.target.value ? [e.target.value] : [])}
+              />
+            </div>
+            <div className="mb-3">
+              <p className="text-sm font-medium">Requested templates</p>
+              <div className="flex gap-2 mt-2">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={requestedTemplates.includes('civil/small_claims_form7a')} onChange={() => toggleTemplate('civil/small_claims_form7a')} />
+                  <span className="text-sm">Form 7A (Small Claims)</span>
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={requestedTemplates.length === 0} onChange={() => setRequestedTemplates([])} />
+                  <span className="text-sm">All templates</span>
+                </label>
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={confirmChecked} onChange={(e) => setConfirmChecked(e.target.checked)} />
+                <span className="text-sm">I confirm the facts and understand these are information-only documents</span>
+              </label>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded border">Cancel</button>
+              <button onClick={confirmGenerate} className="px-4 py-2 bg-blue-600 text-white rounded">Generate</button>
+            </div>
+          </div>
+        </div>
+      )}    </div>
   );
 }

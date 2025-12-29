@@ -23,6 +23,58 @@ export interface ClassificationResult {
   classification: any;
   forumMap: any;
   nextSteps: string[];
+  pillar?: string;
+  pillarMatches?: string[];
+  pillarAmbiguous?: boolean;
+  pillarExplanation?: {
+    burdenOfProof: string;
+    overview: string;
+    nextSteps: string[];
+  };
+  deadlineAlerts?: {
+    urgency: 'critical' | 'warning' | 'caution' | 'info';
+    daysRemaining: number;
+    limitationPeriod: {
+      name: string;
+      period: string;
+      description: string;
+      consequence: string;
+      learnMoreUrl?: string;
+    };
+    message: string;
+    actionRequired: string;
+    encouragement?: string;
+  }[];
+  ocppWarnings?: string[];
+  journey?: {
+    currentStage: string;
+    percentComplete: number;
+    steps: { id: string; label: string; status: string; nextSteps: string[] }[];
+  };
+  uplBoundaries?: {
+    audience: string;
+    jurisdiction: string;
+    canDo: string[];
+    cannotDo: string[];
+    safeHarbor: string;
+    examples: { request: string; redirect: string }[];
+  };
+  adviceRedirect?: {
+    redirected: boolean;
+    message: string;
+    options: string[];
+    safeHarbor: string;
+    tone: 'gentle' | 'firm';
+  };
+  sandboxPlan?: {
+    tier: string;
+    label: string;
+    rationale: string;
+    actions: string[];
+    humanReview: { required: boolean; reason?: string; steps: string[] };
+    auditTrail: string[];
+    controls: string[];
+  };
 }
 
 class ApiClient {
@@ -82,22 +134,47 @@ class ApiClient {
   // Evidence
   async uploadEvidence(
     matterId: string,
-    file: File
-  ): Promise<{ evidence: Evidence; timeline: any; gaps: any[]; alerts: any[] }> {
-    const formData = new FormData();
-    formData.append('file', file);
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<{ evidence: Evidence; timeline: any; gaps: any[]; alerts: any[]; redactedPreview?: string }> {
+    return new Promise((resolve, reject) => {
+      const url = `${API_BASE}/evidence/${matterId}`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
 
-    const response = await fetch(`${API_BASE}/evidence/${matterId}`, {
-      method: 'POST',
-      body: formData,
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve(data);
+          } catch (err) {
+            reject(new Error('Invalid JSON response'));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || 'Upload failed'));
+          } catch {
+            reject(new Error('Upload failed'));
+          }
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Upload failed'));
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      const fd = new FormData();
+      fd.append('file', file);
+      xhr.send(fd);
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-      throw new Error(error.error || 'Upload failed');
-    }
-
-    return response.json();
   }
 
   async listEvidence(matterId: string): Promise<Evidence[]> {
@@ -111,11 +188,12 @@ class ApiClient {
   // Documents
   async generateDocuments(
     matterId: string,
-    userConfirmedFacts?: string[]
+    userConfirmedFacts?: string[],
+    requestedTemplates?: string[]
   ): Promise<any> {
     return this.request<any>(`/documents/${matterId}/generate`, {
       method: 'POST',
-      body: JSON.stringify({ userConfirmedFacts }),
+      body: JSON.stringify({ userConfirmedFacts, requestedTemplates }),
     });
   }
 

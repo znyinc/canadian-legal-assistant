@@ -21,4 +21,11 @@ describe('TemplateLibrary', () => {
     const tips = lib.formattingGuidance();
     expect(tips.some((t) => t.toLowerCase().includes('retrieval'))).toBe(true);
   });
+
+  it('exposes domain templates', () => {
+    const lib = new TemplateLibrary();
+    const templates = lib.domainTemplates();
+    expect(Object.keys(templates).length).toBeGreaterThan(0);
+    expect(templates['civil/demand_notice']).toBeDefined();
+  });
 });

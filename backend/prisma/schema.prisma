@@ -23,6 +23,9 @@ model Matter {
   // Classification results (JSON)
   classification   String?   // JSON: MatterClassification
   forumMap         String?   // JSON: ForumMap
+  pillar           String?   // High-level pillar for easy querying
+  pillarMatches    String?   // JSON array of detected pillars
+  pillarAmbiguous  Boolean?  // Ambiguity flag
   
   // Metadata
   legalHold        Boolean   @default(false)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, Matter } from '../services/api';
+import { safeText } from '../utils/sanitize';
 
 export default function HomePage() {
   const [matters, setMatters] = useState<Matter[]>([]);
@@ -77,8 +78,9 @@ export default function HomePage() {
     e.preventDefault();
     e.stopPropagation();
 
+    const snippet = safeText(description).substring(0, 100) + (description.length > 100 ? '...' : '');
     const confirmed = window.confirm(
-      `Are you sure you want to delete this matter?\n\n"${description.substring(0, 100)}${description.length > 100 ? '...' : ''}"\n\nThis action cannot be undone.`
+      `Are you sure you want to delete this matter?\n\n"${snippet}"\n\nThis action cannot be undone.`
     );
 
     if (!confirmed) return;
@@ -202,7 +204,7 @@ export default function HomePage() {
                         </span>
                         <span className="text-sm text-gray-500">{matter.province}</span>
                       </div>
-                      <p className="text-gray-900 mb-2">{matter.description}</p>
+                      <p className="text-gray-900 mb-2">{safeText(matter.description)}</p>
                       <p className="text-sm text-gray-500">
                         Created {new Date(matter.createdAt).toLocaleDateString()}
                       </p>
@@ -224,7 +226,7 @@ export default function HomePage() {
                         </span>
                         <span className="text-sm text-gray-500">{matter.province}</span>
                       </div>
-                      <p className="text-gray-900 mb-2">{matter.description}</p>
+                      <p className="text-gray-900 mb-2">{safeText(matter.description)}</p>
                       <p className="text-sm text-gray-500">
                         Created {new Date(matter.createdAt).toLocaleDateString()}
                       </p>

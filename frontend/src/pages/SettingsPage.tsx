@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { api } from '../services/api';
+import { safeText } from '../utils/sanitize';
 
 interface Matter {
   id: string;
@@ -60,7 +62,7 @@ export function SettingsPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Failed to export data: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert('Failed to export data: ' + safeText(err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +80,7 @@ export function SettingsPage() {
       setDeleteConfirm(false);
       alert('Matter deleted successfully');
     } catch (err) {
-      alert('Failed to delete matter: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert('Failed to delete matter: ' + safeText(err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +93,7 @@ export function SettingsPage() {
       const data = await api.getAuditLog(auditFilterMatterId || undefined);
       setAuditLog(data);
     } catch (err) {
-      alert('Failed to load audit log: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert('Failed to load audit log: ' + safeText(err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +221,7 @@ export function SettingsPage() {
                   <option value="">-- Select a matter --</option>
                   {matters.map((matter) => (
                     <option key={matter.id} value={matter.id}>
-                      {matter.description} ({matter.domain}) - {new Date(matter.createdAt).toLocaleDateString()}
+                      {safeText(matter.description)} ({safeText(matter.domain)}) - {new Date(matter.createdAt).toLocaleDateString()}
                     </option>
                   ))}
                 </select>
@@ -232,7 +234,7 @@ export function SettingsPage() {
                     <dl className="space-y-2 text-sm text-gray-700">
                       <div className="flex justify-between">
                         <dt className="font-medium">Description:</dt>
-                        <dd>{selectedMatter.description}</dd>
+                        <dd>{safeText(selectedMatter.description)}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="font-medium">Domain:</dt>
@@ -397,7 +399,7 @@ export function SettingsPage() {
                               View Details
                             </summary>
                             <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
-                              {JSON.stringify(event.details, null, 2)}
+                              {DOMPurify.sanitize(JSON.stringify(event.details, null, 2), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })}
                             </pre>
                           </details>
                         </td>

@@ -47,7 +47,13 @@ export class EvidenceIndexer {
     return {
       items: this.indexItems,
       generatedAt: new Date().toISOString(),
-      sourceManifest: { sources: this.sources }
+      sourceManifest: {
+        entries: this.sources,
+        // Provide legacy "sources" alias for tests that still expect it
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(this.sources ? { sources: this.sources } : {} as any),
+        compiledAt: new Date().toISOString()
+      } as any
     };
   }
 

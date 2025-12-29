@@ -95,4 +95,84 @@ describe('DocumentPackager', () => {
     expect(hasPlaceholder).toBe(true);
     expect(pkg.warnings?.length).toBeGreaterThan(0);
   });
+
+  it('includes PDF/A conversion guide for OCPP filings in Ontario', () => {
+    const packager = new DocumentPackager();
+    const pkg = packager.assemble({
+      packageName: 'ocpp-package',
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidenceChecklist: 'Missing evidence content',
+      drafts: [draft],
+      sourceManifest,
+      evidenceManifest,
+      jurisdiction: 'Ontario',
+      domain: 'ocppFiling'
+    });
+
+    const pdfaGuide = pkg.files.find((f) => f.path === 'PDF_A_CONVERSION_GUIDE.md');
+    expect(pdfaGuide).toBeDefined();
+    expect(pdfaGuide?.content).toContain('PDF/A Format Conversion Guide');
+    expect(pdfaGuide?.content).toContain('LibreOffice');
+    expect(pdfaGuide?.content).toContain('Microsoft Word');
+    expect(pdfaGuide?.content).toContain('Adobe Acrobat Pro');
+    expect(pkg.warnings).toContain('IMPORTANT: Toronto Region Superior Court requires PDF/A format for all filings.');
+  });
+
+  it('includes PDF/A warnings for civil negligence in Ontario', () => {
+    const packager = new DocumentPackager();
+    const pkg = packager.assemble({
+      packageName: 'civil-package',
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidenceChecklist: 'Missing evidence content',
+      drafts: [draft],
+      sourceManifest,
+      evidenceManifest,
+      jurisdiction: 'Ontario',
+      domain: 'civilNegligence'
+    });
+
+    const pdfaGuide = pkg.files.find((f) => f.path === 'PDF_A_CONVERSION_GUIDE.md');
+    expect(pdfaGuide).toBeDefined();
+    expect(pkg.warnings).toContain('IMPORTANT: Toronto Region Superior Court requires PDF/A format for all filings.');
+  });
+
+  it('does not include PDF/A guide for non-OCPP domains', () => {
+    const packager = new DocumentPackager();
+    const pkg = packager.assemble({
+      packageName: 'ltb-package',
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidenceChecklist: 'Missing evidence content',
+      drafts: [draft],
+      sourceManifest,
+      evidenceManifest,
+      jurisdiction: 'Ontario',
+      domain: 'landlordTenant'
+    });
+
+    const pdfaGuide = pkg.files.find((f) => f.path === 'PDF_A_CONVERSION_GUIDE.md');
+    expect(pdfaGuide).toBeUndefined();
+    expect(pkg.warnings?.some(w => w.includes('PDF/A'))).toBeFalsy();
+  });
+
+  it('does not include PDF/A guide for non-Ontario jurisdictions', () => {
+    const packager = new DocumentPackager();
+    const pkg = packager.assemble({
+      packageName: 'bc-package',
+      forumMap: 'Forum map content',
+      timeline: 'Timeline content',
+      missingEvidenceChecklist: 'Missing evidence content',
+      drafts: [draft],
+      sourceManifest,
+      evidenceManifest,
+      jurisdiction: 'British Columbia',
+      domain: 'ocppFiling'
+    });
+
+    const pdfaGuide = pkg.files.find((f) => f.path === 'PDF_A_CONVERSION_GUIDE.md');
+    expect(pdfaGuide).toBeUndefined();
+    expect(pkg.warnings?.some(w => w.includes('PDF/A'))).toBeFalsy();
+  });
 });

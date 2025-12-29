@@ -168,36 +168,33 @@ router.get('/statute', async (req: Request, res: Response) => {
   }
 
   try {
-    const citation = citationFormatter.formatStatuteCitation({
+    // Use the actual CitationFormatter.formatStatute method
+    const citation = citationFormatter.formatStatute({
+      jurisdiction: 'Ontario',
       title: title as string,
-      year: year ? parseInt(year as string, 10) : undefined,
-      section: section as string | undefined,
-      juris: 'ON',
+      provision: section as string | undefined,
+      url: `https://www.ontario.ca/laws/statute/${year || 'current'}`,
+      retrievalDate: new Date().toISOString().split('T')[0],
     });
 
     res.json({
       statute: {
-        title: citation.title,
-        citation: citation.fullCitation,
-        citationWithURL: citation.citationWithURL,
-        url: citation.url,
+        title,
+        citation,
+        url: `https://www.ontario.ca/laws/statute/${year || 'current'}`,
         retrievedAt: new Date(),
       },
     });
   } catch (error) {
-    const failure = retrievalGuard.handleRetrievalFailure(
-      new Error(error instanceof Error ? error.message : 'Citation failed'),
-      'Statute citation'
-    );
+    const message = retrievalGuard.failureMessage('e-Laws', title as string);
 
     res.status(400).json({
       error: 'Failed to format statute citation',
-      failure,
+      message,
       suggestion: `Search manually for "${title}" on e-Laws Ontario`,
     });
   }
 });
-
 // GET /api/caselaw/court-guidance - Get court/tribunal guidance
 router.get('/court-guidance', async (req: Request, res: Response) => {
   const { court } = req.query;

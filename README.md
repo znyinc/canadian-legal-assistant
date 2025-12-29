@@ -43,6 +43,14 @@ npm run dev
 
 ## Features
 
+### What pillars mean
+- **Criminal**: Offences prosecuted by the state (e.g., assault, theft). Burden: beyond a reasonable doubt. Seek police/lawyer help for urgent risk.
+- **Civil**: Disputes between parties for money or specific performance (e.g., negligence, contracts). Burden: balance of probabilities.
+- **Administrative**: Tribunal or regulator processes (e.g., LTB, HRTO, licensing). Burden: often balance of probabilities or statute-specific tests.
+- **Quasi-criminal**: Regulatory/by-law offences (e.g., tickets, provincial offences). Burden: statute-specific, can include penalties.
+- **Unknown/ambiguous**: Provide more facts. When unsure or facing deadlines, contact a lawyer or community legal clinic.
+- Examples: “Slip and fall at a store” → Civil; “By-law ticket + assault” → Ambiguous (Quasi-criminal + Criminal).
+
 ### 1. Matter Intake & Classification
 - Describe legal issue (insurance, landlord/tenant, employment, etc.)
 - Automatic domain classification and urgency assessment
@@ -57,7 +65,9 @@ npm run dev
 - Evidence indexing with cryptographic hashing
 
 ### 3. Document Generation
-- Domain-specific templates (Insurance: complaint letters; L/T: LTB forms)
+- Domain-specific templates (Insurance: complaint letters; L/T: LTB forms; Civil negligence: demand notice, Form 7A scaffold, evidence checklist)
+- Municipal 10-day notice detection: system flags matters that may require municipal notice (tree/municipal property damage) and advises sending notice to municipal clerk within 10 days where applicable
+- Quick action: UI provides a "Generate Form 7A" button on civil negligence matters to create a focused Form 7A package for download
 - Evidence-grounded drafting with user confirmation
 - Standardized packages: drafts + manifests + timeline
 - Source citations with URLs and retrieval dates
