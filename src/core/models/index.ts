@@ -8,6 +8,7 @@ export type Domain =
   | 'criminal'
   | 'ocppFiling'
   | 'tree-damage'
+  | 'consumerProtection'
   | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;
@@ -181,6 +182,12 @@ export interface DomainModuleOutput {
   drafts: DocumentDraft[];
   package: DocumentPackage;
   warnings?: string[];
+  ocppValidation?: {
+    compliant: boolean;
+    errors: string[];
+    warnings: string[];
+    checklist: string;
+  };
 }
 
 export interface DomainModule {

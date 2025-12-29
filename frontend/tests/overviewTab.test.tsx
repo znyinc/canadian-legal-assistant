@@ -1,18 +1,13 @@
 /* @vitest-environment jsdom */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
 
-// Mock MatterDeadlineAlerts to avoid React hook mismatch in jsdom
-vi.mock('../../frontend/src/components/MatterDeadlineAlerts', () => ({
-  MatterDeadlineAlerts: () => <div data-testid="matter-deadline-alerts">Deadline alerts</div>,
-}));
-
-import OverviewTab from '../../frontend/src/components/OverviewTab';
+import OverviewTab from '../src/components/OverviewTab';
 
 describe('OverviewTab (UI): pillar explanation display', () => {
-  it('shows pillar explanation with burden and overview and next steps', () => {
+  it('shows pillar explanation with burden and overview and next steps', async () => {
     const classification = { domain: 'civil-negligence', pillar: 'Civil' };
     const forumMap = { primaryForum: { name: 'Small Claims Court', type: 'court' }, alternatives: [] };
     const pillarExplanation = {
@@ -21,7 +16,12 @@ describe('OverviewTab (UI): pillar explanation display', () => {
       nextSteps: ['Collect photos', 'Obtain repair estimates']
     };
 
+    const user = userEvent.setup();
     render(<OverviewTab classification={classification} forumMap={forumMap} classifying={false} onClassify={() => {}} pillarExplanation={pillarExplanation} />);
+
+    // Classification details are collapsed by default - click to expand
+    const expandButton = screen.getByRole('button', { name: /Technical Classification Details/i });
+    await user.click(expandButton);
 
     expect(screen.getByText(/Legal pillar:/)).toBeInTheDocument();
     expect(screen.getByText(/Balance of probabilities/)).toBeInTheDocument();
@@ -52,5 +52,32 @@ describe('OverviewTab (UI): pillar explanation display', () => {
     expect(screen.getByText(/Divisional Court/)).toBeInTheDocument();
     expect(screen.getByText(/Court of Appeal/)).toBeInTheDocument();
     expect(screen.getAllByText(/Amount within Small Claims threshold/).length).toBeGreaterThan(0);
+  });
+
+  it('renders deadline alerts when provided', () => {
+    const classification = { domain: 'civil-negligence', pillar: 'Civil' } as any;
+    const forumMap = { primaryForum: { name: 'Small Claims Court', type: 'court' }, alternatives: [] } as any;
+    const alerts = [
+      {
+        urgency: 'warning',
+        daysRemaining: 5,
+        limitationPeriod: {
+          name: 'Municipal Notice Requirement',
+          period: '10 days',
+          description: 'Notice needed within 10 days',
+          consequence: 'Missing it can bar your claim',
+        },
+        message: '5 days remaining to send notice',
+        actionRequired: 'Send written notice to the municipality',
+        encouragement: "Don't panic",
+      },
+    ];
+
+    render(<OverviewTab classification={classification} forumMap={forumMap} classifying={false} onClassify={() => {}} deadlineAlerts={alerts} />);
+
+    expect(screen.getByText(/Important Deadlines/i)).toBeInTheDocument();
+    expect(screen.getByText(/Municipal Notice Requirement/)).toBeInTheDocument();
+    expect(screen.getByText(/5 days remaining to send notice/)).toBeInTheDocument();
+    expect(screen.getByText(/Send written notice/)).toBeInTheDocument();
   });
 });

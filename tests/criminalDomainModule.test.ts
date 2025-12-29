@@ -275,4 +275,131 @@ describe('Criminal Domain Templates', () => {
     expect(template).toContain('uttering threats');
     expect(template).toContain('Ontario');
   });
+
+  it('generates victim services guide', async () => {
+    const criminalModule = new CriminalDomainModule();
+    const classification = {
+      domain: 'criminal',
+      subCategory: 'assault',
+    };
+
+    const evidenceManifest = {
+      matterId: 'test-victim-services',
+      description: 'Test evidence',
+      sources: [],
+      items: [],
+      compiledAt: new Date(),
+    };
+
+    const { drafts } = await criminalModule.generateDocuments(
+      classification as any,
+      {},
+      [],
+      evidenceManifest,
+    );
+
+    const victimServicesDraft = drafts.find((d) => d.title.includes('Victim Services'));
+    expect(victimServicesDraft).toBeDefined();
+    expect(victimServicesDraft!.title).toContain('Victim Services Ontario');
+    const content = victimServicesDraft!.sections[0].content;
+    expect(content).toContain('V/WAP');
+    expect(content).toContain('Court accompaniment');
+    expect(content).toContain('416-314-2447');
+  });
+
+  it('generates criminal evidence checklist', async () => {
+    const criminalModule = new CriminalDomainModule();
+    const classification = {
+      domain: 'criminal',
+      subCategory: 'assault',
+    };
+
+    const evidenceManifest = {
+      matterId: 'test-evidence-checklist',
+      description: 'Test evidence',
+      sources: [],
+      items: [],
+      compiledAt: new Date(),
+    };
+
+    const { drafts } = await criminalModule.generateDocuments(
+      classification as any,
+      {},
+      [],
+      evidenceManifest,
+    );
+
+    const evidenceChecklistDraft = drafts.find((d) => d.title.includes('Evidence Checklist'));
+    expect(evidenceChecklistDraft).toBeDefined();
+    expect(evidenceChecklistDraft!.title).toContain('Criminal Complainant');
+    const content = evidenceChecklistDraft!.sections[0].content;
+    expect(content).toContain('Medical Documentation');
+    expect(content).toContain('occurrence number');
+    expect(content).toContain('Screenshot');
+    expect(content).toContain('Witnesses');
+  });
+
+  it('generates complainant role explanation', async () => {
+    const criminalModule = new CriminalDomainModule();
+    const classification = {
+      domain: 'criminal',
+      subCategory: 'assault',
+    };
+
+    const evidenceManifest = {
+      matterId: 'test-role-guide',
+      description: 'Test evidence',
+      sources: [],
+      items: [],
+      compiledAt: new Date(),
+    };
+
+    const { drafts } = await criminalModule.generateDocuments(
+      classification as any,
+      {},
+      [],
+      evidenceManifest,
+    );
+
+    const roleDraft = drafts.find((d) => d.title.includes('Role as Complainant'));
+    expect(roleDraft).toBeDefined();
+    const content = roleDraft!.sections[0].content;
+    expect(content).toContain('witness, not a party');
+    expect(content).toContain('Crown Attorney');
+    expect(content).toContain('peace bond');
+    expect(content).toContain('810');
+  });
+
+  it('includes all six criminal drafts for assault', async () => {
+    const criminalModule = new CriminalDomainModule();
+    const classification = {
+      domain: 'criminal',
+      subCategory: 'assault',
+      notes: ['assault'],
+    };
+
+    const evidenceManifest = {
+      matterId: 'test-all-drafts',
+      description: 'Test evidence',
+      sources: [],
+      items: [],
+      compiledAt: new Date(),
+    };
+
+    const { drafts } = await criminalModule.generateDocuments(
+      classification as any,
+      {},
+      [],
+      evidenceManifest,
+    );
+
+    // Should have: release conditions, victim impact, police/crown guide, victim services, evidence checklist, complainant role
+    expect(drafts.length).toBe(6);
+    expect(drafts.some((d) => d.title.includes('Release Conditions'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('Victim Impact'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('Police and Crown'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('Victim Services'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('Evidence Checklist'))).toBe(true);
+    expect(drafts.some((d) => d.title.includes('Complainant'))).toBe(true);
+  });
 });

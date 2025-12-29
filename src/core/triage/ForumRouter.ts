@@ -32,6 +32,11 @@ export class ForumRouter {
   }
 
   private primaryForum(input: RoutingInput): AuthorityRef {
+    // Criminal matters go to Ontario Court of Justice
+    if (input.domain === 'criminal') {
+      return this.mustGet('ON-OCJ');
+    }
+
     // Tribunal prioritization for LTB and HRTO
     if (input.domain === 'landlordTenant') {
       return this.mustGet('ON-LTB');
@@ -50,9 +55,10 @@ export class ForumRouter {
       return this.mustGet('CA-FC');
     }
 
-    // Court level by amount (Ontario heuristic)
+    // Court level by amount (Ontario heuristic updated for $50,000 Small Claims limit)
     if (input.jurisdiction === 'Ontario') {
-      if ((input.disputeAmount || 0) <= 35000) return this.mustGet('ON-SC');
+      const amount = input.disputeAmount || 0;
+      if (amount <= 50000) return this.mustGet('ON-SMALL');
       return this.mustGet('ON-SC');
     }
 
@@ -100,10 +106,11 @@ export class ForumRouter {
     } else if (input.isJudicialReview) {
       notes.push('Judicial review requested; routing to the reviewing court.');
     } else if (input.jurisdiction === 'Ontario') {
-      if ((input.disputeAmount || 0) <= 35000) {
-        notes.push('Claim amount within Small Claims Court monetary threshold in Ontario.');
+      const amount = input.disputeAmount || 0;
+      if (amount <= 50000) {
+        notes.push('Claim amount within Small Claims Court monetary threshold in Ontario ($50,000).');
       } else {
-        notes.push('Higher-value claim defaults to Superior Court in Ontario.');
+        notes.push('Higher-value claim defaults to Superior Court of Justice in Ontario.');
       }
     }
 

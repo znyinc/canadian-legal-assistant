@@ -1,6 +1,6 @@
 # Canadian Legal Assistant - Startup Script
-# Starts backend (port 3010) and frontend (port 5173/5174) dev servers
-# Automatically kills any existing processes on those ports
+# Starts backend (port 3001) and frontend (port 5173/5174) dev servers
+# Automatically kills any existing processes on those ports (use -Clean to force)
 
 param(
     [switch]$Clean = $false  # If -Clean flag is used, kill existing processes and restart
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "SilentlyContinue"
 $BackendPort = 3001
-$FrontendPort = 5173
+$FrontendPorts = @(5173, 5174) # Vite uses 5173 by default and 5174 as a fallback
 # Prefer script directory; fall back to current working directory
 $RootDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommandPath) { Split-Path -Parent $MyInvocation.MyCommandPath } else { Get-Location }
 
@@ -34,16 +34,21 @@ function Stop-ProcessOnPort {
     return $false
 }
 
-# Check and clean existing processes if needed
-$BackendRunning = Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue
-$FrontendRunning = Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue
+# Check and clean existing processes if needed (including Vite fallback port)
+$ExistingConnections = @()
+foreach ($port in @($BackendPort) + $FrontendPorts) {
+    $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+    if ($conn) { $ExistingConnections += $conn }
+}
 
-if ($BackendRunning -or $FrontendRunning -or $Clean) {
+if ($ExistingConnections -or $Clean) {
     Write-Host ""
     Write-Host "[CHECKING] Checking for existing processes..." -ForegroundColor Yellow
     
     Stop-ProcessOnPort -Port $BackendPort -ServiceName "Backend"
-    Stop-ProcessOnPort -Port $FrontendPort -ServiceName "Frontend"
+    foreach ($port in $FrontendPorts) {
+        Stop-ProcessOnPort -Port $port -ServiceName "Frontend"
+    }
     
     Start-Sleep -Seconds 1
 }
@@ -85,19 +90,21 @@ try {
     Write-Host "  Waiting for frontend to initialize..." -ForegroundColor Gray
     $maxWait = 15
     $waited = 0
+    $activeFrontendPort = $null
     while ($waited -lt $maxWait) {
-        if ((Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue) -or (Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue)) {
-            if (Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue) {
-                Write-Host "[OK] Frontend running on http://localhost:$FrontendPort" -ForegroundColor Green
-            } else {
-                Write-Host "[OK] Frontend running on http://localhost:5173" -ForegroundColor Green
+        foreach ($port in $FrontendPorts) {
+            if (Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue) {
+                $activeFrontendPort = $port
+                break
             }
-            break
         }
+        if ($activeFrontendPort) { break }
         Start-Sleep -Seconds 1
         $waited++
     }
-    if ($waited -ge $maxWait) {
+    if ($activeFrontendPort) {
+        Write-Host "[OK] Frontend running on http://localhost:$activeFrontendPort" -ForegroundColor Green
+    } else {
         Write-Host "[WARNING] Frontend may still be starting (no response after 15s)" -ForegroundColor Yellow
     }
 } catch {
@@ -111,8 +118,8 @@ Write-Host "=" * 50 -ForegroundColor Cyan
 Write-Host "[SUCCESS] Both servers started successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your application:" -ForegroundColor Cyan
-Write-Host "  Backend API:  http://localhost:3010" -ForegroundColor White
-Write-Host "  Frontend UI:  http://localhost:5173 (or 5174)" -ForegroundColor White
+Write-Host "  Backend API:  http://localhost:$BackendPort" -ForegroundColor White
+Write-Host "  Frontend UI:  http://localhost:$($FrontendPorts[0]) (or $($FrontendPorts[1]))" -ForegroundColor White
 Write-Host ""
 Write-Host "To stop servers, run: .\shutdown.ps1" -ForegroundColor Cyan
 Write-Host "=" * 50 -ForegroundColor Cyan

@@ -6,7 +6,7 @@ import { DomainModuleInput, DocumentDraft } from '../models';
  *
  * This module routes employment disputes to the appropriate forum:
  * - ESA (Employment Standards Act) administrative complaints → Ministry of Labour
- * - Common law wrongful dismissal → Superior Court (or Small Claims under $35K-$50K)
+ * - Common law wrongful dismissal → Superior Court (or Small Claims under $50K)
  *
  * Key distinction: ESA provides LIMITED remedies (wages, severance), common law provides BROADER remedies
  * (damages for manner of dismissal, lost benefits, reputation) but requires litigation.
@@ -66,7 +66,7 @@ export class EmploymentLawRouterModule extends BaseDomainModule {
    • Consider common law wrongful dismissal litigation
    • Can claim broader damages
    • Requires lawyer (more expensive)
-   • Claims may exceed Small Claims limit ($35K-$50K)
+  • Claims may exceed Small Claims limit ($50K)
 
 **Do you have a contract specifying notice period or severance?**
 → YES: Contract may limit or exceed ESA minimums
@@ -87,7 +87,7 @@ export class EmploymentLawRouterModule extends BaseDomainModule {
 ✓ Not paid vacation pay or statutory holiday pay
 ✓ Entitled to severance but not paid
 ✓ Due notice but dismissed without notice/pay-in-lieu
-✓ Claims under $35,000-$50,000
+✓ Claims under $50,000
 ✓ Want quick resolution (6-12 months vs 2-3 years litigation)
 
 **When NOT to choose ESA complaint:**
@@ -114,7 +114,7 @@ export class EmploymentLawRouterModule extends BaseDomainModule {
 ✗ Cannot afford lawyer/litigation costs
 ✗ Want resolution quickly (litigation takes 2-3 years)
 ✗ Fired "for cause" with good documentation (harder to win)
-✗ Claims under $35,000 (use Small Claims instead)`,
+✗ Claims under $50,000 (use Small Claims instead)`,
           evidenceRefs: [],
           confirmed: true
         },
@@ -127,7 +127,7 @@ export class EmploymentLawRouterModule extends BaseDomainModule {
 | Remedies | Unpaid wages, severance only | Broader damages (benefits, manner, emotional distress) |
 | Burden of Proof | Lower; MOL helps | Higher; you prove wrongful dismissal |
 | "For Cause" Defense | Weak (ESA doesn't allow) | Strong defense if documented |
-| Small Claims | N/A | Yes, if under $35-50K |
+| Small Claims | N/A | Yes, if under $50K |
 | Limitation Period | 2 years from event | 2 years from dismissal |
 | Appeal | Limited (Director review) | Full court appeal available |`,
           evidenceRefs: [],
@@ -304,7 +304,7 @@ Example: $60,000/year × 12 months notice = $60,000 wrongful dismissal claim
         },
         {
           heading: 'Where to Sue & Procedure',
-          content: `**Small Claims Court (for claims under $35,000-$50,000):**
+          content: `**Small Claims Court (for claims under $50,000):**
 ✓ Faster (12-18 months)
 ✓ Simpler procedure
 ✓ No lawyer requirement
@@ -312,7 +312,7 @@ Example: $60,000/year × 12 months notice = $60,000 wrongful dismissal claim
 ✗ Limited remedies
 ✗ Limited appeal rights
 
-**Superior Court (for claims over $35,000-$50,000):**
+**Superior Court (for claims over $50,000):**
 ✓ Larger damage awards possible
 ✓ Full appeal rights
 ✓ Complex claims
@@ -784,8 +784,8 @@ December 2, 2026: TOO LATE (claim is now statute-barred, FOREVER)`,
 
 **Understand your options:**
 □ ESA complaint (free, 6-12 months, limited remedies)
-□ Small Claims Court (if under $35-50K, 12-18 months)
-□ Superior Court (if over $35-50K, 2-4 years)
+□ Small Claims Court (if under $50K, 12-18 months)
+□ Superior Court (if over $50K, 2-4 years)
 □ Negotiate directly with employer
 
 **Do NOT:**

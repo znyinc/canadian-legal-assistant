@@ -154,7 +154,7 @@ Proof: Keep email receipt or Canada Post tracking number.`,
 • Day 0–10: Give formal notice to municipality
 • Day 11–30: Municipality may respond with offer/denial/request for more info
 • Day 30–90: Negotiate with municipality claims adjuster
-• Day 90+: If no resolution, consult lawyer about Small Claims ($35–50K) or Superior Court claim
+• Day 90+: If no resolution, consult lawyer about Small Claims (up to $50,000) or Superior Court claim
 • Limitation period: 2 years from discovery of damage (track original date)
 
 ⏰ Do NOT wait—if approaching 2-year limit, file claim to stop limitation period.`,
@@ -250,7 +250,7 @@ Example: Dead tree on municipal land obviously will fall → foreseeable harm �
           heading: 'Liability Limits & Damages Cap',
           content: `**Municipal Act Caps:**
 As of 2025, limits vary:
-• Small Claims: $35,000–$50,000 (jurisdiction limit)
+• Small Claims: up to $50,000 (jurisdiction limit)
 • Superior Court: No limit but consider cost-benefit
 
 **Recoverable Damages:**
@@ -378,7 +378,7 @@ Most municipalities carry liability insurance ($10M+ typical)
 8. Amount claimed (repair cost + reasonable expenses)
 
 **Claim Options:**
-- Small Claims ($35K–50K limit)
+- Small Claims (up to $50,000 limit)
 - Superior Court claim (no limit, but more expensive)
 - CANCELLED Claims tribunal (if applicable)**
 
@@ -458,7 +458,7 @@ Sincerely,
 • Cost: Filing fee ($50–200)
 
 **Path 3: Small Claims Court**
-• Jurisdiction: Up to $35,000–$50,000 (depending on your province)
+• Jurisdiction: Up to $50,000
 • Process: Small claims procedure (simpler, faster than Superior Court)
 • Timeline: 6–12 months from filing to trial
 • Cost: Filing fee ($100–200) + service costs

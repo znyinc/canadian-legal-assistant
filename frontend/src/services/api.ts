@@ -31,10 +31,49 @@ export interface ClassificationResult {
     overview: string;
     nextSteps: string[];
   };
+  deadlineAlerts?: {
+    urgency: 'critical' | 'warning' | 'caution' | 'info';
+    daysRemaining: number;
+    limitationPeriod: {
+      name: string;
+      period: string;
+      description: string;
+      consequence: string;
+      learnMoreUrl?: string;
+    };
+    message: string;
+    actionRequired: string;
+    encouragement?: string;
+  }[];
+  ocppWarnings?: string[];
   journey?: {
     currentStage: string;
     percentComplete: number;
     steps: { id: string; label: string; status: string; nextSteps: string[] }[];
+  };
+  uplBoundaries?: {
+    audience: string;
+    jurisdiction: string;
+    canDo: string[];
+    cannotDo: string[];
+    safeHarbor: string;
+    examples: { request: string; redirect: string }[];
+  };
+  adviceRedirect?: {
+    redirected: boolean;
+    message: string;
+    options: string[];
+    safeHarbor: string;
+    tone: 'gentle' | 'firm';
+  };
+  sandboxPlan?: {
+    tier: string;
+    label: string;
+    rationale: string;
+    actions: string[];
+    humanReview: { required: boolean; reason?: string; steps: string[] };
+    auditTrail: string[];
+    controls: string[];
   };
 }
 

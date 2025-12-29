@@ -302,6 +302,8 @@ export class LimitationPeriodsEngine {
 
   /**
    * Get relevant limitation periods for a matter based on domain and description.
+   * NOTE: Criminal matters do not have civil limitation periods - they are governed
+   * by different timelines (disclosure, trial scheduling) set by the Crown.
    */
   getRelevantPeriods(
     domain: string,
@@ -310,11 +312,17 @@ export class LimitationPeriodsEngine {
   ): LimitationPeriod[] {
     const relevant: LimitationPeriod[] = [];
     
-    // Always include general 2-year period
+    // Criminal matters do not have civil limitation periods
+    // Criminal timelines are set by Crown counsel (disclosure, pre-trial, trial dates)
+    if (domain === 'criminal') {
+      return relevant; // Empty - no civil deadlines apply
+    }
+    
+    // Always include general 2-year period for civil matters
     const general = this.periods.get('ontario-general-2-year');
     if (general) relevant.push(general);
     
-    // Check for municipal notice requirement
+    // Check for municipal notice requirement (civil property damage only)
     if (this.detectMunicipalNotice(description, tags)) {
       const municipal = this.periods.get('ontario-municipal-10-day');
       if (municipal) relevant.push(municipal);
@@ -328,12 +336,12 @@ export class LimitationPeriodsEngine {
       if (wrongful) relevant.push(wrongful);
     }
     
-    if (domain === 'landlord-tenant') {
+    if (domain === 'landlordTenant') {
       const ltb = this.periods.get('ontario-ltb-application');
       if (ltb) relevant.push(ltb);
     }
     
-    if (domain === 'human-rights') {
+    if (domain === 'humanRights') {
       const hrto = this.periods.get('ontario-human-rights-hrto');
       if (hrto) relevant.push(hrto);
     }

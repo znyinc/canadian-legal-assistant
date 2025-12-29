@@ -137,7 +137,7 @@ describe('LimitationPeriodsEngine', () => {
 
   it('should get relevant periods for landlord-tenant matters', () => {
     const engine = new LimitationPeriodsEngine();
-    const periods = engine.getRelevantPeriods('landlord-tenant', 'Landlord illegally withheld my rent deposit');
+    const periods = engine.getRelevantPeriods('landlordTenant', 'Landlord illegally withheld my rent deposit');
     
     expect(periods.some(p => p.id === 'ontario-ltb-application')).toBe(true);
   });
@@ -157,5 +157,20 @@ describe('LimitationPeriodsEngine', () => {
     
     const hrto = engine.getPeriod('ontario-human-rights-hrto');
     expect(hrto?.learnMoreUrl).toContain('sjto.ca');
+  });
+
+  it('should NOT return limitation periods for criminal matters', () => {
+    const engine = new LimitationPeriodsEngine();
+    
+    // Criminal matters are prosecuted by Crown - no civil limitation periods apply
+    const criminalPeriods = engine.getRelevantPeriods(
+      'criminal',
+      'Assault and uttering threats at neighbourhood altercation, police attended',
+      ['assault', 'threats']
+    );
+    
+    expect(criminalPeriods.length).toBe(0);
+    expect(criminalPeriods.some(p => p.id === 'ontario-general-2-year')).toBe(false);
+    expect(criminalPeriods.some(p => p.id === 'ontario-municipal-10-day')).toBe(false);
   });
 });

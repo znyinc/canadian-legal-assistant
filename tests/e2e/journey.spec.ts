@@ -19,13 +19,13 @@ test('journey tracker persists across reloads', async ({ page }) => {
   await expect(percent).toBeVisible({ timeout: 10000 });
 
   // Check a couple of stable step labels
-  await expect(page.getByText('Understand')).toBeVisible();
-  await expect(page.getByText('Options')).toBeVisible();
+  await expect(page.getByText('Understand', { exact: true })).toBeVisible();
+  await expect(page.getByText('Options', { exact: true })).toBeVisible();
 
   // Reload and verify persistence
   await page.reload();
   await expect(page.getByText('Journey Tracker')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/\d+% complete/)).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText('Understand')).toBeVisible();
-  await expect(page.getByText('Options')).toBeVisible();
+  await expect(page.getByText('Understand', { exact: true })).toBeVisible();
+  await expect(page.getByText('Options', { exact: true })).toBeVisible();
 });

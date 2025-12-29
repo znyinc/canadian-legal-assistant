@@ -25,10 +25,27 @@ describe('DisclaimerService', () => {
     expect(res.redirected).toBe(true);
   });
 
-  it.skip('renders empathy-focused CAN/CANNOT boundaries', () => {
+  it('renders empathy-focused CAN/CANNOT boundaries', () => {
     const text = buildEmpathyBoundaries({ jurisdiction: 'Ontario', audience: 'self-represented' });
     expect(text).toContain('What We CAN Do');
     expect(text).toContain('What We CANNOT Do');
     expect(text).toContain('Ontario');
+  });
+
+  it('builds structured empathy boundary plan with safe harbor', () => {
+    const svc = new DisclaimerService();
+    const plan = svc.empathyBoundaryPlan({ jurisdiction: 'Ontario', audience: 'self-represented' });
+    expect(plan.canDo.length).toBeGreaterThan(0);
+    expect(plan.cannotDo.length).toBeGreaterThan(0);
+    expect(plan.safeHarbor).toContain('Safe Harbor Over Speed');
+    expect(plan.examples[0].redirect).toMatch(/information/i);
+  });
+
+  it('detects advice requests and returns safe-harbor redirection', () => {
+    const svc = new DisclaimerService();
+    const advice = svc.adviceRequestGuidance('What should I do about this?');
+    expect(advice.redirected).toBe(true);
+    expect(advice.message).toContain('information-only');
+    expect(advice.safeHarbor).toContain('Safe Harbor');
   });
 });

@@ -42,7 +42,7 @@ shutdown.bat
 
 ### Startup
 
-1. Checks if backend (port 3010) and frontend (port 5173/5174) are already running
+1. Checks if backend (port 3001) and frontend (port 5173/5174) are already running
 2. Kills any existing processes on those ports (if `-Clean` flag used or ports are in use)
 3. Starts backend dev server in hidden background process
 4. Starts frontend dev server in hidden background process
@@ -54,7 +54,7 @@ shutdown.bat
 
 ### Shutdown
 
-1. Finds processes running on ports 3010 and 5173/5174
+1. Finds processes running on ports 3001 and 5173/5174
 2. Terminates those processes gracefully
 3. Verifies ports are free
 4. Reports status
@@ -102,7 +102,7 @@ Stop-Process -Id <PID> -Force
 2. Check .env files in backend and frontend directories for correct configuration
 
 3. Check terminal outputs:
-   - Backend should show: `[OK] Backend running on http://localhost:3010`
+   - Backend should show: `[OK] Backend running on http://localhost:3001`
    - Frontend should show: `[OK] Frontend running on http://localhost:5173`
 
 ## Development Workflow
@@ -139,7 +139,7 @@ If you need to restart servers frequently during development:
 
 If you want to use different ports:
 
-1. **Backend**: Edit `backend/.env` and change `PORT=3010`
+1. **Backend**: Edit `backend/.env` and change `PORT=3001`
 2. **Frontend**: Edit `frontend/.env` and set `VITE_API_URL=http://localhost:<new-port>`
 3. Update the port numbers in `startup.ps1` and `shutdown.ps1`
 

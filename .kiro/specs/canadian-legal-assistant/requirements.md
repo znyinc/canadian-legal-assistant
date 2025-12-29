@@ -232,6 +232,34 @@ The system maintains strict boundaries to avoid unauthorized practice of law whi
 6. WHEN employment matters arise, THE System SHALL distinguish between Employment Standards Act complaints and civil wrongful dismissal claims
 7. WHERE Ontario-specific procedures apply, THE System SHALL prioritize provincial requirements over general Canadian guidance
 
+### Requirement 15
+
+**User Story:** As a legal newcomer facing my first encounter with the justice system, I want an action-first user experience that tells me what to do next, so that I can take immediate steps without being overwhelmed by technical classifications.
+
+#### Acceptance Criteria
+
+1. WHEN a user describes their legal issue, THE System SHALL lead with immediate actionable steps rather than technical classification details
+2. WHEN presenting guidance, THE System SHALL use empathetic acknowledgment language that recognizes the user's emotional state
+3. WHEN explaining legal processes, THE System SHALL clarify the user's specific role (witness, plaintiff, complainant) in plain language
+4. WHEN providing options, THE System SHALL always include settlement pathways and negotiation alternatives alongside court processes
+5. WHEN generating action plans, THE System SHALL prioritize steps by urgency with clear "Do this first" guidance
+6. WHEN users might make mistakes, THE System SHALL include "What to Avoid" sections with specific warnings
+7. WHEN offering next steps, THE System SHALL use conversational language like "Would you like us to..." rather than technical button labels
+
+### Requirement 16
+
+**User Story:** As someone considering legal action, I want to understand all available resolution pathways including settlement options, so that I can make informed decisions about the best approach for my situation.
+
+#### Acceptance Criteria
+
+1. WHEN presenting forum options, THE System SHALL always mention settlement and negotiation as primary alternatives to court
+2. WHEN explaining legal processes, THE System SHALL include statistics about settlement rates and typical outcomes
+3. WHEN generating document options, THE System SHALL offer demand letters and negotiation templates before court filings
+4. WHEN assessing disputes, THE System SHALL explain the benefits and risks of settlement versus litigation
+5. WHEN routing to forums, THE System SHALL present internal complaint processes and ombudsman options before court
+6. WHEN cost calculations are shown, THE System SHALL compare settlement costs versus litigation expenses
+7. WHERE applicable, THE System SHALL explain insurance subrogation and third-party payment options
+
 ### Requirement 10
 
 **User Story:** As a user interacting with the system, I want an intuitive and accessible web interface, so that I can easily navigate through matter intake, evidence upload, and document generation processes.

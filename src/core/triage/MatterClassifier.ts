@@ -43,6 +43,7 @@ export class MatterClassifier {
     if (h.includes('insurance') || h.includes('claim')) return 'insurance';
     if (h.includes('employment') || h.includes('work')) return 'employment';
     if (h.includes('human rights') || h.includes('hrto')) return 'humanRights';
+    if (h.includes('consumer') || h.includes('refund') || h.includes('warranty') || h.includes('service') || h.includes('unfair') || h.includes('chargeback')) return 'consumerProtection';
     return 'other';
   }
 

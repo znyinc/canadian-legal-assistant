@@ -6,6 +6,8 @@ import { PillarClassifier } from '../core/triage/PillarClassifier';
 import { PillarExplainer } from '../core/triage/PillarExplainer';
 import { JourneyTracker, JourneyProgress } from '../core/triage/JourneyTracker';
 import { AuthorityRegistry } from '../core/authority/AuthorityRegistry';
+import { DisclaimerService } from '../core/upl/DisclaimerService';
+import { A2ISandboxFramework, SandboxPlan } from '../core/upl/A2ISandboxFramework';
 import { validateFile } from '../core/evidence/Validator';
 import { redactPII } from '../core/evidence/PIIRedactor';
 import { EvidenceIndexer } from '../core/evidence/EvidenceIndexer';
@@ -16,6 +18,9 @@ import { DomainModuleRegistry } from '../core/domains/DomainModuleRegistry';
 import { AuditLogger } from '../core/audit/AuditLogger';
 import { ManifestBuilder } from '../core/audit/ManifestBuilder';
 import { DataLifecycleManager } from '../core/lifecycle/DataLifecycleManager';
+import { OCPPValidator } from '../core/ocpp/OCPPValidator';
+import { LimitationPeriodsEngine, DeadlineAlert } from '../core/limitation/LimitationPeriodsEngine';
+import { ActionPlanGenerator, ActionPlan } from '../core/actionPlan/ActionPlanGenerator';
 import { initialAuthorities } from '../data/authorities';
 import {
   Domain,
@@ -32,10 +37,13 @@ import {
 
 export interface IntakeRequest {
   classification: Partial<MatterClassification>;
+  description?: string;
+  province?: string;
+  tags?: string[];
 }
 
 export interface IntakeResponse {
-  classification: MatterClassification & { pillar?: string; pillarMatches?: string[]; pillarAmbiguous?: boolean };
+  classification: MatterClassification & { pillar?: string; pillarMatches?: string[]; pillarAmbiguous?: boolean; actionPlan?: ActionPlan };
   forumMap: any; // structured ForumMap object
   timelineAssessment: string;
   pillar?: string;
@@ -48,6 +56,12 @@ export interface IntakeResponse {
   };
   alerts?: string[];
   journey?: JourneyProgress;
+  ocppWarnings?: string[]; // OCPP compliance warnings for Toronto Region
+  deadlineAlerts?: DeadlineAlert[]; // Limitation period deadline alerts
+  uplBoundaries?: ReturnType<DisclaimerService['empathyBoundaryPlan']>;
+  adviceRedirect?: ReturnType<DisclaimerService['adviceRequestGuidance']>;
+  sandboxPlan?: SandboxPlan;
+  actionPlan?: ActionPlan; // Action plan for empathy-first UX display
 }
 
 export interface EvidenceUploadRequest {
@@ -80,6 +94,12 @@ export interface DocumentResponse {
   drafts: DocumentDraft[];
   package: DocumentPackage;
   warnings?: string[];
+  ocppValidation?: {
+    compliant: boolean;
+    errors: string[];
+    warnings: string[];
+    checklist?: string;
+  };
 }
 
 export interface ExportRequest {
@@ -113,6 +133,11 @@ export class IntegrationAPI {
   private audit: AuditLogger;
   private manifests: ManifestBuilder;
   private lifecycle: DataLifecycleManager;
+  private ocppValidator: OCPPValidator;
+  private limitationEngine: LimitationPeriodsEngine;
+  private actionPlanGenerator: ActionPlanGenerator;
+  private upl: DisclaimerService;
+  private sandbox: A2ISandboxFramework;
 
   constructor(options?: {
     classifier?: MatterClassifier;
@@ -132,6 +157,11 @@ export class IntegrationAPI {
     audit?: AuditLogger;
     manifests?: ManifestBuilder;
     lifecycle?: DataLifecycleManager;
+    ocppValidator?: OCPPValidator;
+    limitationEngine?: LimitationPeriodsEngine;
+    actionPlanGenerator?: ActionPlanGenerator;
+    upl?: DisclaimerService;
+    sandbox?: A2ISandboxFramework;
   }) {
     this.authorities = options?.authorities ?? this.seedAuthorities();
     this.classifier = options?.classifier ?? new MatterClassifier();
@@ -146,6 +176,11 @@ export class IntegrationAPI {
     this.timeline = options?.timeline ?? new TimelineGenerator();
     this.drafting = options?.drafting ?? new DocumentDraftingEngine();
     this.packager = options?.packager ?? new DocumentPackager();
+    this.ocppValidator = options?.ocppValidator ?? new OCPPValidator();
+    this.limitationEngine = options?.limitationEngine ?? new LimitationPeriodsEngine();
+    this.actionPlanGenerator = options?.actionPlanGenerator ?? new ActionPlanGenerator();
+    this.upl = options?.upl ?? new DisclaimerService();
+    this.sandbox = options?.sandbox ?? new A2ISandboxFramework();
     this.registry = options?.registry ?? new DomainModuleRegistry();
     this.audit = options?.audit ?? new AuditLogger();
     this.manifests = options?.manifests ?? new ManifestBuilder();
@@ -153,11 +188,25 @@ export class IntegrationAPI {
   }
 
   intake(req: IntakeRequest): IntakeResponse {
-    const classification = this.classifier.classify(req.classification);
+    // Merge request-level description/tags into classification for detection
+    const enrichedClassification = {
+      ...req.classification,
+      description: req.description || (req.classification as any).description,
+      notes: (req.classification as any).notes || (req.description ? [req.description] : undefined),
+      tags: req.tags || (req.classification as any).tags
+    };
+    
+    // Preserve explicitly set domain/jurisdiction, otherwise run classifier
+    const classificationResult = this.classifier.classify(enrichedClassification);
+    const classification = {
+      ...classificationResult,
+      ...(enrichedClassification.domain && { domain: enrichedClassification.domain }),
+      ...(enrichedClassification.jurisdiction && { jurisdiction: enrichedClassification.jurisdiction })
+    };
     const forumMap = this.router.route(classification);
     const timelineAssessment = this.assessor.assess(classification.timeline?.keyDates || []);
     // Preserve descriptive hints from the original request when running heuristics
-    const mergedForDetection = { ...classification, ...req.classification } as any;
+    const mergedForDetection = { ...classification, ...enrichedClassification } as any;
     const municipal = this.assessor.detectMunicipalNotice(mergedForDetection, undefined);
 
     // Pillar classification and explanation
@@ -184,6 +233,58 @@ export class IntegrationAPI {
     const alerts: string[] = [];
     if (municipal.required && municipal.message) alerts.push(municipal.message);
 
+    // OCPP validation for Toronto Region filings
+    const ocppWarnings: string[] = [];
+    if (this.ocppValidator.requiresOCPPValidation(classification.jurisdiction, classification.domain)) {
+      const checklist = this.ocppValidator.generateComplianceChecklist();
+      ocppWarnings.push('⚠️ OCPP Filing Requirements: Toronto Region Superior Court requires PDF/A format, 8.5x11 page size, and files under 20MB.');
+      ocppWarnings.push('Review compliance checklist before filing documents.');
+    }
+
+    // Limitation period deadline alerts (Ontario only)
+    const deadlineAlerts: DeadlineAlert[] = [];
+    if (classification.jurisdiction === 'Ontario') {
+      const relevantPeriods = this.limitationEngine.getRelevantPeriods(
+        classification.domain,
+        req.description || mergedForDetection.description || '',
+        req.tags || mergedForDetection.tags
+      );
+      
+      // Generate alerts for each relevant period
+      // In a real implementation, this would calculate from actual incident/discovery dates
+      relevantPeriods.forEach(period => {
+        const exampleDaysRemaining = period.id === 'ontario-municipal-10-day' ? 5 : 30;
+        const alert = this.limitationEngine.calculateAlert(period.id, exampleDaysRemaining);
+        if (alert) deadlineAlerts.push(alert);
+      });
+    }
+
+    const uplBoundaries = this.upl.empathyBoundaryPlan({
+      jurisdiction: classification.jurisdiction,
+      domain: classification.domain,
+      audience: 'self-represented'
+    });
+    const adviceRedirect = this.upl.adviceRequestGuidance(req.description || mergedForDetection.description || '');
+    const sandboxPlan = this.sandbox.plan({
+      domain: classification.domain,
+      jurisdiction: classification.jurisdiction,
+      urgency: classification.urgency as any
+    });
+
+    this.audit.log('other', 'system', 'UPL boundary enforcement applied', {
+      tier: sandboxPlan.tier,
+      redirected: adviceRedirect.redirected
+    });
+
+    // Generate action plan for empathy-first UX
+    const actionPlan = this.actionPlanGenerator.generate(classification);
+
+    // Persist boundary outputs and action plan for reloads
+    (classification as any).uplBoundaries = uplBoundaries;
+    (classification as any).adviceRedirect = adviceRedirect;
+    (classification as any).sandboxPlan = sandboxPlan;
+    (classification as any).actionPlan = actionPlan;
+
     return {
       classification,
       forumMap,
@@ -193,7 +294,13 @@ export class IntegrationAPI {
       pillarAmbiguous: ambiguous || undefined,
       pillarExplanation: { burdenOfProof: expl.burdenOfProof, overview: expl.overview, nextSteps: expl.nextSteps },
       journey,
-      alerts: alerts.length ? alerts : undefined
+      alerts: alerts.length ? alerts : undefined,
+      ocppWarnings: ocppWarnings.length ? ocppWarnings : undefined,
+      deadlineAlerts: deadlineAlerts.length ? deadlineAlerts : undefined,
+      uplBoundaries,
+      adviceRedirect,
+      sandboxPlan,
+      actionPlan
     };
   }
 
@@ -235,6 +342,23 @@ export class IntegrationAPI {
 
       this.audit.log('export', 'system', 'Documents generated', { domain: domainModule.domain });
 
+      // OCPP validation for Toronto Region filings
+      let ocppValidation = undefined;
+      if (this.ocppValidator.requiresOCPPValidation(req.classification.jurisdiction, req.classification.domain)) {
+        // Perform basic validation (without actual file content, provide warnings)
+        const validationResult = this.ocppValidator.validateFiling({
+          filename: 'generated-document.pdf',
+          fileSize: 0, // Will be validated at export time
+          isPDFA: undefined, // Cannot verify format until actual PDF generated
+          jurisdiction: req.classification.jurisdiction
+        });
+
+        ocppValidation = {
+          ...validationResult,
+          checklist: this.ocppValidator.generateComplianceChecklist()
+        };
+      }
+
       // If caller requested specific templates, filter drafts and package files
       if (req.requestedTemplates && req.requestedTemplates.length) {
         const requested = req.requestedTemplates;
@@ -255,9 +379,13 @@ export class IntegrationAPI {
           missingEvidenceChecklist: req.missingEvidence,
           drafts: filteredDrafts,
           sourceManifest: req.sourceManifest,
-          evidenceManifest
+          evidenceManifest,
+          jurisdiction: req.classification.jurisdiction,
+          domain: req.classification.domain
         });
-        result = { drafts: filteredDrafts, package: pkg, warnings: pkg.warnings };
+        result = { drafts: filteredDrafts, package: pkg, warnings: pkg.warnings, ocppValidation };
+      } else {
+        result = { ...result, ocppValidation };
       }
 
       return result;
@@ -286,7 +414,9 @@ export class IntegrationAPI {
       missingEvidenceChecklist: req.missingEvidence,
       drafts: [draft],
       sourceManifest: req.sourceManifest,
-      evidenceManifest
+      evidenceManifest,
+      jurisdiction: req.classification.jurisdiction,
+      domain: req.classification.domain
     });
 
     this.audit.log('export', 'system', 'Documents generated (fallback)', { domain: req.classification.domain });

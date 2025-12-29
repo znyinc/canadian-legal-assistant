@@ -31,7 +31,7 @@ import { InsuranceDomainModule } from '../../src/core/domains/InsuranceDomainMod
 import { LandlordTenantDomainModule } from '../../src/core/domains/LandlordTenantDomainModule';
 import { CivilNegligenceDomainModule } from '../../src/core/domains/CivilNegligenceDomainModule';
 import { CriminalDomainModule } from '../../src/core/domains/CriminalDomainModule';
-import { MunicipalPropertyDamageDomainModule } from '../../src/core/domains/MunicipalPropertyDamageDomainModule';
+import { MunicipalPropertyDamageModule } from '../../src/core/domains/MunicipalPropertyDamageModule';
 import { IntegrationAPI } from '../../src/api/IntegrationAPI';
 
 function createApp() {
@@ -41,7 +41,7 @@ function createApp() {
   registry.register(new LandlordTenantDomainModule());
   registry.register(new CivilNegligenceDomainModule());
   registry.register(new CriminalDomainModule());
-  registry.register(new MunicipalPropertyDamageDomainModule());
+  registry.register(new MunicipalPropertyDamageModule());
 
   // Create shared IntegrationAPI instance with registry
   const integrationApi = new IntegrationAPI({ registry });

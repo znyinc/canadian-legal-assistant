@@ -14,9 +14,10 @@ export class PillarClassifier {
     const matches = this.detectAllPillars(t);
     if (matches.length === 1) return matches[0];
     if (matches.length > 1) {
-      // If multiple pillars found, prefer Criminal if present, otherwise return Unknown to force manual review
-      if (matches.includes('Criminal')) return 'Criminal';
-      return 'Unknown';
+      // Deterministic priority to avoid returning Unknown when multiple pillars are present
+      const priority: Pillar[] = ['Criminal', 'Civil', 'Administrative', 'Quasi-Criminal'];
+      const found = priority.find((p) => matches.includes(p));
+      if (found) return found;
     }
 
     return 'Unknown';
@@ -27,10 +28,10 @@ export class PillarClassifier {
     const t = (text || '').toLowerCase();
     const results: Pillar[] = [];
 
-    const criminal = ['assault', 'theft', 'robbery', 'murder', 'homicide', 'sexual assault', 'uttering threats', 'possession'];
-    const quasi = ['by-law', 'bylaw', 'penalty', 'ticket', 'parking ticket', 'municipal fine', 'provincial offence', 'offence'];
-    const admin = ['landlord', 'ltb', 'hrto', 'fsra', 'ombudsman', 'licensing', 'regulator', 'tribunal', 'hearing', 'permit', 'appeal'];
-    const civil = ['negligence', 'tort', 'property damage', 'small claims', 'breach of contract', 'damages', 'personal injury', 'slip and fall', 'defamation', 'defamatory'];
+    const criminal = ['assault', 'theft', 'robbery', 'murder', 'homicide', 'sexual assault', 'uttering threats', 'possession', 'arrested', 'police', '911', 'charges laid'];
+    const quasi = ['by-law', 'bylaw', 'penalty', 'ticket', 'parking ticket', 'municipal fine', 'provincial offence', 'offence', 'speeding', 'traffic violation'];
+    const admin = ['landlord', 'ltb', 'hrto', 'fsra', 'ombudsman', 'licensing', 'regulator', 'tribunal', 'hearing', 'permit', 'appeal', 'eviction', 'rent deposit'];
+    const civil = ['negligence', 'tort', 'property damage', 'small claims', 'breach of contract', 'damages', 'personal injury', 'slip and fall', 'defamation', 'defamatory', 'hired', 'contractor', 'mechanic', 'repair', 'refund', 'not responding', 'consumer', 'paid advance', 'took money', 'tree fell', 'tree damage', 'gazebo', 'fence', 'neighbour', 'neighbor'];
 
     if (this.matchAny(t, criminal)) results.push('Criminal');
     if (this.matchAny(t, quasi)) results.push('Quasi-Criminal');

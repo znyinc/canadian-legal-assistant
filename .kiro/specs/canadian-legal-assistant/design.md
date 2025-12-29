@@ -273,11 +273,41 @@ interface Authority {
 - e-Laws/Justice Laws: Official browse/download only
 - Court/tribunal sites: Record retrieval dates for changing guidance
 
+### Action Plan Generator
+
+**Purpose**: Convert technical classifications into action-first user guidance with empathetic presentation
+
+**Key Methods**:
+- `generateActionPlan(classification: MatterClassification, evidence: EvidenceIndex): ActionPlan`
+- `prioritizeActions(actions: Action[], urgency: UrgencyLevel): PrioritizedActionPlan`
+- `generateRoleExplanation(domain: LegalDomain, pillar: LegalPillar): RoleExplanation`
+- `identifySettlementPathways(classification: MatterClassification): SettlementOption[]`
+
+**Action Plan Structure**:
+1. **Acknowledgment**: Empathetic recognition of user's situation
+2. **Immediate Actions**: "Do this first" prioritized steps (24-48 hours)
+3. **Role Clarification**: User's specific role in the legal process
+4. **Evidence Checklist**: Case-specific evidence gathering guidance
+5. **Settlement Options**: Negotiation and alternative resolution pathways
+6. **What to Avoid**: Specific warnings about common mistakes
+7. **Next Steps Offers**: Conversational prompts for document generation
+
+**Inputs**: Matter classification, evidence index, user profile, urgency assessment
+**Outputs**: Structured action plan with empathetic messaging, prioritized steps, settlement alternatives
+
 ### User Interface Components
 
 **Purpose**: Provide accessible, responsive web interface for all system functionality
 
 **Key Components**:
+
+#### Action-First Interface Components
+- **AcknowledgmentBanner**: Empathetic opening statement recognizing user's situation
+- **ImmediateActionsCard**: Numbered, prioritized action steps with urgency indicators
+- **YourRoleExplainer**: Plain language explanation of user's role in legal process
+- **SettlementPathwayCard**: Always-present alternatives to court proceedings
+- **WhatToAvoidSection**: Specific warnings about common mistakes and pitfalls
+- **NextStepsOffer**: Conversational prompts for document generation and next actions
 
 #### Matter Intake Interface
 - **Multi-step form**: Progressive disclosure of classification questions

@@ -4,6 +4,7 @@ import { DomainModuleRegistry } from '../src/core/domains/DomainModuleRegistry';
 import { InsuranceDomainModule } from '../src/core/domains/InsuranceDomainModule';
 import { LandlordTenantDomainModule } from '../src/core/domains/LandlordTenantDomainModule';
 import { CivilNegligenceDomainModule } from '../src/core/domains/CivilNegligenceDomainModule';
+import { OCPPFilingModule } from '../src/core/domains/OCPPFilingModule';
 import { EvidenceIndexer } from '../src/core/evidence/EvidenceIndexer';
 import { ManifestBuilder } from '../src/core/audit/ManifestBuilder';
 
@@ -117,6 +118,16 @@ describe('IntegrationAPI', () => {
     expect(res.drafts[0].title.toLowerCase()).toContain('form 7a');
   });
 
+  it('provides UPL boundaries, advice redirect, and sandbox plan on intake', () => {
+    const res = api.intake({ classification: { description: 'What should I do about this municipal notice?', jurisdictionHint: 'Ontario' } });
+    expect(res.uplBoundaries).toBeDefined();
+    expect(res.uplBoundaries?.safeHarbor).toContain('Safe Harbor');
+    expect(res.adviceRedirect).toBeDefined();
+    expect(res.adviceRedirect?.redirected).toBe(true);
+    expect(res.sandboxPlan).toBeDefined();
+    expect(res.sandboxPlan?.actions.length).toBeGreaterThan(0);
+  });
+
   it('blocks deletion when legal hold is applied', () => {
     // apply hold through lifecycle manager exposed indirectly
     const sourceManifest = manifests.buildSourceManifest([]);
@@ -124,4 +135,164 @@ describe('IntegrationAPI', () => {
     const result = api.deleteData({ actor: 'admin', items: ['pkg1'] });
     expect(result.status).toBe('blocked');
   });
+
+  it('returns OCPP warnings for Toronto Region OCPP filings on intake', () => {
+    registry.register(new OCPPFilingModule());
+    const api4 = new IntegrationAPI({ registry, manifests, indexer });
+    
+    const res = api4.intake({ 
+      classification: { 
+        domain: 'ocppFiling', // Explicitly set domain
+        jurisdictionHint: 'Ontario',
+        description: 'Need to consolidate related Superior Court actions'
+      } 
+    });
+    
+    expect(res.classification.domain).toBe('ocppFiling');
+    expect(res.ocppWarnings).toBeDefined();
+    expect(res.ocppWarnings && res.ocppWarnings.length).toBeGreaterThan(0);
+    expect(res.ocppWarnings && res.ocppWarnings[0]).toContain('PDF/A');
+  });
+
+  it('returns OCPP validation in document generation response for OCPP domain', () => {
+    registry.register(new OCPPFilingModule());
+    const api3 = new IntegrationAPI({ registry, manifests, indexer });
+
+    const evidenceIndex = indexer.generateIndex();
+    const sourceManifest = manifests.buildSourceManifest([]);
+
+    const res = api3.generateDocuments({
+      classification: {
+        id: 'mc-ocpp',
+        domain: 'ocppFiling',
+        jurisdiction: 'Ontario',
+        parties: { claimantType: 'individual', respondentType: 'business' },
+        status: 'classified'
+      },
+      forumMap: 'Forum map',
+      timeline: 'Timeline text',
+      missingEvidence: 'Missing evidence',
+      evidenceIndex,
+      sourceManifest
+    });
+
+    expect(res.ocppValidation).toBeDefined();
+    expect(res.ocppValidation && res.ocppValidation.checklist).toBeDefined();
+    expect(res.ocppValidation && res.ocppValidation.checklist).toContain('PDF/A');
+  });
+
+  it('includes PDF/A conversion guide in package for OCPP filings', () => {
+    registry.register(new OCPPFilingModule());
+    const api4 = new IntegrationAPI({ registry, manifests, indexer });
+
+    const evidenceIndex = indexer.generateIndex();
+    const sourceManifest = manifests.buildSourceManifest([]);
+
+    const res = api4.generateDocuments({
+      classification: {
+        id: 'mc-ocpp-pdfa',
+        domain: 'ocppFiling',
+        jurisdiction: 'Ontario',
+        parties: { claimantType: 'individual', respondentType: 'business' },
+        status: 'classified'
+      },
+      forumMap: 'Forum map',
+      timeline: 'Timeline text',
+      missingEvidence: 'Missing evidence',
+      evidenceIndex,
+      sourceManifest
+    });
+
+    // Verify PDF/A conversion guide is included in package
+    const pdfaGuide = res.package.files.find((f) => f.path === 'PDF_A_CONVERSION_GUIDE.md');
+    expect(pdfaGuide).toBeDefined();
+    expect(pdfaGuide?.content).toContain('PDF/A Format Conversion Guide');
+    expect(pdfaGuide?.content).toContain('LibreOffice');
+    
+    // Verify warnings about PDF/A requirement
+    expect(res.package.warnings).toBeDefined();
+    expect(res.package.warnings?.some(w => w.includes('PDF/A format'))).toBe(true);
+  });
+
+  it('returns deadline alerts for matters with applicable limitation periods', () => {
+    const api = new IntegrationAPI();
+    
+    // Test municipal property damage (should trigger 10-day notice + 2-year general)
+    const municipalRes = api.intake({
+      description: 'Tree fell on my car from city property',
+      province: 'Ontario',
+      tags: ['property-damage', 'tree-damage'],
+      classification: {}
+    });
+    
+    expect(municipalRes.deadlineAlerts).toBeDefined();
+    expect(municipalRes.deadlineAlerts!.length).toBeGreaterThan(0);
+    
+    // Should have critical municipal 10-day notice alert
+    const municipalAlert = municipalRes.deadlineAlerts!.find(
+      a => a.limitationPeriod.id === 'ontario-municipal-10-day'
+    );
+    expect(municipalAlert).toBeDefined();
+    expect(municipalAlert?.urgency).toBe('critical'); // 5 days remaining
+    expect(municipalAlert?.message).toContain('10 days deadline');
+    expect(municipalAlert?.actionRequired).toContain('notice');
+    expect(municipalAlert?.encouragement).toBeDefined();
+    
+    // Test employment matter (should trigger ESA + wrongful dismissal)
+    const employmentRes = api.intake({
+      description: 'Terminated without cause after 10 years',
+      province: 'Ontario',
+      classification: { domain: 'employment' }
+    });
+    
+    expect(employmentRes.deadlineAlerts).toBeDefined();
+    const esaAlert = employmentRes.deadlineAlerts!.find(
+      a => a.limitationPeriod.id === 'ontario-esa-complaint'
+    );
+    expect(esaAlert).toBeDefined();
+    expect(esaAlert?.limitationPeriod.period).toBe('2 years');
+    
+    // Test landlord-tenant matter (should trigger LTB application period)
+    const ltbRes = api.intake({
+      description: 'Landlord refuses to fix heating in winter',
+      province: 'Ontario',
+      classification: { domain: 'landlordTenant' }
+    });
+    
+    expect(ltbRes.deadlineAlerts).toBeDefined();
+    const ltbAlert = ltbRes.deadlineAlerts!.find(
+      a => a.limitationPeriod.id === 'ontario-ltb-application'
+    );
+    expect(ltbAlert).toBeDefined();
+    expect(ltbAlert?.limitationPeriod.period).toBe('Varies (1 year typical)');
+    
+    // Test non-Ontario matter (should have no Ontario-specific alerts)
+    const bcRes = api.intake({
+      description: 'Contract dispute in BC',
+      province: 'British Columbia',
+      classification: { jurisdiction: 'British Columbia' }
+    });
+    
+    // BC matters should have empty deadlineAlerts (Ontario engine only)
+    expect(bcRes.deadlineAlerts).toBeUndefined();
+  });
+
+  it('includes encouraging messaging in deadline alerts', () => {
+    const api = new IntegrationAPI();
+    
+    const res = api.intake({
+      description: 'Municipal tree damage on my property',
+      province: 'Ontario',
+      tags: ['municipal', 'tree-damage'],
+      classification: {}
+    });
+    
+    expect(res.deadlineAlerts).toBeDefined();
+    const criticalAlert = res.deadlineAlerts!.find(a => a.urgency === 'critical');
+    
+    // Verify encouraging (not alarming) messaging
+    expect(criticalAlert?.encouragement).toBeDefined();
+    expect(criticalAlert?.encouragement).toMatch(/taking the right step|You have time|focus|Don't panic/i);
+  });
 });
+

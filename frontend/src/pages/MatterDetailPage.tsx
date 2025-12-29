@@ -15,6 +15,10 @@ export default function MatterDetailPage() {
   const [pillarExplanation, setPillarExplanation] = useState<any>(null);
   const [pillarMatches, setPillarMatches] = useState<string[] | null>(null);
   const [pillarAmbiguous, setPillarAmbiguous] = useState<boolean>(false);
+  const [deadlineAlerts, setDeadlineAlerts] = useState<any[] | null>(null);
+  const [uplBoundaries, setUplBoundaries] = useState<any | null>(null);
+  const [adviceRedirect, setAdviceRedirect] = useState<any | null>(null);
+  const [sandboxPlan, setSandboxPlan] = useState<any | null>(null);
   const [journey, setJourney] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [classifying, setClassifying] = useState(false);
@@ -41,6 +45,10 @@ export default function MatterDetailPage() {
         if (c.pillarExplanation) setPillarExplanation(c.pillarExplanation);
         if (Array.isArray(c.pillarMatches)) setPillarMatches(c.pillarMatches);
         if (c.pillarAmbiguous) setPillarAmbiguous(!!c.pillarAmbiguous);
+        if (Array.isArray(c.deadlineAlerts)) setDeadlineAlerts(c.deadlineAlerts);
+        if (c.uplBoundaries) setUplBoundaries(c.uplBoundaries);
+        if (c.adviceRedirect) setAdviceRedirect(c.adviceRedirect);
+        if (c.sandboxPlan) setSandboxPlan(c.sandboxPlan);
         if (c.journey) setJourney(c.journey);
       }
       if (data.forumMap) {
@@ -64,12 +72,20 @@ export default function MatterDetailPage() {
     setClassifying(true);
     try {
       const result = await api.classifyMatter(id);
-      setClassification(result.classification);
+      const classificationWithAlerts = {
+        ...result.classification,
+        ...(result.deadlineAlerts ? { deadlineAlerts: result.deadlineAlerts } : {}),
+      };
+      setClassification(classificationWithAlerts);
       setForumMap(result.forumMap);
       // Populate pillar-related UI state from classification result
       if (result.pillarExplanation) setPillarExplanation(result.pillarExplanation);
       if (Array.isArray(result.pillarMatches)) setPillarMatches(result.pillarMatches);
       if (typeof result.pillarAmbiguous !== 'undefined') setPillarAmbiguous(!!result.pillarAmbiguous);
+      if (Array.isArray(result.deadlineAlerts)) setDeadlineAlerts(result.deadlineAlerts);
+      if (result.uplBoundaries) setUplBoundaries(result.uplBoundaries);
+      if (result.adviceRedirect) setAdviceRedirect(result.adviceRedirect);
+      if (result.sandboxPlan) setSandboxPlan(result.sandboxPlan);
       if (result.journey) setJourney(result.journey);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Classification failed');
@@ -188,7 +204,25 @@ export default function MatterDetailPage() {
 
       {/* Tab Content */}
       <Routes>
-        <Route index element={<OverviewTab classification={classification} forumMap={forumMap} classifying={classifying} onClassify={handleClassify} pillarExplanation={pillarExplanation} pillarMatches={pillarMatches || undefined} pillarAmbiguous={pillarAmbiguous} journey={journey} />} />
+        <Route
+          index
+          element={
+            <OverviewTab
+              classification={classification}
+              forumMap={forumMap}
+              classifying={classifying}
+              onClassify={handleClassify}
+              pillarExplanation={pillarExplanation}
+              pillarMatches={pillarMatches || undefined}
+              pillarAmbiguous={pillarAmbiguous}
+              journey={journey}
+              deadlineAlerts={deadlineAlerts || classification?.deadlineAlerts}
+              uplBoundaries={uplBoundaries || classification?.uplBoundaries}
+              adviceRedirect={adviceRedirect || classification?.adviceRedirect}
+              sandboxPlan={sandboxPlan || classification?.sandboxPlan}
+            />
+          }
+        />
         <Route path="evidence" element={<EvidencePage matterId={id!} />} />
         <Route path="documents" element={<DocumentsPage matterId={id!} />} />
       </Routes>

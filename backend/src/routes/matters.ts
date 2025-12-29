@@ -149,6 +149,16 @@ router.post('/:id/classify', async (req: Request, res: Response, next: NextFunct
     };
     const result = getApi(req).intake({ classification: classificationWithNotes as any });
 
+    // Persist deadline alerts with classification so reloads can display them
+    if (result.deadlineAlerts && Array.isArray(result.deadlineAlerts)) {
+      (result.classification as any).deadlineAlerts = result.deadlineAlerts;
+    }
+
+    // Persist action plan with classification for later display
+    if (result.actionPlan) {
+      (result.classification as any).actionPlan = result.actionPlan;
+    }
+
     // persist pillar explanation with classification for later display
     (result.classification as any).pillarExplanation = result.pillarExplanation;
 
