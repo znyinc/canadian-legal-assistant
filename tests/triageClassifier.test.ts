@@ -22,4 +22,40 @@ describe('MatterClassifier', () => {
     expect(result.parties.claimantType).toBe('individual');
     expect(result.urgency).toBe('medium');
   });
+
+  it('classifies criminal assault cases', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'assault', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('criminal');
+  });
+
+  it('classifies criminal uttering threats cases', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'uttering threats', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('criminal');
+  });
+
+  it('classifies police-involved cases as criminal', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'police arrested charged', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('criminal');
+  });
+
+  it('classifies violence cases as criminal', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'violence criminal', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('criminal');
+  });
+
+  it('classifies civil negligence with tree damage', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'tree damage negligence', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('civil-negligence');
+  });
+
+  it('classifies municipal property damage', () => {
+    const mc = new MatterClassifier();
+    const result = mc.classify({ domainHint: 'municipal road damage notice', jurisdictionHint: 'Ontario' });
+    expect(result.domain).toBe('municipalPropertyDamage');
+  });
 });
