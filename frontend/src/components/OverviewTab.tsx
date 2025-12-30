@@ -31,6 +31,7 @@ export default function OverviewTab({
   uplBoundaries,
   adviceRedirect,
   sandboxPlan,
+  onGenerateDocument,
 }: {
   classification: any;
   forumMap: any;
@@ -44,8 +45,19 @@ export default function OverviewTab({
   uplBoundaries?: any;
   adviceRedirect?: any;
   sandboxPlan?: any;
+  onGenerateDocument?: (documentType: string) => Promise<void>;
 }) {
   const [showClassificationDetails, setShowClassificationDetails] = useState(false);
+  const [showBoundaries, setShowBoundaries] = useState(false);
+  const [showSandbox, setShowSandbox] = useState(false);
+
+  const handleGenerateDocument = async (documentType: string) => {
+    if (onGenerateDocument) {
+      await onGenerateDocument(documentType);
+    } else {
+      console.log('Generate document:', documentType);
+    }
+  };
 
   // Use action plan from classification (should be generated server-side)
   const actionPlan: ActionPlan | null = useMemo(() => {
@@ -99,9 +111,47 @@ export default function OverviewTab({
 
       {effectiveAdvice && <AdviceRedirectBanner advice={effectiveAdvice} />}
 
-      {effectiveBoundaries && <EmpathyBoundaries plan={effectiveBoundaries} />}
+      {effectiveBoundaries && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <button
+            onClick={() => setShowBoundaries(!showBoundaries)}
+            className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity"
+          >
+            <h2 className="text-lg font-semibold text-gray-900">Information-Only Boundaries</h2>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-600 transition-transform ${
+                showBoundaries ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {showBoundaries && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <EmpathyBoundaries plan={effectiveBoundaries} />
+            </div>
+          )}
+        </div>
+      )}
 
-      {effectiveSandbox && <SandboxPlanCard plan={effectiveSandbox} />}
+      {effectiveSandbox && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <button
+            onClick={() => setShowSandbox(!showSandbox)}
+            className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity"
+          >
+            <h2 className="text-lg font-semibold text-gray-900">A2I Sandbox Readiness</h2>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-600 transition-transform ${
+                showSandbox ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {showSandbox && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <SandboxPlanCard plan={effectiveSandbox} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ===== ACTION-FIRST UX SECTION (re-ordered for natural flow) ===== */}
 
@@ -115,7 +165,14 @@ export default function OverviewTab({
 
       {/* 2. Immediate Actions */}
       {actionPlan && actionPlan.immediateActions.length > 0 && (
-        <ImmediateActionsCard actions={actionPlan.immediateActions} />
+        <ImmediateActionsCard
+          actions={actionPlan.immediateActions.map((a: any) => ({
+            priority: a.priority,
+            action: a.title,
+            timeframe: a.timeframe,
+            details: a.description,
+          }))}
+        />
       )}
 
       {/* 3. What to Avoid (pairs with immediate actions) */}
@@ -138,6 +195,7 @@ export default function OverviewTab({
             action: 'generate' as const,
             documentType: o.documentType,
           }))}
+          onGenerateDocument={handleGenerateDocument}
         />
       )}
 

@@ -214,6 +214,26 @@ export class LimitationPeriodsEngine {
         consequence: 'After 1 year, the HRTO may refuse to hear your application.',
         learnMoreUrl: 'http://www.sjto.ca/hrto/',
       },
+
+      // Estates and succession
+      {
+        id: 'ontario-dependant-support-6-month',
+        name: 'Dependant Support Claim (SLRA Part V)',
+        description: 'Deadline to start a dependant support claim after a Certificate of Appointment (probate) is issued.',
+        period: '6 months',
+        periodDays: 182,
+        jurisdiction: 'ontario',
+        category: 'statutory',
+        triggers: [
+          'Typically from the date the court issues the Certificate of Appointment of Estate Trustee',
+        ],
+        exceptions: [
+          'Court permission may be required to proceed after 6 months',
+          'Late claims may be limited to undistributed assets',
+        ],
+        consequence: 'If you miss the 6-month window, you may need court permission and may be limited to remaining assets.',
+        learnMoreUrl: 'https://www.ontario.ca/laws/statute/90s26',
+      },
       
       // Absolute limitation period
       {
@@ -344,6 +364,11 @@ export class LimitationPeriodsEngine {
     if (domain === 'humanRights') {
       const hrto = this.periods.get('ontario-human-rights-hrto');
       if (hrto) relevant.push(hrto);
+    }
+
+    if (domain === 'estateSuccession') {
+      const dependant = this.periods.get('ontario-dependant-support-6-month');
+      if (dependant) relevant.push(dependant);
     }
     
     if (domain === 'civil-negligence' || description.toLowerCase().includes('injury')) {

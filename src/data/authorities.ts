@@ -52,6 +52,16 @@ export const initialAuthorities: Authority[] = [
     escalationRoutes: ['ON-CA']
   },
   {
+    id: 'ON-SC-Probate',
+    name: 'Superior Court of Justice (Ontario) — Estates/Probate',
+    type: 'court',
+    jurisdiction: 'Ontario',
+    version: '1.0.0',
+    updatedAt: new Date().toISOString(),
+    updateCadenceDays: 60,
+    escalationRoutes: ['ON-CA']
+  },
+  {
     id: 'ON-DivCt',
     name: 'Divisional Court (Ontario)',
     type: 'court',

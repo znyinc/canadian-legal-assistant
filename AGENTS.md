@@ -881,13 +881,69 @@
   - 22.4.3 marked complete in tasks; AGENTS log updated.
 - **Status:** ✅ Phase 2.3 completed; Action Plan integration validated.
 
+## Task 25: Legal Malpractice Domain Module (Completed 2025-12-29)
+- **Context:** User asked "Why does our app say different?" showing a screenshot where Quinn Avery's legal malpractice case (suing lawyer Morgan Vance for missing limitation period on underlying slip-and-fall claim) was incorrectly classified as civil negligence instead of legal malpractice.
+- **Decisions:**
+  - Created LegalMalpracticeDomainModule as standalone domain (not sub-category of civil-negligence)
+  - Prioritized malpractice keyword detection BEFORE civil negligence to prevent misclassification
+  - Implemented 5 Ontario-specific documents: LawPRO notification, case-within-case analysis, expert witness instruction, formal demand letter, evidence checklist
+  - Added LawPRO mandatory reporting obligations per Rules of Professional Conduct
+  - Included "case within a case" doctrine (4 elements: duty, breach, causation, damages from underlying claim)
+  - 2-year limitation from discovery of malpractice (Limitations Act, 2002 s.5)
+  - Expert witness qualification requirements and standard of care questions
+  - 21-day demand letter deadline per Ontario Small Claims practice
+- **Actions:**
+  - Updated [src/core/models/index.ts](src/core/models/index.ts): Added 'legalMalpractice' to Domain type union
+  - Updated [src/core/triage/MatterClassifier.ts](src/core/triage/MatterClassifier.ts):
+    - Added malpractice detection as FIRST priority check (before civil-negligence)
+    - Keywords: malpractice, solicitor negligence, lawyer negligence, professional negligence, missed limitation, missed deadline, legal error, retainer+breach, lawpro, case within a case
+    - Added 'slip' and 'fall' keywords to civil-negligence detection
+  - Created [src/core/domains/LegalMalpracticeDomainModule.ts](src/core/domains/LegalMalpracticeDomainModule.ts) (227 lines):
+    - Domain: 'legalMalpractice'
+    - Generates 5 DocumentDraft objects with variable extraction from classification notes
+    - Helper methods: extractClientName(), extractLawyerName(), extractOriginalClaimType(), extractDeadline(), extractDamageAmount()
+    - Missing confirmations validation for incomplete data
+  - Extended [src/core/templates/TemplateLibrary.ts](src/core/templates/TemplateLibrary.ts) with 5 templates:
+    - `malpractice/lawpro_notice`: LawPRO contact (416-598-5800), mandatory reporting, policy limits, claims-made coverage
+    - `malpractice/case_within_case_analysis`: 4-element framework (duty, breach, causation, damages), underlying claim strength assessment
+    - `malpractice/expert_instruction`: Expert qualification criteria, standard of care questions, conflict of interest check
+    - `malpractice/demand_letter`: Formal demand structure with 21-day deadline, settlement offer opportunity
+    - `malpractice/evidence_checklist`: Part A (retainer, communications, deadlines) + Part B (underlying claim evidence)
+  - Updated [backend/src/server.ts](backend/src/server.ts): Registered LegalMalpracticeDomainModule in DomainModuleRegistry
+  - Created comprehensive test suite:
+    - [tests/legalMalpracticeClassification.test.ts](tests/legalMalpracticeClassification.test.ts) (15 tests): Keyword detection, priority over civil-negligence
+    - [tests/legalMalpracticeTemplates.test.ts](tests/legalMalpracticeTemplates.test.ts) (17 tests): Template rendering with variable substitution
+    - [tests/legalMalpracticeDomainModule.test.ts](tests/legalMalpracticeDomainModule.test.ts) (9 tests): Integration tests for all 5 documents, missing confirmations, packaging
+- **Bug Fixes:**
+  - Added `render()` alias method to TemplateLibrary (was only `renderTemplate()`)
+  - Fixed LegalMalpracticeDomainModule to manually create DocumentDraft objects (no buildDraft helper exists)
+  - Updated test assertions to match markdown formatting in templates
+  - Added sourceManifest parameter to all 8 integration test calls
+- **Outputs:**
+  - All tests passing: **374/374** (52 files, 6.39s duration) — up from 333
+  - Legal malpractice tests: 41/41 passing (15 classification + 17 templates + 9 integration)
+  - Zero test regressions
+- **Security/Quality:**
+  - No new vulnerabilities introduced
+  - All templates include legal information disclaimer
+  - LawPRO guidance includes mandatory reporting timeline (immediately upon discovery)
+  - Case-within-case analysis explains burden of proof on all 4 elements
+  - Expert instruction emphasizes independence and standard of care assessment
+- **Key Features:**
+  - **LawPRO Notification:** Phone 416-598-5800, mandatory reporting under Rules of Professional Conduct, claims-made coverage explanation
+  - **Case Within a Case:** 4-element framework (duty, breach, causation, damages), underlying claim must be provable
+  - **Expert Witness:** Qualification requirements, standard of care questions, conflict check
+  - **Demand Letter:** Formal structure, 21-day deadline, settlement opportunity
+  - **Evidence Checklist:** Retainer agreement, communications, deadlines, underlying claim strength
+- **Status:** ✅ Task 25 complete; app now correctly classifies legal malpractice and generates Ontario-specific guidance
+
 ## Current Status (2025-12-29)
-- **Tests:** All core unit tests passing (301/301, 46 files, Vitest)
+- **Tests:** All core unit tests passing (374/374, 52 files, Vitest)
 - **E2E:** All 5 E2E specs passing (golden-path, journey, pillar, pillar-ambiguous; Playwright)
 - **Security:** Snyk backend scan clean after upgrades; frontend XSS mitigations applied
 - **Dependencies:** `multer` 2.0.2, `archiver` 7.0.0 (PR #1 merged)
 - **CI:** Workflow pushed to PR #2; GitHub Actions checks running at https://github.com/znyinc/canadian-legal-assistant/pull/2
-- **Features:** Plain Language Translation Layer (17.3), Limitation Periods Engine (17.4), Cost Calculator & Risk Assessment (17.5), Action Plan Generator (22.1), Action Plan React Components (22.2), Backend Integration & OverviewTab Restructure (22.3) complete
+- **Features:** Plain Language Translation Layer (17.3), Limitation Periods Engine (17.4), Cost Calculator & Risk Assessment (17.5), Action Plan Generator (22.1), Action Plan React Components (22.2), Backend Integration & OverviewTab Restructure (22.3), Consumer Protection Domain (24), Legal Malpractice Domain (25) complete
 
 ## Task 17.6: Civil Negligence Domain Module (added)
 - **Prompt:** "Implement civil negligence/occupiers' liability domain module and templates (demand notice, Form 7A scaffold, evidence checklist) and register it with DomainModuleRegistry."

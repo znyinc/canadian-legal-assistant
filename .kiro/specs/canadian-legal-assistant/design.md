@@ -20,55 +20,109 @@ Key design principles:
 
 ## Architecture
 
-The system follows a modular, domain-extensible architecture with clear separation between core services and domain-specific modules:
+The system follows a modular, AI-enhanced architecture with comprehensive legal taxonomy coverage and sophisticated routing capabilities across all Canadian jurisdictions:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Interface Layer                     │
-│              (Plain Language + Journey Tracker)            │
+│         (Plain Language + Journey Tracker + AI Chat)       │
 ├─────────────────────────────────────────────────────────────┤
-│                  API Gateway & Routing                     │
+│                  API Gateway & AI Orchestration            │
 ├─────────────────────────────────────────────────────────────┤
-│  Four Pillars    │  Journey Tracker  │  Plain Language     │
-│  Classifier      │                   │  Translation Layer  │
+│  AI-Powered      │  Journey Tracker  │  Plain Language     │
+│  Classification  │                   │  Translation Layer  │
 ├─────────────────────────────────────────────────────────────┤
-│  Limitation      │  Cost Calculator  │  Document Generator │
-│  Periods Engine  │  & Risk Assessor  │                     │
+│  Comprehensive   │  Cost Calculator  │  AI Document        │
+│  Legal Taxonomy  │  & Risk Assessor  │  Generator          │
 ├─────────────────────────────────────────────────────────────┤
-│  Triage Engine   │  Forum Router     │  Evidence Processor │
+│  Enhanced Triage │  Multi-Domain     │  Evidence Processor │
+│  Engine          │  Forum Router     │                     │
 ├─────────────────────────────────────────────────────────────┤
-│  Authority Registry  │  Source Access Controller          │
+│  Comprehensive Authority Registry & AI-Enhanced Routing    │
 ├─────────────────────────────────────────────────────────────┤
-│                 Ontario-Specific Modules                   │
-│  MV Accidents │ LTB │ OCPP │ Municipal │ Employment │ etc. │
+│                 Comprehensive Domain Modules               │
+│ Torts │ Contracts │ Employment │ Family │ Admin │ Immigration│
+│ Criminal │ IP │ Tax │ Privacy │ Professional │ Indigenous   │
+├─────────────────────────────────────────────────────────────┤
+│                    AI Services Layer                       │
+│  NLP Engine │ Legal Research │ Document AI │ Case Analysis │
 ├─────────────────────────────────────────────────────────────┤
 │                    Data Access Layer                       │
 │  RAG Indices │ Evidence Store │ Authority DB │ Audit Log   │
+│  Case Law DB │ Statute DB │ Precedent Index │ AI Models    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Core Services
+### Core AI-Enhanced Services
 
-1. **Four Pillars Classifier**: Categorizes matters into Criminal, Civil, Administrative, or Quasi-Criminal law
-2. **Journey Tracker**: Guides users through five stages (Understand, Options, Prepare, Act, Resolve)
-3. **Plain Language Translation Layer**: Converts legal terminology to accessible language with contextual explanations
-4. **Limitation Periods Engine**: Tracks deadlines with urgency-based alerts and Ontario-specific periods
-5. **Cost Calculator & Risk Assessor**: Educates users about financial exposure and fee waiver options
-6. **Triage Engine**: Classifies legal matters by domain, urgency, and appropriate resolution pathway
-7. **Forum Router**: Determines appropriate courts, tribunals, regulators, or ombudsman services
-8. **Evidence Processor**: Handles document ingestion, metadata extraction, and timeline generation
-9. **Case Law Referencer**: Provides citations and links while respecting access restrictions
-10. **Document Generator**: Creates domain-appropriate templates and packages
-11. **Authority Registry**: Maintains versioned mapping of legal bodies and their constraints
-12. **Source Access Controller**: Enforces lawful acquisition methods and terms compliance
+1. **AI-Powered Classification Engine**: Advanced NLP-based classification covering comprehensive legal taxonomy
+2. **Multi-Domain Analysis System**: Identifies complex cases spanning multiple legal areas
+3. **Comprehensive Legal Taxonomy**: Detailed categorization across all Canadian law areas
+4. **AI-Enhanced Forum Router**: Sophisticated routing across federal, provincial, territorial, and Indigenous jurisdictions
+5. **Professional Regulatory Integration**: Connections to all professional colleges and regulatory bodies
+6. **Alternative Dispute Resolution Routing**: AI-powered ADR recommendations
+7. **International Law Integration**: Cross-border legal issue identification and routing
+8. **AI Document Generation**: Context-aware document creation with legal language optimization
+9. **Legal Research AI**: Automated case law and statute research with relevance scoring
+10. **Precedent Analysis Engine**: AI-powered analysis of legal precedents and their applicability
 
 ### Domain Modules
 
-Each legal domain (insurance, landlord/tenant, employment, etc.) implements:
-- Domain-specific routing logic
-- Specialized document templates
-- Relevant authority mappings
-- Custom evidence requirements
+The system includes comprehensive domain modules covering all areas of Canadian law:
+
+#### Core Legal Domains
+- **Tort Law**: Negligence, intentional torts, strict liability, defamation (including anti-SLAPP), privacy torts, occupiers' liability, professional negligence, medical malpractice
+- **Contract Law**: Breach of contract, remedies, limitation periods, commercial disputes, construction liens, real estate purchase disputes, shareholder agreements
+- **Employment Law**: Wrongful dismissal, constructive dismissal, human rights violations, workplace safety, employment standards, severance disputes
+- **Family Law**: Divorce, custody, support, property division, domestic relations, child protection information (information-only), dependant support claims
+- **Criminal Law**: Summary and indictable offences, victim services (CICB), court processes, criminal procedure, bail procedures, peace bonds (810 orders)
+- **Administrative Law**: Judicial review, statutory appeals, regulatory compliance, property tax appeals (ARB/MPAC), tribunal procedures
+- **Immigration Law**: Visa applications, appeals, humanitarian considerations, refugee claims, permanent residence applications
+
+#### Specialized Legal Domains
+- **Intellectual Property**: Copyright, trademark, patent, trade secrets, licensing, digital rights
+- **Tax Law**: CRA disputes, Tax Court appeals, provincial tax matters, property tax assessments
+- **Privacy Law**: Federal and provincial privacy commissioners, data protection, AODA compliance
+- **Professional Regulation**: Lawyer discipline, medical malpractice, CPSO complaints, engineering standards, professional misconduct
+- **Indigenous Law**: Treaty rights, land claims, cultural considerations, self-determination rights
+- **International Law**: Cross-border disputes, treaty obligations, diplomatic immunity, international commercial law
+
+#### Estate & Succession Law
+- **Wills & Probate**: Estate administration, will challenges, grant of probate, succession law procedures (Succession Law Reform Act)
+- **Estate Disputes**: Estate trustee disputes, interpretation disputes, creditor claims against estates
+- **Dependant Support Claims**: Dependant support petitions (Succession Law Reform Act Part V), eligibility criteria, support calculations
+
+#### Consumer & Debt Management
+- **Consumer Protection**: Consumer Protection Act disputes, service refunds, warranty claims, unfair business practices (Consumer Protection Ontario)
+- **Debt & Insolvency**: Bankruptcy procedures, consumer proposals, creditor defences, Licensed Insolvency Practitioner engagement, credit counseling
+- **Credit & Collections**: Dispute resolution, creditor rights and debtor protections
+
+#### Property & Municipal Law
+- **Condominium Law**: Condominium Authority Tribunal (CAT) disputes, pet policies, parking disputes, record access, assessment challenges
+- **Property Tax Appeals**: Assessment Review Board procedures, MPAC challenges, property assessment grounds, evidence requirements
+- **Municipal Law**: Municipal code enforcement, bylaw disputes, property standards complaints, municipal liability claims
+
+#### Victim & Compensation Services
+- **Criminal Injuries Compensation**: CICB eligibility, application procedures, compensation categories, victim support services
+- **Victim Services**: Ontario victim support programs, counseling services, safety planning, victim-offender mediation, restitution orders
+- **Civil Remedies for Crime Victims**: Options for civil suits against perpetrators, damages recovery, procedural options
+
+#### Regulatory and Administrative Bodies
+- **Federal Regulators**: Competition Bureau, CRTC, Transport Canada, Health Canada, IRCC (Immigration), Canada Revenue Agency
+- **Provincial Regulators**: Securities commissions, utilities boards, professional colleges (Law Society, CPSO, PEO), Assessment Review Board, CAT
+- **Ombudsman Services**: Federal ombudsman, provincial ombudsmen, sector-specific ombudsmen, Patient Ombudsman, Financial Services Ombudsman
+- **Tribunal Systems**: Specialized tribunals for each legal domain and jurisdiction (LTB, HRTO, ARB, CAT, Small Claims Courts)
+- **Victim Services Agencies**: Ontario victim services, provincial victim assistance programs, specialized support services
+
+Each domain module implements:
+- AI-powered classification and routing logic
+- Specialized document templates and forms
+- Relevant authority mappings and escalation paths
+- Custom evidence requirements and analysis
+- Jurisdiction-specific procedures and deadlines (with statutory references)
+- Alternative dispute resolution options
+- Professional consultation recommendations
+- Legal information disclaimers and UPL compliance safeguards
 
 ### User Interface Layer
 
@@ -90,29 +144,95 @@ The UI layer provides a responsive, accessible web interface with the following 
 
 ## Components and Interfaces
 
-### Triage Engine
+### AI-Powered Classification Engine
 
-**Purpose**: Universal matter classification and initial routing
-
-**Key Methods**:
-- `classifyMatter(userInput: MatterDescription): MatterClassification`
-- `assessUrgency(dates: DateInfo[], domain: LegalDomain): UrgencyAssessment`
-- `generateQuestionSet(incompleteClassification: PartialClassification): QuestionSet`
-
-**Inputs**: User-provided matter description, dates, parties, dispute amount
-**Outputs**: Domain classification, urgency flags, targeted question sets
-
-### Forum Router
-
-**Purpose**: Determine appropriate legal pathways and sequence
+**Purpose**: Advanced NLP-based classification covering comprehensive legal taxonomy
 
 **Key Methods**:
-- `routeToForum(classification: MatterClassification): ForumMap`
-- `determineCourtLevel(claimValue: number, subjectMatter: string, reliefSought: string): CourtLevel`
-- `distinguishAppealVsJudicialReview(tribunalDecision: TribunalDecision): PathwayType`
+- `classifyComplexMatter(userInput: string, context: LegalContext): ComprehensiveLegalClassification`
+- `identifyMultiDomainIssues(classification: LegalClassification): MultiDomainAnalysis`
+- `assessClassificationConfidence(classification: LegalClassification): ConfidenceScore`
+- `suggestAdditionalQuestions(partialClassification: PartialClassification): QuestionSet`
 
-**Inputs**: Matter classification, claim parameters, location facts
-**Outputs**: Forum map with pathways and sequence, routing rationale
+**AI Capabilities**:
+- Natural language processing for legal scenario analysis
+- Multi-domain case identification and prioritization
+- Confidence scoring and uncertainty handling
+- Context-aware question generation for clarification
+
+**Comprehensive Legal Taxonomy Coverage**:
+- **Tort Law**: Negligence (professional, medical, occupiers' liability), intentional torts (assault, battery, false imprisonment), defamation (libel, slander), privacy torts, nuisance
+- **Contract Law**: Breach types (fundamental, minor), remedies (damages, specific performance), formation issues, commercial vs consumer contracts
+- **Employment Law**: Wrongful dismissal, constructive dismissal, human rights violations, workplace harassment, employment standards violations, workplace safety
+- **Family Law**: Divorce proceedings, child custody and access, spousal support, child support, property division, domestic contracts
+- **Administrative Law**: Judicial review grounds, statutory appeals, procedural fairness, regulatory compliance, licensing disputes
+- **Immigration Law**: Visa categories, refugee claims, appeals (RAD, Federal Court), humanitarian applications, citizenship issues
+
+**Inputs**: Natural language matter description, supporting documents, user context
+**Outputs**: Detailed classification with confidence scores, multi-domain flags, recommended next steps
+
+### Multi-Domain Forum Router
+
+**Purpose**: AI-enhanced routing across comprehensive Canadian legal system
+
+**Key Methods**:
+- `routeComplexMatter(classification: ComprehensiveLegalClassification): ComprehensiveForumMap`
+- `identifyJurisdictionalIssues(matter: LegalMatter): JurisdictionalAnalysis`
+- `recommendADROptions(classification: LegalClassification): ADRRecommendations`
+- `assessInternationalElements(matter: LegalMatter): InternationalLawAnalysis`
+
+**Comprehensive Authority Database**:
+- **Federal Courts**: Federal Court, Federal Court of Appeal, Tax Court of Canada, Supreme Court of Canada
+- **Provincial/Territorial Courts**: Superior courts, provincial courts, specialized courts (family, small claims)
+- **Federal Tribunals**: Immigration and Refugee Board, Competition Tribunal, Transportation Appeal Tribunal
+- **Provincial Tribunals**: Human rights tribunals, landlord-tenant boards, labour relations boards, securities tribunals
+- **Professional Regulatory Bodies**: Law societies, medical colleges, engineering associations, accounting bodies
+- **Ombudsman Services**: Federal ombudsman, provincial ombudsmen, sector-specific ombudsmen
+- **Indigenous Authorities**: Band councils, tribal courts, Indigenous dispute resolution mechanisms
+- **International Forums**: International Court of Justice, trade dispute panels, human rights bodies
+
+**Inputs**: Comprehensive legal classification, jurisdictional factors, matter complexity
+**Outputs**: Prioritized forum options, jurisdictional analysis, ADR recommendations, escalation paths
+
+### AI Legal Research Engine
+
+**Purpose**: Automated legal research with relevance scoring and precedent analysis
+
+**Key Methods**:
+- `conductLegalResearch(query: ResearchQuery, jurisdiction: string): ResearchResults`
+- `analyzePrecedents(caseList: CaseReference[], currentFacts: FactPattern): PrecedentAnalysis`
+- `identifyRelevantStatutes(legalIssue: LegalIssue, jurisdiction: string): StatuteAnalysis`
+- `generateLegalSummary(researchResults: ResearchResults): LegalSummary`
+
+**AI Capabilities**:
+- Semantic search across case law databases
+- Relevance scoring based on factual similarity
+- Precedent strength analysis and distinguishing factors
+- Automated legal principle extraction
+- Citation network analysis for authority ranking
+
+**Inputs**: Legal research queries, factual patterns, jurisdictional constraints
+**Outputs**: Ranked case law results, statute analysis, legal principle summaries, citation networks
+
+### AI Document Generation Engine
+
+**Purpose**: Context-aware document creation with legal language optimization
+
+**Key Methods**:
+- `generateContextualDocument(template: DocumentTemplate, facts: FactPattern, jurisdiction: string): GeneratedDocument`
+- `optimizeLegalLanguage(draft: DocumentDraft, audience: Audience): OptimizedDocument`
+- `validateDocumentCompleteness(document: GeneratedDocument): ValidationResults`
+- `suggestImprovements(document: GeneratedDocument): ImprovementSuggestions`
+
+**AI Capabilities**:
+- Context-aware template customization
+- Legal language optimization for audience
+- Completeness checking and gap identification
+- Style and tone adjustment based on document type
+- Automated citation formatting and verification
+
+**Inputs**: Document templates, factual patterns, jurisdictional requirements, audience specifications
+**Outputs**: Customized legal documents, validation reports, improvement suggestions, citation verification
 
 ### Evidence Processor
 
@@ -203,11 +323,44 @@ The UI layer provides a responsive, accessible web interface with the following 
 - `generateAlert(deadline: LimitationPeriod): DeadlineAlert`
 - `checkMunicipalNotice(matterDetails: MatterDetails): NoticeRequirement`
 
-**Ontario-Specific Periods**:
-- Municipal property notice: 10 days (CRITICAL)
-- Construction lien preserve: 60 days
-- Most civil claims: 2 years
-- Ultimate backstop: 15 years
+**Estate & Succession (R20)**:
+- Will challenges: Generally before probate or within 2 years
+- Dependant support claims: 6 months from certificate of appointment (Succession Law Reform Act, Part V)
+- Estate administration disputes: 2 years from discovery
+
+**Child Protection (R21)**:
+- N/A (information-only domain; no civil limitation periods)
+
+**Debt & Insolvency (R22)**:
+- Bankruptcy discharge: Variable (0-9 years depending on circumstances)
+- Consumer proposal: 60 months (5 years) to complete payments
+- Debt defense: 2 years from cause of action (Bankruptcy and Insolvency Act)
+
+**Criminal Injuries Compensation (R23)**:
+- CICB application: 2 years from incident (exceptions for dependent minors)
+- Victim support: Ongoing as long as victim qualifies
+
+**Property Tax Appeals (R24)**:
+- Assessment Review Board: 45 days from assessment notice (Assessment Act s.40(12))
+- Judicial review of ARB decision: 30 days
+
+**Condominium Authority Tribunal (R25)**:
+- CAT dispute resolution: Approximately 90 days (Condominium Act, 1998)
+- Board decision implementation: Varies by dispute type
+
+**Defamation & Anti-SLAPP (R26)**:
+- Defamation claim: 2 years from discovery (Libel and Slander Act)
+- Anti-SLAPP media notice: 6 weeks (Courts of Justice Act s.137.1)
+- Responsible communication defense: Varies by circumstances
+
+**Ontario-Specific Periods** (Across All Domains):
+- **Municipal slip/fall notice**: 10 days (CRITICAL) - Municipalities Act
+- **Construction lien preserve**: 60 days - Construction Act
+- **Most civil claims**: 2 years from discovery - Limitations Act, 2002 s.4
+- **Human rights complaints**: 1 year - Human Rights Code
+- **Libel/slander notice requirement**: 6 weeks - Libel and Slander Act s.5(1)
+- **OCPP court filings**: October 2025 Ontario Court Reforms
+- **Ultimate backstop**: 15 years from act/omission - Limitations Act, 2002
 
 **Alert Levels**:
 - **Critical (Red)**: ≤7 days - "You need to act TODAY"
@@ -272,6 +425,55 @@ interface Authority {
 - CanLII: API and linking only, no web scraping
 - e-Laws/Justice Laws: Official browse/download only
 - Court/tribunal sites: Record retrieval dates for changing guidance
+
+### Backend Services Layer
+
+The system is powered by six core backend services working in orchestration:
+
+#### 1. Scenario Classifier Service
+**Purpose**: AI-powered classification into 50+ Ontario scenarios (motor vehicle accidents, slip/fall, medical malpractice, defamation, breach of contract, debt, wrongful dismissal, HRTO complaints, LTB disputes, real estate, family law, wills, consumer protection, crime victim compensation, bankruptcy, property tax appeals, condo disputes, and more)
+
+**Capabilities**: NLP classification, multi-scenario detection, confidence scoring, follow-up question generation
+
+#### 2. Guidance Generator Service
+**Purpose**: Generate personalized plain-language guidance
+
+**Capabilities**: Step-by-step guidance (most urgent first), plain language explanations, deadline identification, resource/form recommendations, empathetic messaging
+
+#### 3. Document Analyzer Service
+**Purpose**: Analyze user-uploaded documents (PDF, PNG, JPG, EML, MSG, TXT)
+
+**Capabilities**: Contract review, notice analysis, form completion assistance, metadata extraction, relevance assessment
+
+#### 4. Deadline Calculator Service
+**Purpose**: Calculate Ontario limitation periods and deadlines
+
+**Key Periods**: 10-day municipal notice (CRITICAL), 60-day construction lien, 2-year general civil claims, 1-year HRTO, 6-week libel notice, 45-day property tax appeal, ~90-day CAT disputes, 6-week anti-SLAPP media notice, 15-year ultimate backstop
+
+#### 5. Resource Locator Service
+**Purpose**: Find forms, legal aid eligibility, legal clinics, self-help resources
+
+**Integrations**: Central Forms Repository, Tribunals Ontario, Legal Aid Ontario, Law Society referral service
+
+#### 6. Lawyer Referral Service
+**Purpose**: Connect users with legal professionals
+
+**Integrations**: Law Society of Ontario, Legal Aid Ontario, Community legal clinic network
+
+### API Layer
+
+**Base URL**: `/api/v1`
+
+**Endpoints**:
+1. `POST /api/v1/assess` - Scenario classification with confidence scores
+2. `GET /api/v1/scenarios/{scenario_id}` - Scenario details (mva_tort, slip_fall, will_challenge, etc.)
+3. `POST /api/v1/guidance` - Personalized step-by-step guidance
+4. `POST /api/v1/deadlines/calculate` - Limitation period calculations
+5. `POST /api/v1/documents/analyze` - Document analysis and extraction
+6. `GET /api/v1/forms/{form_id}` - Official Ontario government forms (Form 7A, LTB forms, etc.)
+7. `GET /api/v1/resources/clinics` - Legal clinic locator by postal code and domain
+8. `POST /api/v1/cases` - Case creation and management (authenticated)
+9. `GET /api/v1/resources/lawyer-referral` - Lawyer recommendations by domain and region
 
 ### Action Plan Generator
 
@@ -339,75 +541,210 @@ interface Authority {
 - **Audit log viewer**: Transparent access to user activity logs
 - **Retention settings**: User-configurable retention periods and status display
 
+### Frontend Component Architecture (From YAML Specification)
+
+The frontend is organized around six core UI patterns implemented as React components:
+
+#### 1. Conversational Intake Pattern
+- **Purpose**: Guide users through matter classification using natural conversation
+- **Components**: `ConversationalIntakeForm`, `ScenarioQuestionFlow`, `ProgressIndicator`
+- **YAML Mapping**: `scenarios[*].intake` section with follow-up questions
+- **User Experience**: Progressive disclosure questions, one question at a time, clear explanations
+- **Output**: Populated MatterClassification with domain, jurisdiction, parties, urgency
+
+#### 2. Scenario Card Pattern
+- **Purpose**: Display available legal pathways as distinct scenarios with pros/cons
+- **Components**: `ScenarioCard`, `ScenarioComparison`, `MultiPathwayDisplay`
+- **YAML Mapping**: `scenarios[*].pathways` array with costs, timelines, pros/cons
+- **User Experience**: No single "best" answer shown; all viable pathways presented
+- **Output**: User selection of preferred pathway, feeds into document generation
+
+#### 3. Step-by-Step Guide Pattern
+- **Purpose**: Present procedural requirements in sequential, digestible steps
+- **Components**: `StepByStepGuide`, `StepCard`, `SubtaskChecklist`
+- **YAML Mapping**: `scenarios[*].process.steps` array with substeps and deadlines
+- **User Experience**: Numbered steps, completion checkmarks, deadline indicators, expandable details
+- **Output**: User progress tracking, next step prompts, completion validation
+
+#### 4. Deadline Tracker Pattern
+- **Purpose**: Visualize and remind users of critical dates and limitation periods
+- **Components**: `DeadlineAlerts`, `TimelineVisualization`, `UrgencyBadge`
+- **YAML Mapping**: `scenarios[*].deadlines` array with periods, exceptions, consequences
+- **User Experience**: Color-coded urgency (critical red, warning orange, caution yellow), countdown timers
+- **Output**: Exported deadline checklist, automated reminders (future feature)
+
+#### 5. Document Checklist Pattern
+- **Purpose**: Guide evidence gathering and document preparation for proceedings
+- **Components**: `EvidenceChecklist`, `DocumentPreparationGuide`, `UploadIndicator`
+- **YAML Mapping**: `scenarios[*].evidence_requirements` with file types, organization, submission guidance
+- **User Experience**: Checkbox-based evidence tracking, file upload with progress, completeness scoring
+- **Output**: Evidence manifest, package generation trigger, missing evidence alerts
+
+#### 6. Form Helper Pattern
+- **Purpose**: Assist users in completing Ontario government forms with evidence integration
+- **Components**: `FormHelper`, `FieldGuidance`, `FormPreview`, `PrePopulation`
+- **YAML Mapping**: `scenarios[*].forms` array with field mapping, hints, validation rules
+- **User Experience**: Guided field completion, evidence-to-field mapping, real-time preview, error prevention
+- **Output**: Pre-populated form data, completion checklist, form validation report
+
+#### Supporting Patterns
+- **LegalClinicLocator**: Search by postal code and legal domain for free/low-cost legal help
+- **DocumentGenerator**: Interactive document creation with user confirmation at each step
+- **EvidenceTimeline**: Chronological visualization of user-uploaded evidence with credibility scoring
+- **AccessibilityAudit**: WCAG 2.1 AA compliance verification and keyboard navigation testing
+
 ## Data Models
 
-### Core Data Types
+### Core AI-Enhanced Data Types
 
 ```typescript
-interface MatterClassification {
-  domain: LegalDomain;
-  subDomain?: string;
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  timeFlags: TimeFlag[];
-  jurisdiction: string;
-  parties: PartyInfo[];
-  disputeAmount?: number;
+interface ComprehensiveLegalClassification {
+  primaryDomain: ComprehensiveLegalDomain;
+  secondaryDomains?: ComprehensiveLegalDomain[];
+  subDomains: string[];
+  legalPillar: LegalPillar;
+  urgencyLevel: 'critical' | 'high' | 'medium' | 'low';
+  confidenceScore: number;
+  multiDomainFlags: MultiDomainFlag[];
+  jurisdictionalFactors: JurisdictionalFactor[];
+  internationalElements?: InternationalElement[];
+  indigenousConsiderations?: IndigenousConsideration[];
+  professionalRegulatoryAspects?: ProfessionalRegulatoryAspect[];
 }
 
-interface ForumMap {
-  primaryPathway: ForumPathway;
+interface ComprehensiveLegalDomain {
+  category: 'tort' | 'contract' | 'employment' | 'family' | 'criminal' | 'administrative' | 
+           'immigration' | 'intellectual-property' | 'tax' | 'privacy' | 'professional-regulation' | 
+           'indigenous' | 'international' | 'environmental' | 'securities' | 'competition' | 
+           'human-rights' | 'consumer-protection' | 'real-estate' | 'corporate' | 'bankruptcy';
+  subCategory: string;
+  specialization?: string;
+  regulatoryBody?: string;
+  applicableLegislation: string[];
+}
+
+interface ComprehensiveForumMap {
+  primaryPathways: ForumPathway[];
   alternativePathways: ForumPathway[];
-  sequence: string[];
+  adrOptions: ADROption[];
+  professionalRegulatoryOptions: ProfessionalRegulatoryOption[];
+  ombudsmanOptions: OmbudsmanOption[];
+  internationalOptions?: InternationalForumOption[];
+  indigenousOptions?: IndigenousForumOption[];
+  escalationSequence: string[];
+  jurisdictionalAnalysis: JurisdictionalAnalysis;
   routingRationale: string;
-  registryEntries: string[];
+  aiConfidenceScore: number;
 }
 
-interface EvidenceIndex {
-  items: EvidenceItem[];
-  timeline: TimelineEvent[];
-  missingEvidence: MissingEvidenceItem[];
-  credibilityAssessment: CredibilityAssessment;
+interface MultiDomainAnalysis {
+  primaryDomain: ComprehensiveLegalDomain;
+  secondaryDomains: ComprehensiveLegalDomain[];
+  domainInteractions: DomainInteraction[];
+  prioritizationRecommendation: string;
+  coordinatedApproachRequired: boolean;
+  potentialConflicts: string[];
 }
 
-interface EvidenceItem {
-  id: string;
-  filename: string;
-  type: 'pdf' | 'image' | 'email' | 'text';
-  provenance: 'original_eml' | 'original_pdf' | 'screenshot_derived';
-  metadata: DocumentMetadata;
-  credibilityScore: number;
-  hash: string;
-  timestamp: Date;
+interface AIResearchResults {
+  relevantCases: CaseReference[];
+  applicableStatutes: StatuteReference[];
+  legalPrinciples: LegalPrinciple[];
+  precedentAnalysis: PrecedentAnalysis;
+  confidenceScore: number;
+  researchGaps: string[];
+  recommendedFollowUp: string[];
 }
 
-interface DocumentPackage {
-  forumMap: string;
-  timeline: string;
-  missingEvidenceChecklist: string;
-  draftDocuments: string[];
-  sourceManifest: SourceManifest;
-  evidenceManifest: EvidenceManifest;
+interface GeneratedDocument {
+  documentType: string;
+  content: string;
+  customizations: DocumentCustomization[];
+  evidenceReferences: EvidenceReference[];
+  legalCitations: LegalCitation[];
+  completenessScore: number;
+  validationResults: ValidationResult[];
+  improvementSuggestions: string[];
 }
 ```
 
-### Authority Registry Schema
+### Comprehensive Authority Registry Schema
 
 ```typescript
-interface AuthorityRegistry {
+interface ComprehensiveAuthorityRegistry {
   version: string;
   lastUpdated: Date;
-  authorities: Authority[];
+  federalAuthorities: FederalAuthority[];
+  provincialAuthorities: ProvincialAuthority[];
+  territorialAuthorities: TerritorialAuthority[];
+  indigenousAuthorities: IndigenousAuthority[];
+  internationalAuthorities: InternationalAuthority[];
+  professionalBodies: ProfessionalRegulatoryBody[];
+  ombudsmanServices: OmbudsmanService[];
+  adrProviders: ADRProvider[];
 }
 
-interface Authority {
+interface FederalAuthority {
   body: string;
-  jurisdiction: string;
-  authorityType: AuthorityType;
+  authorityType: 'court' | 'tribunal' | 'regulator' | 'ombuds' | 'enforcement';
+  jurisdiction: 'federal';
+  legalDomains: ComprehensiveLegalDomain[];
   relevanceTriggers: string[];
-  constraints: string[];
-  authoritativeSources: string[];
-  updateCadence: string;
-  escalationRoutes: string[];
+  filingRequirements: FilingRequirement[];
+  appealRoutes: string[];
+  timelineLimitations: TimelineLimitation[];
+  fees: FeeStructure[];
+  representationRules: RepresentationRule[];
+}
+
+interface ProfessionalRegulatoryBody {
+  profession: string;
+  regulatoryBody: string;
+  jurisdiction: string;
+  disciplinaryProcess: DisciplinaryProcess;
+  complaintProcedure: ComplaintProcedure;
+  appealRights: AppealRight[];
+  publicRegister: boolean;
+  investigationTimeline: string;
+}
+
+interface ADROption {
+  type: 'mediation' | 'arbitration' | 'collaborative-law' | 'negotiation' | 'restorative-justice';
+  provider: string;
+  applicableDomains: ComprehensiveLegalDomain[];
+  costStructure: CostStructure;
+  timelineEstimate: string;
+  bindingNature: 'binding' | 'non-binding' | 'conditional';
+  enforcementMechanism: string;
+}
+```
+
+### AI Service Integration Schema
+
+```typescript
+interface AIServiceConfiguration {
+  nlpEngine: NLPEngineConfig;
+  classificationModel: ClassificationModelConfig;
+  researchEngine: ResearchEngineConfig;
+  documentGenerator: DocumentGeneratorConfig;
+  confidenceThresholds: ConfidenceThreshold[];
+  fallbackProcedures: FallbackProcedure[];
+}
+
+interface NLPEngineConfig {
+  modelVersion: string;
+  languageSupport: string[];
+  legalTerminologyDatabase: string;
+  contextWindowSize: number;
+  confidenceCalibration: ConfidenceCalibration;
+}
+
+interface ClassificationModelConfig {
+  modelArchitecture: string;
+  trainingDataVersion: string;
+  legalTaxonomyVersion: string;
+  multiDomainDetection: boolean;
+  uncertaintyQuantification: boolean;
 }
 ```
 
@@ -509,6 +846,87 @@ Property 14: Domain-specific output generation
 Property 15: Data lifecycle management
 *For any* user data, the system should support user-initiated export and deletion, enforce configurable retention periods with legal hold exceptions, and maintain audit logs of all data activities
 **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
+
+## Limitation Periods Across Legal Domains
+
+The system implements Ontario-first limitation periods mapping for each legal domain, providing deadline alerts integrated into the intake and document generation workflows.
+
+### Limitation Period Mapping by Domain
+
+| Domain | Primary Period | Key Exceptions | Consequences | Statute/Reference |
+|--------|---|---|---|---|
+| **tort-negligence** | 2 years (discovery rule) | Ultimate 15-year backstop; No retroactivity to pre-Sept 2004 claims | Lost right to sue; Defendant gains limitation defense | *Limitations Act, 2002* s.4, 15, 16 |
+| **civil-negligence** | 2 years (from discovery) | Occupiers' liability same period; Professional negligence (malpractice) 2-year discovery | Lost claim eligibility | *Limitations Act, 2002* |
+| **contract-breach** | 2 years (discovery) | 15-year ultimate backstop | Debt recovery barred | *Limitations Act, 2002* |
+| **employment-wrongful-dismissal** | 2 years (discovery rule) | ESA claims within 2 years | Lost damages claim | *Limitations Act, 2002*; *Employment Standards Act, 2000* |
+| **employment-human-rights** | 1 year from last discriminatory act | Earlier notification to HRTO may waive limitation | Case dismissed | *Human Rights Code* s.34 |
+| **landlord-tenant** | No written limitation but LTB acts on urgent basis | N/A | Eviction/possession risk continues | *Residential Tenancies Act, 2006* |
+| **criminal** | No civil limitation (Crown timeline governs) | Crown disclosure deadline ~30-60 days | Varies by trial schedule | *Criminal Code* |
+| **family-law-child-support** | No limitation for ongoing arrears | Claims >6 years likely require court order | Support enforcement | *Family Law Act, 1986*; *Child Support Guidelines* |
+| **family-law-spousal-support** | 6 years for arrears > 6 months old | Retroactive claims beyond 6 years unlikely | Support enforcement | *Family Law Act, 1986* |
+| **municipal-property-damage** | 10-day notice requirement (**CRITICAL**) | Must serve municipal insurer; Subsequent 2-year claim period | Lost statutory notice, claim barred | *Municipal Act, 2001* s.44; *Construction Lien Act* |
+| **administrative-judicial-review** | 30 days from decision (federal); varies provincial | Extensions possible on grounds of justice | Application dismissed | *Judicial Review Procedure Act* |
+| **administrative-property-tax-appeal** | 45 days from ARB/MPAC notice | Extensions for reasonable cause possible | Assessment stands | *Assessment Act* s.40, 43 |
+| **administrative-condo-disputes** | ~90-day mandatory dispute resolution window | Small claims court option available after deadline | CAT claim dismissed if DRS required | *Condominium Act, 1998*; *Condo Authority Tribunal Rules* |
+| **intellectual-property-copyright** | 2 years (discovery rule; 15-year ultimate) | Registration strengthens enforcement | Copyright protection lost | *Limitations Act, 2002* |
+| **intellectual-property-trademark** | 2 years (discovery rule; 15-year ultimate) | Registration and use defense key | Trademark infringement claim barred | *Limitations Act, 2002* |
+| **tax-cra-dispute** | 90 days to object (procedural); Statute of Limitations 4-6 years | Fairness claims may extend timeline | Assessment finalized | *Income Tax Act* s.165, 169 |
+| **privacy-commissioner** | 12 months from knowledge of breach | Earlier notification recommended | Commissioner cannot investigate | *PIPEDA*; Provincial privacy laws |
+| **professional-regulation-discipline** | Varies by profession (2-5 years typical) | College may extend investigation timelines | Disciplinary action barred | Profession-specific regulations |
+| **consumerProtection** | Variable (usually 2 years for Small Claims route) | CPO investigation may exceed 2 years; Separate chargeback window 60-120 days | Claim/chargeback lost | *Consumer Protection Act, 2002*; Credit card networks |
+| **legal-malpractice** | 2 years from discovery (within 15-year backstop) | "Case within a case" discovery rule applies | Malpractice claim dismissed | *Limitations Act, 2002* |
+| **estate-succession** | 2 years from death or more for will challenges | Depends on discovery of grounds | Will challenge dismissed; Estate settled | *Succession Law Reform Act*; *Limitations Act, 2002* |
+| **debt-insolvency** | Varies (creditor claims 6 years; Crown 10 years) | Insolvency discharge affects claims | Debt collection blocked; Bankruptcy discharged | *Bankruptcy and Insolvency Act*; *Limitations Act, 2002* |
+| **victim-compensation** | 2 years from criminal incident | Application within 1-2 years preferred | CICB compensation barred | *Criminal Injuries Compensation Act* |
+| **defamation-libel** | 6-week media notice (if applicable) + 2-year discovery | Media notice shortens timeline significantly | Media immunity may apply; Shortened discovery period | *Libel and Slander Act* s.5; *Limitations Act, 2002* |
+| **defamation-anti-slapp** | 6-week media notice + procedural deadlines | Two-step test (merits + public interest) | Motion dismissed if improper; Proceeds to trial | *Courts of Justice Act* s.137.1 |
+
+### YAML-to-Deadline Mapping
+
+Each YAML scenario maps to one or more limitation periods:
+
+```yaml
+# Example: motor_vehicle_accident maps to tort-negligence
+scenarios:
+  - id: motor_vehicle_accident
+    domain: tort-negligence
+    deadlines:
+      - period_id: tort-negligence
+        description: "2-year limitation from date of discovery"
+        critical_date: "2 years from accident date"
+        urgency: warning
+      - period_id: municipal-property-damage
+        description: "10-day notice to municipality (if applicable)"
+        critical_date: "10 days from incident"
+        urgency: critical
+
+  - id: defamation
+    domain: defamation-libel
+    deadlines:
+      - period_id: defamation-media-notice
+        description: "6-week media notice (if applicable)"
+        critical_date: "6 weeks from publication"
+        urgency: critical
+      - period_id: defamation-discovery
+        description: "2-year discovery from date of publication"
+        critical_date: "2 years from publication"
+        urgency: warning
+```
+
+### Integration with LimitationPeriodsEngine
+
+The backend `LimitationPeriodsEngine` class provides methods to:
+1. **Calculate relevant periods** for a given domain and jurisdiction
+2. **Generate deadline alerts** with urgency levels (critical, warning, caution, info)
+3. **Provide period-specific guidance** (consequences, exceptions, Learn More links)
+4. **Detect municipal notice requirements** from matter description and tags
+5. **Validate limitation period applicability** based on jurisdiction
+
+These deadline alerts appear at:
+- **Intake response**: Shown immediately after classification
+- **Matter detail page**: Displayed above forum routing in supporting information
+- **Document generation**: Included in generated packages as reminder
+- **Evidence timeline**: Flagged against evidence dates to identify gaps
 
 ## Error Handling
 

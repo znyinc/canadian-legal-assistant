@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { prisma } from '../prisma.js';
 import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 // Use IntegrationAPI instance attached to app.locals when available
 function getApi(req: Request) {
   return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();

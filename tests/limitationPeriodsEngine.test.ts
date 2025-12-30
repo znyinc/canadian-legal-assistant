@@ -142,6 +142,15 @@ describe('LimitationPeriodsEngine', () => {
     expect(periods.some(p => p.id === 'ontario-ltb-application')).toBe(true);
   });
 
+  it('should get dependant support deadline for estate matters', () => {
+    const engine = new LimitationPeriodsEngine();
+    const periods = engine.getRelevantPeriods('estateSuccession', 'Probate issued, dependant requires support', ['dependant_support_claim']);
+
+    expect(periods.some(p => p.id === 'ontario-dependant-support-6-month')).toBe(true);
+    const period = periods.find(p => p.id === 'ontario-dependant-support-6-month');
+    expect(period?.period).toBe('6 months');
+  });
+
   it('should include Small Claims jurisdiction update ($50K)', () => {
     const engine = new LimitationPeriodsEngine();
     // Small Claims info is in TermDictionary, but limitation engine should reference general period

@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './prisma.js';
 import { config } from './config.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -12,7 +12,6 @@ import caselawRouter from './routes/caselaw.js';
 import exportRouter from './routes/export.js';
 
 const app = express();
-const prisma = new PrismaClient();
 
 // Middleware
 app.disable('x-powered-by');
@@ -32,6 +31,8 @@ import { LandlordTenantDomainModule } from '../../src/core/domains/LandlordTenan
 import { CivilNegligenceDomainModule } from '../../src/core/domains/CivilNegligenceDomainModule';
 import { CriminalDomainModule } from '../../src/core/domains/CriminalDomainModule';
 import { MunicipalPropertyDamageModule } from '../../src/core/domains/MunicipalPropertyDamageModule';
+import { LegalMalpracticeDomainModule } from '../../src/core/domains/LegalMalpracticeDomainModule';
+import { EstateSuccessionDomainModule } from '../../src/core/domains/EstateSuccessionDomainModule';
 import { IntegrationAPI } from '../../src/api/IntegrationAPI';
 
 function createApp() {
@@ -42,6 +43,8 @@ function createApp() {
   registry.register(new CivilNegligenceDomainModule());
   registry.register(new CriminalDomainModule());
   registry.register(new MunicipalPropertyDamageModule());
+  registry.register(new LegalMalpracticeDomainModule());
+  registry.register(new EstateSuccessionDomainModule());
 
   // Create shared IntegrationAPI instance with registry
   const integrationApi = new IntegrationAPI({ registry });

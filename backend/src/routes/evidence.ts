@@ -1,14 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import path from 'path';
 import crypto from 'crypto';
 import fs from 'fs/promises';
+import { prisma } from '../prisma.js';
 import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
 import { config } from '../config.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 // Use IntegrationAPI instance attached to app.locals when available
 function getApi(req: Request) {
   return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();

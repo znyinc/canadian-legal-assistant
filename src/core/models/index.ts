@@ -8,7 +8,9 @@ export type Domain =
   | 'criminal'
   | 'ocppFiling'
   | 'tree-damage'
+  | 'estateSuccession'
   | 'consumerProtection'
+  | 'legalMalpractice'
   | 'other';
 export type Jurisdiction = 'Ontario' | 'Federal' | string;
 export type PartyType = 'individual' | 'business' | 'government' | string;

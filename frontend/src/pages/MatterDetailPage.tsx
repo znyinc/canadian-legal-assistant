@@ -123,6 +123,17 @@ export default function MatterDetailPage() {
     }
   };
 
+  const handleGenerateDocument = async (documentType: string) => {
+    if (!id) return;
+    try {
+      await api.generateDocuments(id, undefined, [documentType]);
+      navigate(`/matters/${id}/documents`);
+    } catch (err) {
+      console.error('Generate document failed', err);
+      alert('Failed to generate document');
+    }
+  };
+
   return (
     <div>
       {/* Matter Header */}
@@ -220,6 +231,7 @@ export default function MatterDetailPage() {
               uplBoundaries={uplBoundaries || classification?.uplBoundaries}
               adviceRedirect={adviceRedirect || classification?.adviceRedirect}
               sandboxPlan={sandboxPlan || classification?.sandboxPlan}
+              onGenerateDocument={handleGenerateDocument}
             />
           }
         />

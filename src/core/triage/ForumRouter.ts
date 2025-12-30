@@ -37,6 +37,11 @@ export class ForumRouter {
       return this.mustGet('ON-OCJ');
     }
 
+    // Estates and succession matters route to the probate branch of the Superior Court
+    if (input.domain === 'estateSuccession') {
+      return this.mustGet('ON-SC-Probate');
+    }
+
     // Tribunal prioritization for LTB and HRTO
     if (input.domain === 'landlordTenant') {
       return this.mustGet('ON-LTB');

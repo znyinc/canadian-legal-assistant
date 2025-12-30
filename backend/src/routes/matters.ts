@@ -1,10 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { prisma } from '../prisma.js';
 import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 // Use IntegrationAPI instance attached to app.locals when available
 function getApi(req: Request) {
   return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();
@@ -14,7 +13,7 @@ function getApi(req: Request) {
 const createMatterSchema = z.object({
   description: z.string().min(10),
   province: z.string().default('ON'),
-  domain: z.enum(['insurance', 'landlordTenant', 'employment', 'civil-negligence', 'other']),
+  domain: z.enum(['criminal', 'insurance', 'landlordTenant', 'employment', 'civil-negligence', 'municipalPropertyDamage', 'consumerProtection', 'humanRights', 'ocppFiling', 'treeDamage', 'legalMalpractice', 'estateSuccession', 'other']),
   disputeAmount: z
     .preprocess((v) => {
       if (v === '' || v === undefined) return null;
@@ -125,7 +124,7 @@ router.post('/:id/classify', async (req: Request, res: Response, next: NextFunct
     });
 
     const classificationInput = {
-      domainHint: data.domain,
+      domainHint: data.description,  // Pass description text so classifier can detect keywords
       jurisdictionHint: data.province,
       disputeAmount: data.disputeAmount ?? undefined,
       keyDates: Array.isArray((data as any).timeline?.keyDates)

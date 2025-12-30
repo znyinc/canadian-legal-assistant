@@ -3,10 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { createWriteStream } from 'fs';
 import archiver from 'archiver';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET /api/export - Export all data as ZIP
 router.get('/', async (req: Request, res: Response) => {

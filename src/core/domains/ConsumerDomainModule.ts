@@ -1,12 +1,14 @@
 import { BaseDomainModule } from './BaseDomainModule';
 import { DomainModuleInput, DocumentDraft } from '../models';
 import { TemplateLibrary } from '../templates/TemplateLibrary';
+import { DocumentDraftingEngine } from '../documents/DocumentDraftingEngine';
+import { DocumentPackager } from '../documents/DocumentPackager';
 
 export class ConsumerDomainModule extends BaseDomainModule {
   domain = 'consumerProtection' as const;
   private templateLibrary: TemplateLibrary;
 
-  constructor(options?: { drafting?; packager? }) {
+  constructor(options?: { drafting?: DocumentDraftingEngine; packager?: DocumentPackager }) {
     super(options);
     this.templateLibrary = new TemplateLibrary();
   }

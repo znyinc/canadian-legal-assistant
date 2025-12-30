@@ -265,6 +265,21 @@ describe('IntegrationAPI', () => {
     );
     expect(ltbAlert).toBeDefined();
     expect(ltbAlert?.limitationPeriod.period).toBe('Varies (1 year typical)');
+
+    // Test estate/succession matter (should trigger dependant support 6-month alert)
+    const estateRes = api.intake({
+      description: 'Probate issued, dependant needs support from estate',
+      province: 'Ontario',
+      classification: { domain: 'estateSuccession', notes: ['Probate issued on 2025-01-05'] }
+    });
+
+    expect(estateRes.deadlineAlerts).toBeDefined();
+    const dependantAlert = estateRes.deadlineAlerts!.find(
+      a => a.limitationPeriod.id === 'ontario-dependant-support-6-month'
+    );
+    expect(dependantAlert).toBeDefined();
+    expect(dependantAlert?.limitationPeriod.period).toBe('6 months');
+    expect(dependantAlert?.actionRequired).toMatch(/file/i);
     
     // Test non-Ontario matter (should have no Ontario-specific alerts)
     const bcRes = api.intake({

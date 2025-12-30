@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { api } from '../services/api';
 import { safeText } from '../utils/sanitize';
 import { SmartText } from '../components/SmartText';
+import { PackageContentsSegmented } from '../components/PackageContentsSegmented';
 
 interface DocumentsPageProps {
   matterId: string;
@@ -158,14 +159,26 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                 )}
 
                 {packageData.package?.files && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Package Contents</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {packageData.package.files.map((file: any, index: number) => (
-                        <li key={index}>{safeText(file.path || file.filename || `Document ${index + 1}`)}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <PackageContentsSegmented
+                    files={packageData.package.files}
+                    onDownloadEssentials={async () => {
+                      setDownloadingPackageId(doc.packageId);
+                      try {
+                        await handleDownload(doc.packageId, doc.createdAt);
+                      } finally {
+                        setDownloadingPackageId(null);
+                      }
+                    }}
+                    onDownloadEverything={async () => {
+                      setDownloadingPackageId(doc.packageId);
+                      try {
+                        await handleDownload(doc.packageId, doc.createdAt);
+                      } finally {
+                        setDownloadingPackageId(null);
+                      }
+                    }}
+                    isDownloading={downloadingPackageId === doc.packageId}
+                  />
                 )}
 
                 {packageData.warnings && packageData.warnings.length > 0 && (

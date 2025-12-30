@@ -106,6 +106,9 @@ export class ActionPlanGenerator {
       municipalPropertyDamage: "dealing with damage caused by municipal property",
       'tree-damage': "dealing with tree damage from a neighbor's property",
       ocppFiling: "preparing a court filing for Toronto Region Superior Court",
+      consumerProtection: "dealing with a consumer protection issue",
+      legalMalpractice: "dealing with potential legal malpractice",
+      estateSuccession: "dealing with estate and succession matters",
       other: "dealing with a legal issue",
     };
 

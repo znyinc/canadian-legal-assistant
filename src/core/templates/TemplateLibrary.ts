@@ -113,6 +113,114 @@ export class TemplateLibrary {
 
 **Tip:** Label files with attachment numbers to match the statement of claim.`,
 
+  'estate/will_challenge_grounds': `# Will Challenge Grounds (Ontario)
+
+**Purpose:** Outline common grounds to challenge a will in Ontario. This is information-only; confirm facts with an estates lawyer.
+
+## Key Grounds
+- **Lack of testamentary capacity:** Testator did not understand making a will, property, or potential beneficiaries
+- **Undue influence:** Pressure or coercion affected the testator's choices
+- **Failure of formalities:** Will not properly signed/witnessed under the Succession Law Reform Act
+- **Suspicious circumstances:** Sudden changes, isolation, or beneficiary involvement in preparation
+
+## Immediate Steps
+- Collect all versions of the will and codicils (dates, signatures)
+- Gather medical records around the will-signing date
+- Identify witnesses and their contact information
+- Preserve communications (emails, letters) related to the will
+
+## Evidence to Gather
+- Medical notes on cognition and capacity
+- Witness affidavits about signing conditions
+- Timeline of events leading to the will change
+- Proof of dependency or support history (if applicable)
+
+## Where Issues Are Heard
+- Ontario Superior Court of Justice (Estates / Probate). Confirm local probate office details.
+
+**Reminder:** Court deadlines and procedures vary. Consult counsel for litigation strategy.`,
+
+  'estate/probate_application_guide': `# Probate / Certificate of Appointment — Guide (Ontario)
+
+**Purpose:** Help you prepare for a probate application (Certificate of Appointment of Estate Trustee). Use current official forms from Ontario Court forms site.
+
+## Core Steps
+1) Identify the correct application type (with will / without will)
+2) Obtain an original or court-certified copy of the will (if any)
+3) Complete required court forms (current versions from forms.mgcs.gov.on.ca)
+4) Calculate and pay Estate Administration Tax (if applicable)
+5) Serve required beneficiaries and file proof of service
+6) File the application package with the Superior Court of Justice (Estates)
+
+## Documents Checklist
+- Original will and any codicils
+- Proof of death (death certificate)
+- Affidavit of execution of will (or alternative proof)
+- Draft Certificate of Appointment
+- Estate asset list and values (for tax calculation)
+- Proof of service on beneficiaries and those entitled on intestacy
+
+## Tips
+- Use consistent asset valuations (attach statements/appraisals)
+- Keep copies of all filings and receipts
+- Check local probate office for booking/filing procedures
+
+**Note:** This is informational. Always use the latest official probate forms and confirm local requirements.`,
+
+  'estate/estate_dispute_notice': `# Estate Dispute Notice (Information)
+
+**Context:** For disputes about an estate trustee's conduct (delay, accounting issues, conflicts) or contested administration steps.
+
+## Issues Commonly Raised
+- Lack of disclosure or accounting
+- Delays distributing assets
+- Conflict of interest or self-dealing
+- Failure to safeguard estate assets
+
+## Information to Include
+- Estate name and court file number (if any)
+- Your relationship to the deceased and standing
+- Specific concerns (dates, amounts, assets involved)
+- Requests (accounting, passing of accounts, removal/replacement of trustee)
+
+## Next Steps (Informational)
+- Request an accounting in writing with a clear deadline
+- Preserve correspondence and financial records
+- Consider court processes: passing of accounts, motions for directions
+- For serious misconduct, legal advice is strongly recommended
+
+**Reminder:** This notice is informational and not a formal pleading. Court relief requires proper filings in the Superior Court of Justice (Estates).`,
+
+  'estate/dependant_support_procedure': `# Dependant Support Claim — Procedure (Ontario)
+
+**Legal Basis:** Succession Law Reform Act, Part V. Strict timelines apply.
+
+## Who May Qualify
+- Spouse (married or qualifying common-law)
+- Children (minor/adult dependent)
+- Parents, siblings, or others the deceased supported or was legally obligated to support
+
+## Deadline
+- Typically **6 months from the issuance of probate/Certificate of Appointment** to start a claim against the estate. Act promptly; late claims may require court permission.
+
+## Key Steps
+1) Identify dependency and support history (financial records, receipts)
+2) Obtain probate details (court file, issuance date)
+3) Prepare evidence of needs and estate assets
+4) File a dependant support application in the Superior Court of Justice (Estates)
+5) Serve estate trustee and affected beneficiaries
+
+## Evidence Checklist
+- Proof of relationship and dependency
+- Income/expense statements and budgets
+- Medical or caregiving records (if relevant)
+- Estate asset/liability summary
+
+## Remedies the Court May Order
+- Periodic payments, lump sums, property transfers, or trust arrangements
+
+**Reminder:** Court forms and timelines are strict. Seek legal advice promptly if the 6-month window is approaching or has passed.`,
+
       'criminal/release_conditions_checklist': `# Release Conditions Checklist
 
 **Accused:** {{fullName}}
@@ -947,7 +1055,372 @@ Under the Consumer Protection Act, 2002, consumers have the right to receive ser
 3. Consider Small Claims Court for compensation
 4. Report to Better Business Bureau (if desired)
 
-**Tip:** For unfair practices, Consumer Protection Ontario may investigate the business. For monetary compensation, you must pursue Small Claims Court separately.`
+**Tip:** For unfair practices, Consumer Protection Ontario may investigate the business. For monetary compensation, you must pursue Small Claims Court separately.`,
+
+      // Legal Malpractice Templates
+      'malpractice/lawpro_notice': `# LawPRO Immediate Notification Guide
+
+**What is LawPRO?**
+LawPRO (Lawyers' Professional Indemnity Company) is the mandatory professional liability insurer for all Ontario lawyers in private practice.
+
+**Why notify LawPRO?**
+Your lawyer {{lawyerName}} has a professional obligation to report potential malpractice claims to LawPRO immediately. This is not optional.
+
+**Who should notify?**
+- **The defendant lawyer** ({{lawyerName}}) must report, **OR**
+- **Your new lawyer** can notify LawPRO on your behalf
+
+**What happens next?**
+1. LawPRO acknowledges the claim
+2. Assigns a claims examiner
+3. Investigates the facts
+4. Often attempts early settlement if liability is clear
+
+**Your case:**
+- Client: {{clientName}}
+- Discovery date: {{discoveryDate}}
+- Original matter: {{originalClaimType}}
+- Missed deadline: {{missedDeadline}}
+
+**Important:**
+- Missed limitation periods are among the clearest forms of legal negligence
+- LawPRO often acknowledges liability early in these cases
+- This is NOT adversarial yet — most cases settle before litigation
+
+**Next steps:**
+1. Retain independent counsel (different lawyer)
+2. Preserve all evidence (retainer agreement, emails, admission of error)
+3. Do NOT sign any releases
+4. Your new lawyer will send formal notice to LawPRO
+
+**LawPRO Contact:**
+- Phone: 416-598-5800 (Toronto)
+- Website: www.lawpro.ca
+- Claims reporting is handled through the insured lawyer or their new counsel
+
+**This is information only, not legal advice. Consult a lawyer specializing in legal malpractice.**`,
+
+      'malpractice/case_within_case': `# Case-Within-a-Case Analysis Framework
+
+**What is "Case Within a Case"?**
+In legal malpractice, you must prove TWO things:
+1. The lawyer was negligent (missed deadline, etc.)
+2. **But for** that negligence, you would have won the original claim
+
+This is called the "case within a case" doctrine.
+
+**Your Original Claim:**
+- Type: {{originalClaimType}}
+- Potential damages: {{potentialDamages}}
+- Missed deadline: {{missedDeadline}}
+
+**Four Elements to Prove:**
+
+### 1. Duty of Care
+✔ **Established by retainer agreement**
+- Your lawyer owed you professional duties under the retainer
+
+### 2. Breach of Standard of Care
+✔ **Missing a limitation deadline = prima facie negligence**
+- A "reasonably competent solicitor" knows and tracks limitation periods
+- This breach is almost always established by admission
+
+### 3. Causation (The "Case Within a Case")
+⚠ **You must show the original claim had a reasonable prospect of success**
+- NOT certainty — just "loss of a chance"
+- Gather evidence from the original incident:
+  - Photos, incident reports
+  - Medical records (if injury)
+  - Witness statements
+  - Expert opinions (if needed)
+
+**Assessment factors:**
+- Strength of liability evidence
+- Quantum (amount) of damages
+- Credibility of witnesses
+- Contributory negligence risk
+- Typical awards for similar cases
+
+### 4. Damages
+⚠ **NOT automatically the full claim amount**
+- Courts assess: **Likelihood of success × Original claim value**
+- Example: 60% chance × $100,000 = $60,000 recoverable
+- Plus: Legal costs already incurred
+- Plus: Interest
+
+**What you need to do:**
+1. **Document the original claim thoroughly**
+   - Preserve all evidence from original incident
+   - Get expert opinions on liability and damages
+   - Research comparable case awards
+
+2. **Quantify realistic damages**
+   - Not the amount you claimed
+   - The amount you likely would have recovered
+
+3. **Get expert evidence**
+   - Often requires another lawyer to opine on standard of care
+   - May need expert on the original claim (e.g., engineer, doctor)
+
+**This is information only, not legal advice. Consult a legal malpractice specialist.**`,
+
+      'malpractice/expert_instruction': `# Expert Witness Instruction Letter — Legal Malpractice
+
+**To:** [Expert Lawyer Name]
+
+**From:** {{clientName}} (via counsel)
+
+**Date:** [Current date]
+
+**Re:** Expert Opinion on Standard of Care — Legal Malpractice Claim
+
+---
+
+**Background:**
+
+I am seeking an expert opinion on whether the conduct of {{lawyerName}} constituted a breach of the standard of care expected of a reasonably competent solicitor in Ontario.
+
+**Facts:**
+
+1. **Original matter:** {{originalClaimType}}
+2. **Limitation deadline:** {{missedDeadline}}
+3. **Retainer:** [Date retainer signed, scope of work]
+4. **Lawyer's admission:** [Email/letter where lawyer admitted missing deadline]
+5. **Consequence:** Claim is now statute-barred; client has lost right to sue
+
+**Questions for Expert Opinion:**
+
+1. **Standard of Care:**
+   - What is the expected standard of care for tracking limitation periods in Ontario?
+   - Are tickler systems, calendaring software, or diary systems considered mandatory?
+
+2. **Breach:**
+   - Does missing a statutory limitation deadline constitute a breach of the standard of care?
+   - Are there any circumstances where missing {{missedDeadline}} would NOT be negligent?
+
+3. **Causation (if applicable):**
+   - What evidence would be needed to assess the merits of the original {{originalClaimType}} claim?
+   - What is the typical range of settlements/awards for similar claims?
+
+**Documents Enclosed:**
+
+- Retainer agreement
+- Email admission from {{lawyerName}}
+- Timeline of key dates
+- [Evidence from original claim, if available]
+
+**Timeline:**
+
+Please provide your preliminary assessment within [timeframe]. A formal written opinion will be required if this proceeds to litigation.
+
+**Your Qualifications:**
+
+We are seeking an expert with:
+- Active Ontario bar membership
+- Experience in [relevant practice area]
+- Familiarity with professional negligence standards
+- No conflict of interest with {{lawyerName}} or their firm
+
+**Fee Arrangement:**
+
+[To be discussed]
+
+**Next Steps:**
+
+If you are available and willing to provide this opinion, please confirm by [date]. We will then forward complete documentary evidence and discuss timeline.
+
+**This is information only, not legal advice. Template must be customized by your malpractice counsel.**`,
+
+      'malpractice/demand_letter': `# Formal Demand Letter — Legal Malpractice Claim
+
+**DELIVERED BY:** [Email and Registered Mail]
+
+**TO:**
+{{lawyerName}}
+[Law Firm Name]
+[Address]
+
+**CC:** LawPRO (Lawyers' Professional Indemnity Company)
+
+**FROM:**
+{{clientName}}
+[Address]
+
+**DATE:** [Current date]
+
+**RE: NOTICE OF LEGAL MALPRACTICE CLAIM**
+
+---
+
+Dear {{lawyerName}}:
+
+## 1. Introduction
+
+This letter constitutes formal notice of a professional negligence claim arising from your representation of me in [original matter type: {{originalClaimType}}].
+
+## 2. Facts
+
+On or about [date], I retained you to pursue a claim for {{originalClaimType}}.
+
+In Ontario, the Limitations Act, 2002 generally provides a **two-year limitation period** for such claims. The deadline to file my Statement of Claim was **{{missedDeadline}}**.
+
+On {{discoveryDate}}, I discovered that no claim had been filed. In your email dated [date], you admitted to "missing the diary date" and acknowledged that the limitation period had expired.
+
+## 3. Consequence
+
+As a direct result of your negligence, my right to pursue the original claim is now **legally extinguished**. I have lost the opportunity to recover damages estimated at **{{potentialDamages}}**.
+
+## 4. Elements of Malpractice
+
+### Duty of Care
+✔ Established by our retainer agreement dated [date]
+
+### Breach of Standard of Care
+✔ Missing a statutory limitation deadline is prima facie negligence
+
+### Causation
+The original claim had a reasonable prospect of success, supported by:
+- [List key evidence: photos, medical records, witness statements, etc.]
+
+### Damages
+- Lost claim value: {{potentialDamages}}
+- Legal costs incurred: [amount]
+- Interest
+
+## 5. Demand for Resolution
+
+I invite you (and LawPRO on your behalf) to acknowledge liability and engage in settlement discussions without the need for litigation.
+
+**Deadline:** Please respond within **21 days** of receipt of this letter.
+
+If I do not receive a substantive response, I will:
+1. Retain independent legal counsel
+2. Proceed with a Statement of Claim in Ontario Superior Court of Justice
+3. Seek full damages, costs, and interest
+
+## 6. Preservation of Evidence
+
+Please preserve all files, emails, calendar entries, and other documents related to my retainer. Spoliation of evidence will be separately actionable.
+
+## 7. No Waiver
+
+This letter does not constitute a waiver of any rights or limitation periods. I reserve all rights and remedies.
+
+---
+
+**Enclosures:**
+- Copy of retainer agreement
+- Copy of your admission email dated [date]
+- [Timeline of events]
+
+**Contact:**
+[Your phone/email]
+
+**This is information only, not legal advice. Have your malpractice lawyer review and customize before sending.**`,
+
+      'malpractice/evidence_checklist': `# Evidence Preservation Checklist — Legal Malpractice Claims
+
+**Purpose:** Gather and preserve ALL evidence related to both (1) the lawyer's negligence and (2) the merits of the original claim.
+
+---
+
+## Part A: Evidence of Lawyer's Negligence
+
+### 1. Retainer Agreement
+- [ ] Original signed retainer agreement
+- [ ] Any amendments or modifications
+- [ ] Fee arrangement details
+- [ ] Scope of work definition
+
+### 2. Communications
+- [ ] **Admission of error:** Email/letter where lawyer acknowledged missing deadline
+- [ ] All emails between you and lawyer
+- [ ] Text messages
+- [ ] Voicemails (transcribe and save audio)
+- [ ] Meeting notes or memos
+
+### 3. Limitation Period Evidence
+- [ ] Date of original incident ({{missedDeadline}} calculation)
+- [ ] Proof of when limitation period expired
+- [ ] Statute text (Limitations Act, 2002)
+- [ ] Any correspondence about filing timeline
+
+### 4. Discovery Date
+- [ ] How you discovered the error (court portal screenshot, etc.)
+- [ ] Date of discovery: {{discoveryDate}}
+- [ ] Initial reaction communications
+
+### 5. Financial Records
+- [ ] Invoices from lawyer
+- [ ] Trust statements
+- [ ] Payment receipts
+- [ ] Legal costs incurred to date
+
+---
+
+## Part B: Evidence of Original Claim Merits (Case-Within-Case)
+
+**Original claim type:** {{originalClaimType}}
+
+### 6. Incident Documentation
+- [ ] Photos of scene/property damage/injuries
+- [ ] Incident reports (police, workplace, property management)
+- [ ] Witness names and contact information
+- [ ] Witness statements (if available)
+
+### 7. Medical Evidence (if injury claim)
+- [ ] Medical records from treating physicians
+- [ ] Diagnostic reports (X-rays, MRI, CT scans)
+- [ ] Treatment invoices and receipts
+- [ ] Prognosis reports
+
+### 8. Financial Losses
+- [ ] Lost income documentation (pay stubs, tax returns)
+- [ ] Out-of-pocket expenses (receipts)
+- [ ] Future loss estimates (if applicable)
+
+### 9. Expert Evidence (if needed)
+- [ ] Expert reports on liability (e.g., engineer for slip-and-fall)
+- [ ] Expert reports on damages (e.g., medical expert, economist)
+- [ ] Comparable case awards research
+
+### 10. Comparable Cases
+- [ ] Research similar claims in your jurisdiction
+- [ ] Typical settlement ranges
+- [ ] Jury verdict reports (if available)
+
+---
+
+## Part C: Next Steps
+
+### 11. Immediate Actions
+- [ ] **Do NOT destroy anything** — every email, note, receipt matters
+- [ ] Make copies of all documents
+- [ ] Organize chronologically
+- [ ] Create a master timeline
+- [ ] Secure digital files (backup to cloud and external drive)
+
+### 12. Consult Independent Counsel
+- [ ] Find a lawyer who specializes in legal malpractice
+- [ ] Provide them with complete evidence package
+- [ ] Do NOT contact original lawyer for documents (your new lawyer will do this)
+
+### 13. LawPRO Notification
+- [ ] Your new lawyer will send notice to LawPRO
+- [ ] LawPRO will assign a claims examiner
+- [ ] Be prepared for investigation and questions
+
+---
+
+**Deadline to Preserve:**
+Legal malpractice limitation period in Ontario is **2 years from discovery** of the negligence.
+
+Discovery date: {{discoveryDate}}
+**Your deadline:** [Calculate 2 years from discovery]
+
+**Do NOT delay.** Early action improves settlement prospects.
+
+**This is information only, not legal advice. Consult a legal malpractice specialist immediately.**`
     };
   }
 
@@ -959,5 +1432,98 @@ Under the Consumer Protection Act, 2002, consumers have the right to receive ser
       const val = context[key];
       return val === undefined || val === null ? '' : String(val);
     });
+  }
+
+  // Alias for consistency with domain modules
+  render(templateId: string, context: Record<string, string | number | undefined>): string {
+    return this.renderTemplate(templateId, context);
+  }
+
+  /**
+   * Ontario Forms Repository: Official URLs for fillable forms
+   * Source: Central Forms Repository (forms.mgcs.gov.on.ca), Ontario Court Forms, Tribunals Ontario
+   */
+  ontarioFormsRepository(): Record<string, { url: string; type: string; description: string }> {
+    return {
+      'form-7a-small-claims': {
+        url: 'https://ontariocourtforms.on.ca/en/superior-court-of-justice/statement-of-claim/',
+        type: 'PDF Fillable',
+        description: 'Small Claims Court - Statement of Claim (Form 7A)'
+      },
+      'ltb-form-t1': {
+        url: 'https://tribunalsontario.ca/ltb/forms-filing-and-fees/',
+        type: 'PDF Fillable',
+        description: 'Landlord & Tenant Board - Tenant Application (T1 Application)'
+      },
+      'ltb-form-l1': {
+        url: 'https://tribunalsontario.ca/ltb/forms-filing-and-fees/',
+        type: 'PDF Fillable',
+        description: 'Landlord & Tenant Board - Landlord Application (L1 Eviction)'
+      },
+      'family-forms-portal': {
+        url: 'https://www.ontario.ca/page/file-family-court-documents-online',
+        type: 'Online Portal',
+        description: 'Family Court Forms - My Ontario Account Required'
+      },
+      'central-forms-repository': {
+        url: 'https://forms.mgcs.gov.on.ca/en/',
+        type: 'Multi-Ministry Repository',
+        description: 'Ontario Central Forms Repository - All Government Forms'
+      },
+      'ontario-court-forms': {
+        url: 'https://ontariocourtforms.on.ca/en/',
+        type: 'Court-Specific',
+        description: 'Ontario Court Forms - Family, Civil, Small Claims, Criminal'
+      },
+      'superior-court-rules-forms': {
+        url: 'https://ontariocourtforms.on.ca/en/rules-of-civil-procedure-forms/',
+        type: 'Rules of Civil Procedure',
+        description: 'Superior Court - Rules of Civil Procedure Forms'
+      },
+      'hrto-forms': {
+        url: 'https://tribunalsontario.ca/hrto/',
+        type: 'Tribunal Forms',
+        description: 'Human Rights Tribunal of Ontario - Application and Replies'
+      },
+      'lat-forms': {
+        url: 'https://tribunalsontario.ca/lat/',
+        type: 'Tribunal Forms',
+        description: 'Licence Appeal Tribunal - Accident Benefits Dispute Forms'
+      },
+      'legal-aid-forms-library': {
+        url: 'https://www.legalaid.on.ca/lawyers-legal-professionals/forms-library/',
+        type: 'Reference',
+        description: 'Legal Aid Ontario Forms Library (Professional Reference)'
+      }
+    };
+  }
+
+  /**
+   * Generate a forms reference section for documents
+   * Lists official Ontario forms relevant to the matter type
+   */
+  generateFormsReference(matterType: string): string {
+    const formsMap: Record<string, string[]> = {
+      'small-claims': ['form-7a-small-claims', 'ontario-court-forms', 'central-forms-repository'],
+      'landlord-tenant': ['ltb-form-t1', 'ltb-form-l1', 'tribunalsontario-portal'],
+      'family': ['family-forms-portal', 'central-forms-repository'],
+      'human-rights': ['hrto-forms', 'central-forms-repository'],
+      'accident-benefits': ['lat-forms', 'central-forms-repository'],
+      'civil-negligence': ['superior-court-rules-forms', 'ontario-court-forms', 'central-forms-repository'],
+      default: ['central-forms-repository', 'ontario-court-forms']
+    };
+
+    const formIds = formsMap[matterType] || formsMap['default'];
+    const formsRepo = this.ontarioFormsRepository();
+    const forms = formIds.map(id => formsRepo[id]).filter(Boolean);
+
+    if (forms.length === 0) return '';
+
+    let markdown = '## Official Ontario Forms\n\n';
+    forms.forEach(form => {
+      markdown += `- **${form.description}** (${form.type})\n  ${form.url}\n\n`;
+    });
+
+    return markdown;
   }
 }

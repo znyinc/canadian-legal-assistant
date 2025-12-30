@@ -1,0 +1,1497 @@
+# =============================================================================
+# KIRO AI - Ontario Legal Assistant
+# Comprehensive System Specification for AI-Enabled IDE
+# Version: 1.0.0
+# Target: Common citizens navigating Ontario legal landscape
+# =============================================================================
+
+project:
+  name: "KIRO AI - Ontario Legal Assistant"
+  description: "Empathetic, plain-language legal guidance system for Ontario residents"
+  version: "1.0.0"
+  license: "Proprietary"
+  
+goals:
+  primary: "Help everyday Ontarians understand their legal rights and navigate the justice system"
+  principles:
+    - "Plain language over legal jargon"
+    - "Empathy-first interactions"
+    - "Clear actionable next steps"
+    - "Always recommend professional consultation for complex matters"
+    - "Never provide legal advice - provide legal information and guidance"
+
+# =============================================================================
+# DOMAIN MODEL - Legal Scenarios Taxonomy
+# =============================================================================
+
+domain:
+  legal_categories:
+    
+    # ----- TORTS & PERSONAL INJURY -----
+    - category: "torts_personal_injury"
+      display_name: "Personal Injury & Accidents"
+      icon: "medical-cross"
+      scenarios:
+        
+        - id: "mva_tort"
+          name: "Motor Vehicle Accident - Tort Claim"
+          description: "Suing at-fault driver for negligence"
+          forum: "superior_court"
+          limitation_period: "2_years_discoverability"
+          key_statutes:
+            - "Insurance Act, R.S.O. 1990, c. I.8"
+            - "Limitations Act, 2002"
+          damages_available:
+            - type: "pecuniary"
+              includes: ["past_income_loss", "future_income_loss", "future_care_costs"]
+            - type: "non_pecuniary"
+              includes: ["pain_suffering", "loss_enjoyment_life"]
+              cap: "$420,000 (approx, inflation-adjusted)"
+            - type: "family_law_act"
+              includes: ["loss_guidance_care_companionship"]
+          special_requirements:
+            - name: "statutory_threshold"
+              description: "Must prove permanent serious impairment or disfigurement for non-pecuniary damages"
+            - name: "deductible"
+              description: "~$46,000+ deducted from pain/suffering unless damages exceed monetary floor"
+          related_scenarios: ["mva_sabs"]
+          user_questions:
+            - "I was hit by a car. What can I claim?"
+            - "How much can I get for my car accident injuries?"
+            - "The other driver was at fault. What are my options?"
+            
+        - id: "mva_sabs"
+          name: "Motor Vehicle Accident - Statutory Benefits"
+          description: "Claiming accident benefits from your own insurer"
+          forum: "licence_appeal_tribunal"
+          limitation_period: "various_per_benefit_type"
+          key_statutes:
+            - "Statutory Accident Benefits Schedule (SABS)"
+            - "Insurance Act"
+          benefits_available:
+            - "income_replacement_benefit"
+            - "medical_rehabilitation_benefit"
+            - "attendant_care_benefit"
+            - "caregiver_benefit"
+            - "non_earner_benefit"
+          special_requirements:
+            - name: "application_deadlines"
+              description: "Must apply within specific timeframes for each benefit"
+            - name: "treatment_plans"
+              description: "Insurer approval process for treatment"
+          remedial_limitations:
+            - "No costs typically awarded"
+            - "Benefits only - no pain and suffering"
+          user_questions:
+            - "My insurance company denied my claim"
+            - "How do I get my medical bills paid after an accident?"
+            - "What benefits am I entitled to?"
+            
+        - id: "slip_fall"
+          name: "Slip and Fall / Premises Liability"
+          description: "Injury on someone else's property"
+          forum: "superior_court_or_small_claims"
+          limitation_period: "2_years_discoverability"
+          key_statutes:
+            - "Occupiers' Liability Act"
+          special_requirements:
+            - name: "notice_to_municipality"
+              description: "10 days written notice required for municipal sidewalk/road claims"
+          damages_available:
+            - "medical_expenses"
+            - "lost_income"
+            - "pain_suffering"
+          user_questions:
+            - "I slipped on ice at a store"
+            - "I fell at work - what are my options?"
+            - "The city didn't clear the sidewalk and I got hurt"
+            
+        - id: "medical_malpractice"
+          name: "Medical Malpractice"
+          description: "Negligence by healthcare provider"
+          forum: "superior_court"
+          limitation_period: "2_years_discoverability"
+          parallel_processes:
+            - forum: "cpso"
+              purpose: "Professional discipline"
+              limitation: "Findings generally inadmissible in civil suit"
+            - forum: "patient_ombudsman"
+              purpose: "Systemic issues in hospitals/LTC"
+              limitation: "Cannot award damages"
+          key_statutes:
+            - "Regulated Health Professions Act"
+            - "Health Care Consent Act"
+          special_requirements:
+            - name: "expert_evidence"
+              description: "Must prove breach of standard of care through expert testimony"
+          user_questions:
+            - "My doctor made a mistake"
+            - "I had a bad surgery outcome"
+            - "Should I complain to the College or sue?"
+            
+        - id: "product_liability"
+          name: "Product Liability"
+          description: "Injury from defective product"
+          forum: "superior_court_or_small_claims"
+          limitation_period: "2_years_discoverability"
+          theories_of_liability:
+            - "negligence"
+            - "breach_of_warranty"
+            - "strict_liability_limited"
+          user_questions:
+            - "A product I bought injured me"
+            - "Can I sue the manufacturer?"
+            
+        - id: "professional_negligence"
+          name: "Professional Negligence (Non-Medical)"
+          description: "Negligence by lawyers, accountants, financial advisors, engineers"
+          forum: "superior_court"
+          limitation_period: "2_years_discoverability"
+          subcategories:
+            - "legal_malpractice"
+            - "accounting_negligence"
+            - "financial_advisor_breach"
+            - "engineering_negligence"
+          special_requirements:
+            - name: "expert_evidence"
+              description: "Must establish professional standard of care"
+          user_questions:
+            - "My lawyer missed a deadline"
+            - "My accountant gave bad tax advice"
+            - "My financial advisor lost my money"
+
+    # ----- DEFAMATION & REPUTATION -----
+    - category: "defamation"
+      display_name: "Defamation & Reputation"
+      icon: "shield"
+      scenarios:
+        
+        - id: "libel_slander"
+          name: "Defamation (Libel/Slander)"
+          description: "False statements harming reputation"
+          forum: "superior_court"
+          limitation_period: "2_years"
+          key_statutes:
+            - "Libel and Slander Act"
+          special_requirements:
+            - name: "notice_requirement"
+              description: "6 weeks written notice for newspaper/broadcast libel"
+              critical: true
+          defenses_available:
+            - "truth/justification"
+            - "fair_comment"
+            - "qualified_privilege"
+            - "responsible_communication"
+          anti_slapp:
+            statute: "Courts of Justice Act s.137.1"
+            effect: "Defendant can seek early dismissal if expression relates to public interest"
+            risk: "Full indemnity costs if dismissed"
+          user_questions:
+            - "Someone posted lies about me online"
+            - "A newspaper published false information about me"
+            - "My ex is spreading rumors about me"
+            - "I got a bad review that's not true"
+
+    # ----- CONTRACTS & COMMERCIAL -----
+    - category: "contracts_commercial"
+      display_name: "Contracts & Business Disputes"
+      icon: "handshake"
+      scenarios:
+        
+        - id: "breach_of_contract"
+          name: "Breach of Contract"
+          description: "Party failed to perform contractual obligations"
+          forum: "superior_court_or_small_claims"
+          limitation_period: "2_years_discoverability"
+          remedies:
+            - type: "expectation_damages"
+              description: "Put innocent party in position if contract performed"
+            - type: "specific_performance"
+              description: "Available for unique assets (e.g., real estate)"
+              requirements: "Must show damages inadequate"
+            - type: "rescission"
+              description: "Unwind transaction entirely"
+            - type: "rectification"
+              description: "Correct written document to match actual agreement"
+          user_questions:
+            - "Someone broke our contract"
+            - "I paid for something and didn't receive it"
+            - "The contractor didn't finish the job"
+            
+        - id: "debt_collection"
+          name: "Debt Collection / Money Owed"
+          description: "Recovering money owed"
+          forum: "small_claims_if_under_50k"
+          limitation_period: "2_years"
+          enforcement_tools:
+            - "garnishment"
+            - "writ_of_seizure_and_sale"
+            - "examination_in_aid_of_execution"
+          user_questions:
+            - "Someone owes me money"
+            - "A customer won't pay their invoice"
+            - "How do I collect on a judgment?"
+            
+        - id: "shareholder_oppression"
+          name: "Shareholder Oppression"
+          description: "Unfair treatment by corporation or majority shareholders"
+          forum: "superior_court_commercial_list"
+          key_statutes:
+            - "Ontario Business Corporations Act, s.248"
+          legal_test: "Violation of reasonable expectations"
+          remedies:
+            - "share_buyout"
+            - "director_removal"
+            - "amend_articles"
+            - "interim_orders"
+            - "appoint_receiver"
+          complainants:
+            - "shareholders"
+            - "directors"
+            - "officers"
+            - "creditors_in_some_cases"
+          user_questions:
+            - "The other shareholders are squeezing me out"
+            - "The company isn't paying dividends to freeze me out"
+            - "I'm a minority shareholder being treated unfairly"
+            
+        - id: "construction_lien"
+          name: "Construction Lien"
+          description: "Securing payment for construction work/materials"
+          forum: "superior_court"
+          key_statutes:
+            - "Construction Act"
+          mechanisms:
+            - name: "lien_registration"
+              deadline: "60 days from completion/abandonment"
+            - name: "holdback_requirement"
+              description: "Payer must retain 10% until lien period expires"
+            - name: "statutory_trust"
+              description: "Funds received are trust for subcontractors"
+          remedies:
+            - "lien_against_property"
+            - "holdback_claim"
+            - "breach_of_trust_claim"
+            - "personal_liability_of_directors"
+          user_questions:
+            - "I did work and didn't get paid"
+            - "The contractor won't pay me"
+            - "How do I register a construction lien?"
+            
+        - id: "franchise_disputes"
+          name: "Franchise Disputes"
+          description: "Disputes between franchisors and franchisees"
+          forum: "superior_court"
+          key_statutes:
+            - "Arthur Wishart Act (Franchise Disclosure)"
+          special_provisions:
+            - "disclosure_requirements"
+            - "right_of_rescission"
+            - "duty_of_fair_dealing"
+          user_questions:
+            - "The franchisor misrepresented the opportunity"
+            - "I didn't get proper disclosure documents"
+
+    # ----- EMPLOYMENT & LABOUR -----
+    - category: "employment"
+      display_name: "Employment & Workplace"
+      icon: "briefcase"
+      scenarios:
+        
+        - id: "wrongful_dismissal"
+          name: "Wrongful Dismissal"
+          description: "Termination without adequate notice/pay"
+          forum: "superior_court_or_small_claims"
+          limitation_period: "2_years"
+          key_statutes:
+            - "Employment Standards Act, 2000"
+          remedies:
+            - type: "common_law_damages"
+              description: "Reasonable notice period (can exceed ESA minimums)"
+              factors: ["age", "length_of_service", "character_of_employment", "availability_of_similar_employment"]
+            - type: "esa_minimums"
+              description: "Statutory minimum termination/severance pay"
+          special_considerations:
+            - name: "mitigation"
+              description: "Must look for new work to mitigate damages"
+            - name: "esa_complaint_alternative"
+              description: "Can file ESA complaint instead of lawsuit (but limited to ESA minimums)"
+          user_questions:
+            - "I was fired without notice"
+            - "Is my severance package fair?"
+            - "Can I sue for wrongful dismissal?"
+            
+        - id: "constructive_dismissal"
+          name: "Constructive Dismissal"
+          description: "Forced resignation due to employer's conduct"
+          forum: "superior_court_or_small_claims"
+          triggers:
+            - "substantial_change_duties"
+            - "demotion"
+            - "pay_reduction"
+            - "hostile_work_environment"
+            - "relocation"
+          user_questions:
+            - "My employer changed my job completely"
+            - "I was forced to resign"
+            - "They cut my pay significantly"
+            
+        - id: "esa_complaint"
+          name: "Employment Standards Complaint"
+          description: "Statutory employment rights violations"
+          forum: "ministry_of_labour"
+          key_statutes:
+            - "Employment Standards Act, 2000"
+          claims:
+            - "unpaid_wages"
+            - "overtime"
+            - "vacation_pay"
+            - "public_holiday_pay"
+            - "termination_pay"
+            - "severance_pay"
+          limitation: "2 years from violation"
+          user_questions:
+            - "My employer didn't pay my overtime"
+            - "I haven't received my vacation pay"
+            - "My employer owes me wages"
+            
+        - id: "workplace_harassment"
+          name: "Workplace Harassment & Violence"
+          description: "Harassment/violence in the workplace"
+          forum: "multiple_options"
+          options:
+            - forum: "ministry_of_labour"
+              basis: "OHSA complaint"
+            - forum: "hrto"
+              basis: "If discrimination-based"
+            - forum: "civil_court"
+              basis: "Intentional torts"
+          key_statutes:
+            - "Occupational Health and Safety Act"
+            - "Human Rights Code"
+          user_questions:
+            - "I'm being bullied at work"
+            - "My supervisor is harassing me"
+            - "There's violence in my workplace"
+
+    # ----- HUMAN RIGHTS -----
+    - category: "human_rights"
+      display_name: "Human Rights & Discrimination"
+      icon: "scale-balanced"
+      scenarios:
+        
+        - id: "hrto_complaint"
+          name: "Human Rights Complaint"
+          description: "Discrimination in employment, housing, services"
+          forum: "human_rights_tribunal_ontario"
+          key_statutes:
+            - "Human Rights Code"
+          protected_grounds:
+            - "race"
+            - "ancestry"
+            - "place_of_origin"
+            - "colour"
+            - "ethnic_origin"
+            - "citizenship"
+            - "creed"
+            - "sex"
+            - "sexual_orientation"
+            - "gender_identity"
+            - "gender_expression"
+            - "age"
+            - "marital_status"
+            - "family_status"
+            - "disability"
+            - "receipt_of_public_assistance"
+          social_areas:
+            - "employment"
+            - "housing"
+            - "services_goods_facilities"
+            - "contracts"
+            - "vocational_associations"
+          limitation_period: "1_year"
+          remedies:
+            - "general_damages_for_dignity"
+            - "lost_wages"
+            - "reinstatement"
+            - "public_interest_remedies"
+            - "policy_changes"
+            - "training_orders"
+          user_questions:
+            - "I was discriminated against at work"
+            - "A landlord won't rent to me because of my background"
+            - "I was refused service"
+            - "My employer won't accommodate my disability"
+
+    # ----- RESIDENTIAL TENANCY -----
+    - category: "residential_tenancy"
+      display_name: "Landlord & Tenant"
+      icon: "home"
+      scenarios:
+        
+        - id: "ltb_tenant_issues"
+          name: "Tenant Rights & Issues"
+          description: "Tenant complaints against landlord"
+          forum: "landlord_tenant_board"
+          key_statutes:
+            - "Residential Tenancies Act, 2006"
+          applications:
+            - id: "T1"
+              name: "Rebate of Rent"
+              description: "Landlord collected illegal rent/charges"
+            - id: "T2"
+              name: "Tenant Rights"
+              description: "Harassment, entry, vital services, maintenance"
+            - id: "T6"
+              name: "Maintenance"
+              description: "Landlord failed to maintain unit"
+          remedies:
+            - "rent_abatement"
+            - "repair_orders"
+            - "monetary_compensation_up_to_50k"
+            - "administrative_fine"
+          user_questions:
+            - "My landlord won't fix things"
+            - "My landlord is harassing me"
+            - "My rent was increased illegally"
+            - "My landlord entered without notice"
+            
+        - id: "ltb_landlord_issues"
+          name: "Landlord Rights & Eviction"
+          description: "Landlord applications including eviction"
+          forum: "landlord_tenant_board"
+          applications:
+            - id: "L1"
+              name: "Non-payment of Rent"
+            - id: "L2"
+              name: "Termination - Cause"
+              description: "Damage, interference, illegal acts"
+            - id: "L5"
+              name: "Termination - Own Use"
+              description: "Landlord or family moving in"
+          special_rules:
+            - name: "bad_faith_eviction"
+              description: "Heavy penalties ($15k-$25k+) for pretextual N12 evictions"
+          user_questions:
+            - "My tenant won't pay rent"
+            - "How do I evict a tenant?"
+            - "My tenant is damaging the property"
+            
+        - id: "rent_increase_dispute"
+          name: "Rent Increase Dispute"
+          description: "Challenging or implementing rent increases"
+          forum: "landlord_tenant_board"
+          rules:
+            - "Annual_guideline_increase_set_by_province"
+            - "Above_guideline_increase_requires_AGI_application"
+            - "Exemptions_for_new_buildings_post_Nov_2018"
+          user_questions:
+            - "My rent increase seems too high"
+            - "Can my landlord raise rent anytime?"
+
+    # ----- PROPERTY & REAL ESTATE -----
+    - category: "property_real_estate"
+      display_name: "Property & Real Estate"
+      icon: "building"
+      scenarios:
+        
+        - id: "real_estate_purchase_dispute"
+          name: "Real Estate Purchase Dispute"
+          description: "Issues with buying/selling property"
+          forum: "superior_court"
+          claims:
+            - "breach_of_purchase_agreement"
+            - "misrepresentation"
+            - "failure_to_close"
+            - "deposit_disputes"
+          remedies:
+            - "specific_performance"
+            - "damages"
+            - "return_of_deposit"
+          user_questions:
+            - "The seller won't complete the sale"
+            - "The buyer backed out"
+            - "The property wasn't as described"
+            
+        - id: "neighbour_disputes"
+          name: "Neighbour & Boundary Disputes"
+          description: "Disputes between property owners"
+          forum: "superior_court_or_small_claims"
+          claim_types:
+            - name: "trespass"
+              description: "Unauthorized intrusion on land"
+            - name: "nuisance"
+              description: "Interference with use/enjoyment (noise, water runoff, odors)"
+            - name: "encroachment"
+              description: "Structure crossing boundary"
+            - name: "easement_dispute"
+              description: "Rights of way, prescriptive easements"
+          alternative_resolution:
+            - forum: "line_fences_act"
+              description: "Municipal arbitration for fence disputes"
+          remedies:
+            - "declaration_of_boundary"
+            - "mandatory_injunction"
+            - "damages"
+          user_questions:
+            - "My neighbor's fence is on my property"
+            - "My neighbor is making too much noise"
+            - "Water from next door is flooding my yard"
+            
+        - id: "condo_disputes"
+          name: "Condominium Disputes"
+          description: "Disputes involving condo corporations"
+          forum: "condominium_authority_tribunal"
+          key_statutes:
+            - "Condominium Act, 1998"
+          cat_jurisdiction:
+            - "records_access"
+            - "pets"
+            - "vehicles"
+            - "parking"
+            - "storage"
+            - "some_nuisance_matters"
+          user_questions:
+            - "The condo board won't give me records"
+            - "I have a dispute about my parking spot"
+            - "The condo is enforcing rules unfairly"
+
+    # ----- FAMILY LAW -----
+    - category: "family"
+      display_name: "Family Law"
+      icon: "family"
+      scenarios:
+        
+        - id: "divorce"
+          name: "Divorce"
+          description: "Legal dissolution of marriage"
+          forum: "superior_court_family_branch"
+          key_statutes:
+            - "Divorce Act (federal)"
+          grounds:
+            - "separation_1_year"
+            - "adultery"
+            - "cruelty"
+          user_questions:
+            - "How do I get a divorce?"
+            - "How long do I need to be separated?"
+            
+        - id: "child_custody_access"
+          name: "Child Custody & Parenting"
+          description: "Decision-making and parenting time"
+          forum: "superior_court_or_ocj_family"
+          key_statutes:
+            - "Children's Law Reform Act"
+            - "Divorce Act"
+          legal_test: "Best interests of the child"
+          user_questions:
+            - "I want custody of my children"
+            - "My ex won't let me see my kids"
+            - "I need to modify parenting time"
+            
+        - id: "child_support"
+          name: "Child Support"
+          description: "Financial support for children"
+          forum: "superior_court_or_ocj_family"
+          key_statutes:
+            - "Child Support Guidelines"
+            - "Family Law Act"
+          calculation: "Based on payor income and number of children"
+          user_questions:
+            - "How much child support will I pay/receive?"
+            - "Child support needs to be changed"
+            
+        - id: "spousal_support"
+          name: "Spousal Support"
+          description: "Financial support for spouse"
+          forum: "superior_court_or_ocj_family"
+          factors:
+            - "length_of_marriage"
+            - "roles_during_marriage"
+            - "income_disparity"
+            - "needs_and_means"
+          user_questions:
+            - "Am I entitled to spousal support?"
+            - "How long do I pay spousal support?"
+            
+        - id: "property_division"
+          name: "Property Division (Equalization)"
+          description: "Division of assets on marriage breakdown"
+          forum: "superior_court_only"
+          key_statutes:
+            - "Family Law Act"
+          mechanism: "Equalization of Net Family Property"
+          limitation: "6 years from separation OR 2 years from divorce"
+          user_questions:
+            - "How do we split our assets?"
+            - "Is my spouse entitled to half of everything?"
+            - "What about the house?"
+            
+        - id: "child_protection"
+          name: "Child Protection"
+          description: "Children's Aid Society involvement"
+          forum: "ontario_court_of_justice_family"
+          key_statutes:
+            - "Child, Youth and Family Services Act"
+          user_questions:
+            - "CAS is investigating me"
+            - "My children were apprehended"
+            - "I need to understand the child protection process"
+
+    # ----- ESTATE & INHERITANCE -----
+    - category: "estate"
+      display_name: "Wills, Estates & Inheritance"
+      icon: "scroll"
+      scenarios:
+        
+        - id: "will_challenge"
+          name: "Will Challenge"
+          description: "Contesting validity of a will"
+          forum: "superior_court"
+          grounds:
+            - name: "lack_of_capacity"
+              description: "Testator didn't understand will"
+            - name: "undue_influence"
+              description: "Testator was coerced"
+            - name: "improper_execution"
+              description: "Will not properly signed/witnessed"
+            - name: "fraud"
+              description: "Will was forged or procured by fraud"
+          limitation: "Generally before probate or within 2 years"
+          user_questions:
+            - "I think the will was changed under pressure"
+            - "My parent wasn't mentally capable when they signed"
+            - "The will doesn't seem right"
+            
+        - id: "dependant_support_claim"
+          name: "Dependant Support Claim"
+          description: "Claim for support from estate"
+          forum: "superior_court"
+          key_statutes:
+            - "Succession Law Reform Act, Part V"
+          eligible_dependants:
+            - "spouse"
+            - "parent"
+            - "child"
+            - "sibling"
+          legal_test: "Needs-based; adequate provision for proper support"
+          limitation: "6 months from certificate of appointment"
+          user_questions:
+            - "I was left out of the will"
+            - "The estate doesn't provide enough for me"
+            - "Can I claim against my deceased spouse's estate?"
+            
+        - id: "estate_administration"
+          name: "Estate Administration Disputes"
+          description: "Issues with estate trustees/executors"
+          forum: "superior_court"
+          claims:
+            - "breach_of_fiduciary_duty"
+            - "passing_of_accounts"
+            - "removal_of_estate_trustee"
+            - "compensation_disputes"
+          user_questions:
+            - "The executor isn't doing their job"
+            - "The estate trustee is taking too long"
+            - "I think the executor is stealing from the estate"
+
+    # ----- CONSUMER PROTECTION -----
+    - category: "consumer"
+      display_name: "Consumer Protection"
+      icon: "shopping-cart"
+      scenarios:
+        
+        - id: "consumer_contract_issues"
+          name: "Consumer Contract Issues"
+          description: "Problems with consumer purchases/services"
+          forum: "small_claims_or_superior_court"
+          key_statutes:
+            - "Consumer Protection Act, 2002"
+          special_rights:
+            - name: "cooling_off_period"
+              description: "10 days to cancel direct sales over $50"
+            - name: "rescission_for_unfair_practice"
+              description: "1 year to rescind if misrepresentation"
+          user_questions:
+            - "I was ripped off"
+            - "The product doesn't work as advertised"
+            - "I want to cancel a contract I signed"
+            
+        - id: "door_to_door_sales"
+          name: "Door-to-Door Sales"
+          description: "Issues with direct sales contracts"
+          forum: "small_claims"
+          key_statutes:
+            - "Consumer Protection Act"
+          special_rights:
+            - "10_day_cancellation_right"
+            - "extended_cancellation_if_disclosure_deficient"
+          user_questions:
+            - "I signed something at my door and regret it"
+            - "A salesperson pressured me into a contract"
+
+    # ----- CRIMINAL INJURY & RELATED -----
+    - category: "criminal_related"
+      display_name: "Crime Victims & Related"
+      icon: "gavel"
+      scenarios:
+        
+        - id: "crime_victim_compensation"
+          name: "Criminal Injuries Compensation"
+          description: "Compensation for victims of violent crime"
+          forum: "criminal_injuries_compensation_board"
+          eligibility:
+            - "victim_of_violent_crime_in_ontario"
+            - "family_of_deceased_victim"
+          compensation:
+            - "pain_and_suffering"
+            - "lost_income"
+            - "therapy_costs"
+          user_questions:
+            - "I was a victim of a crime"
+            - "Can I get compensation as a crime victim?"
+            
+        - id: "civil_suit_from_crime"
+          name: "Civil Lawsuit from Criminal Act"
+          description: "Suing someone who committed a crime against you"
+          forum: "superior_court"
+          evidentiary_benefit:
+            statute: "Evidence Act, s.22.1"
+            effect: "Criminal conviction is proof crime was committed"
+          user_questions:
+            - "Someone assaulted me - can I sue?"
+            - "The person was convicted - does that help my civil case?"
+
+    # ----- DEBT & INSOLVENCY -----
+    - category: "debt_insolvency"
+      display_name: "Debt & Bankruptcy"
+      icon: "credit-card"
+      scenarios:
+        
+        - id: "bankruptcy"
+          name: "Personal Bankruptcy"
+          description: "Formal insolvency process"
+          forum: "federal_bankruptcy_court"
+          key_statutes:
+            - "Bankruptcy and Insolvency Act (federal)"
+          note: "Federal jurisdiction - requires licensed insolvency trustee"
+          user_questions:
+            - "I can't pay my debts"
+            - "Should I declare bankruptcy?"
+            
+        - id: "consumer_proposal"
+          name: "Consumer Proposal"
+          description: "Negotiated debt settlement"
+          forum: "federal_bankruptcy_court"
+          key_statutes:
+            - "Bankruptcy and Insolvency Act"
+          user_questions:
+            - "Is there an alternative to bankruptcy?"
+            - "Can I negotiate with my creditors?"
+            
+        - id: "debt_defense"
+          name: "Defending Debt Claims"
+          description: "When being sued for debt"
+          forum: "small_claims_or_superior"
+          defenses:
+            - "limitation_period_expired"
+            - "debt_not_owed"
+            - "improper_collection_practices"
+          user_questions:
+            - "I'm being sued for a debt"
+            - "The debt is old - can they still sue?"
+
+    # ----- IMMIGRATION RELATED -----
+    - category: "immigration"
+      display_name: "Immigration & Refugee"
+      icon: "passport"
+      scenarios:
+        
+        - id: "irb_proceedings"
+          name: "Immigration & Refugee Board"
+          description: "Immigration hearings and appeals"
+          forum: "immigration_refugee_board"
+          divisions:
+            - "refugee_protection_division"
+            - "immigration_division"
+            - "immigration_appeal_division"
+            - "refugee_appeal_division"
+          note: "Federal jurisdiction"
+          user_questions:
+            - "I have an immigration hearing"
+            - "My refugee claim was denied"
+            - "I'm facing deportation"
+            
+        - id: "immigration_judicial_review"
+          name: "Immigration Judicial Review"
+          description: "Challenging immigration decisions"
+          forum: "federal_court"
+          user_questions:
+            - "How do I appeal an immigration decision?"
+
+    # ----- MUNICIPAL & PLANNING -----
+    - category: "municipal"
+      display_name: "Municipal & Planning"
+      icon: "city"
+      scenarios:
+        
+        - id: "zoning_appeal"
+          name: "Zoning & Planning Appeals"
+          description: "Land use and development appeals"
+          forum: "ontario_land_tribunal"
+          key_statutes:
+            - "Planning Act"
+          matters:
+            - "minor_variance"
+            - "site_plan"
+            - "subdivision"
+            - "official_plan_amendment"
+            - "zoning_bylaw_amendment"
+          user_questions:
+            - "The city denied my building permit"
+            - "I want to appeal a planning decision"
+            - "My neighbor's development application affects me"
+            
+        - id: "property_tax_appeal"
+          name: "Property Tax Assessment Appeal"
+          description: "Challenging property assessment"
+          forum: "assessment_review_board"
+          key_statutes:
+            - "Assessment Act"
+          user_questions:
+            - "My property tax assessment is too high"
+            - "How do I appeal my property assessment?"
+            
+        - id: "bylaw_enforcement"
+          name: "Bylaw Enforcement Issues"
+          description: "Municipal bylaw matters"
+          forum: "provincial_offences_court"
+          common_issues:
+            - "property_standards"
+            - "noise_bylaws"
+            - "parking"
+            - "business_licensing"
+          user_questions:
+            - "I got a bylaw ticket"
+            - "The city is ordering me to fix my property"
+
+    # ----- PRIVACY -----
+    - category: "privacy"
+      display_name: "Privacy & Data Protection"
+      icon: "lock"
+      scenarios:
+        
+        - id: "pipeda_complaint"
+          name: "Privacy Complaint (PIPEDA)"
+          description: "Private sector privacy violations"
+          forum: "privacy_commissioner_canada"
+          key_statutes:
+            - "PIPEDA (federal)"
+          note: "Federal jurisdiction for private sector"
+          user_questions:
+            - "A company misused my personal information"
+            - "My data was breached"
+            
+        - id: "privacy_tort"
+          name: "Privacy Tort Claim"
+          description: "Invasion of privacy civil lawsuit"
+          forum: "superior_court"
+          torts:
+            - "intrusion_upon_seclusion"
+            - "public_disclosure_private_facts"
+          user_questions:
+            - "Someone invaded my privacy"
+            - "My private photos were shared without consent"
+
+# =============================================================================
+# FORUMS / TRIBUNALS DATABASE
+# =============================================================================
+
+  forums:
+    - id: "superior_court"
+      name: "Superior Court of Justice"
+      type: "court"
+      jurisdiction: "General civil jurisdiction over $50,000"
+      website: "https://www.ontariocourts.ca/scj/"
+      filing_fees: "Variable by action type"
+      self_rep_friendly: "moderate"
+      
+    - id: "small_claims"
+      name: "Small Claims Court"
+      type: "court"
+      jurisdiction: "Up to $50,000 (as of Oct 2024)"
+      website: "https://www.ontariocourts.ca/scj/small-claims/"
+      filing_fees: "Lower than Superior Court"
+      self_rep_friendly: "high"
+      limitations:
+        - "Monetary and personal property remedies only"
+        - "Limited equitable jurisdiction"
+        
+    - id: "licence_appeal_tribunal"
+      name: "Licence Appeal Tribunal (LAT)"
+      type: "tribunal"
+      jurisdiction: "Statutory accident benefits disputes"
+      website: "https://tribunalsontario.ca/lat/"
+      filing_fees: "$100"
+      self_rep_friendly: "moderate"
+      
+    - id: "landlord_tenant_board"
+      name: "Landlord and Tenant Board (LTB)"
+      type: "tribunal"
+      jurisdiction: "Residential tenancy disputes"
+      website: "https://tribunalsontario.ca/ltb/"
+      filing_fees: "$53-$201"
+      self_rep_friendly: "high"
+      
+    - id: "human_rights_tribunal_ontario"
+      name: "Human Rights Tribunal of Ontario (HRTO)"
+      type: "tribunal"
+      jurisdiction: "Human Rights Code complaints"
+      website: "https://tribunalsontario.ca/hrto/"
+      filing_fees: "None"
+      self_rep_friendly: "high"
+      
+    - id: "ontario_land_tribunal"
+      name: "Ontario Land Tribunal (OLT)"
+      type: "tribunal"
+      jurisdiction: "Planning, land use, environmental appeals"
+      website: "https://olt.gov.on.ca/"
+      self_rep_friendly: "low"
+      
+    - id: "condominium_authority_tribunal"
+      name: "Condominium Authority Tribunal (CAT)"
+      type: "tribunal"
+      jurisdiction: "Condo disputes (limited scope)"
+      website: "https://www.condoauthorityontario.ca/tribunal/"
+      filing_fees: "$25-$125"
+      self_rep_friendly: "high"
+      online_only: true
+
+# =============================================================================
+# LIMITATION PERIODS
+# =============================================================================
+
+  limitation_periods:
+    - id: "2_years_discoverability"
+      description: "2 years from discovery (basic limitation)"
+      statute: "Limitations Act, 2002, s.4"
+      discoverability_factors:
+        - "Injury/loss occurred"
+        - "Caused by act/omission"
+        - "Act/omission was by defendant"
+        - "Proceeding is appropriate means"
+      ultimate_limitation: "15 years from act/omission"
+      
+    - id: "1_year_hrto"
+      description: "1 year for human rights complaints"
+      statute: "Human Rights Code"
+      
+    - id: "6_weeks_libel_notice"
+      description: "6 weeks to serve notice for newspaper/broadcast libel"
+      statute: "Libel and Slander Act, s.5(1)"
+      
+    - id: "10_days_municipal"
+      description: "10 days written notice for municipal slip/fall"
+      statute: "Municipal Act"
+
+# =============================================================================
+# BACKEND ARCHITECTURE
+# =============================================================================
+
+backend:
+  framework: "FastAPI"  # or NestJS
+  language: "Python 3.11+"  # or TypeScript
+  
+  services:
+    - name: "scenario_classifier"
+      type: "ai_service"
+      purpose: "Classify user's situation into legal scenarios"
+      model: "claude-sonnet-4-20250514"
+      features:
+        - "Natural language understanding"
+        - "Multi-scenario detection"
+        - "Confidence scoring"
+        - "Follow-up question generation"
+        
+    - name: "guidance_generator"
+      type: "ai_service"
+      purpose: "Generate plain-language guidance"
+      model: "claude-sonnet-4-20250514"
+      features:
+        - "Step-by-step guidance"
+        - "Document templates"
+        - "Timeline generation"
+        - "Cost estimates"
+        - "Empathetic framing"
+        
+    - name: "document_analyzer"
+      type: "ai_service"
+      purpose: "Analyze user-uploaded documents"
+      model: "claude-sonnet-4-20250514"
+      features:
+        - "Contract review"
+        - "Notice/letter analysis"
+        - "Form completion assistance"
+        
+    - name: "deadline_calculator"
+      type: "logic_service"
+      purpose: "Calculate limitation periods and deadlines"
+      features:
+        - "Discoverability analysis"
+        - "Holiday adjustments"
+        - "Notification reminders"
+        
+    - name: "resource_locator"
+      type: "data_service"
+      purpose: "Find relevant resources and forms"
+      features:
+        - "Form database"
+        - "Legal aid eligibility"
+        - "Community legal clinics"
+        - "Self-help resources"
+        
+    - name: "lawyer_referral"
+      type: "integration_service"
+      purpose: "Connect with legal professionals"
+      integrations:
+        - "Law Society Referral Service"
+        - "Legal Aid Ontario"
+        - "Community legal clinics by region"
+        
+  database:
+    type: "PostgreSQL"
+    schemas:
+      - name: "legal_scenarios"
+        description: "Master scenario taxonomy"
+        tables:
+          - "categories"
+          - "scenarios"
+          - "forums"
+          - "statutes"
+          - "limitation_periods"
+          - "remedies"
+          
+      - name: "user_cases"
+        description: "User case tracking"
+        tables:
+          - "users"
+          - "cases"
+          - "case_scenarios"
+          - "deadlines"
+          - "documents"
+          - "notes"
+          
+      - name: "resources"
+        description: "Legal resources database"
+        tables:
+          - "forms"
+          - "templates"
+          - "legal_clinics"
+          - "court_locations"
+          - "fee_schedules"
+          
+  cache:
+    type: "Redis"
+    purposes:
+      - "Session management"
+      - "AI response caching"
+      - "Rate limiting"
+      
+  api_endpoints:
+    - path: "/api/v1/assess"
+      method: "POST"
+      purpose: "Initial situation assessment"
+      input: "User's natural language description"
+      output: "Classified scenarios with confidence scores"
+      
+    - path: "/api/v1/scenarios/{scenario_id}"
+      method: "GET"
+      purpose: "Get scenario details"
+      output: "Full scenario information"
+      
+    - path: "/api/v1/guidance"
+      method: "POST"
+      purpose: "Generate personalized guidance"
+      input: "Scenario IDs + user context"
+      output: "Step-by-step guidance"
+      
+    - path: "/api/v1/deadlines/calculate"
+      method: "POST"
+      purpose: "Calculate limitation periods"
+      input: "Scenario + key dates"
+      output: "Deadline calculations with explanations"
+      
+    - path: "/api/v1/documents/analyze"
+      method: "POST"
+      purpose: "Analyze uploaded document"
+      input: "Document file"
+      output: "Analysis and next steps"
+      
+    - path: "/api/v1/forms/{form_id}"
+      method: "GET"
+      purpose: "Get fillable form template"
+      
+    - path: "/api/v1/resources/clinics"
+      method: "GET"
+      purpose: "Find legal clinics by location"
+      
+    - path: "/api/v1/cases"
+      method: "POST/GET/PUT"
+      purpose: "User case management"
+
+# =============================================================================
+# FRONTEND ARCHITECTURE
+# =============================================================================
+
+frontend:
+  framework: "Next.js 14+ (App Router)"
+  language: "TypeScript"
+  styling: "Tailwind CSS + shadcn/ui"
+  
+  design_principles:
+    - "Mobile-first responsive design"
+    - "Plain language throughout"
+    - "Accessibility WCAG 2.1 AA"
+    - "Empathetic tone and imagery"
+    - "Progress indicators for multi-step flows"
+    - "Save and resume capability"
+    
+  pages:
+    - path: "/"
+      name: "Home"
+      components:
+        - "HeroSection"
+        - "QuickStartAssessment"
+        - "CommonScenariosGrid"
+        - "HowItWorksSteps"
+        - "TrustIndicators"
+        
+    - path: "/assess"
+      name: "Situation Assessment"
+      components:
+        - "ConversationalIntake"
+        - "ProgressIndicator"
+        - "ScenarioSuggestions"
+        - "FollowUpQuestions"
+        
+    - path: "/scenarios"
+      name: "Legal Scenarios Browser"
+      components:
+        - "CategoryFilter"
+        - "SearchBar"
+        - "ScenarioCards"
+        - "ScenarioDetail"
+        
+    - path: "/scenarios/[id]"
+      name: "Scenario Detail"
+      components:
+        - "ScenarioOverview"
+        - "StepByStepGuide"
+        - "TimelineVisualization"
+        - "FormsAndResources"
+        - "CostEstimator"
+        - "FindHelpCTA"
+        
+    - path: "/guidance"
+      name: "Personalized Guidance"
+      components:
+        - "GuidanceSteps"
+        - "DeadlineTracker"
+        - "DocumentChecklist"
+        - "NextActionCard"
+        
+    - path: "/deadlines"
+      name: "Deadline Calculator"
+      components:
+        - "DateInputForm"
+        - "ScenarioSelector"
+        - "DeadlineResults"
+        - "CalendarExport"
+        
+    - path: "/resources"
+      name: "Resources"
+      components:
+        - "FormsFinder"
+        - "LegalClinicLocator"
+        - "SelfHelpGuides"
+        - "GlossarySearch"
+        
+    - path: "/my-cases"
+      name: "My Cases (Logged In)"
+      components:
+        - "CaseList"
+        - "CaseDetail"
+        - "DeadlineReminders"
+        - "DocumentVault"
+        
+    - path: "/chat"
+      name: "AI Assistant"
+      components:
+        - "ChatInterface"
+        - "SuggestedQuestions"
+        - "ContextPanel"
+        - "ResourceSidebar"
+        
+  components:
+    core:
+      - name: "ConversationalIntake"
+        description: "Chat-like interface for gathering user situation"
+        features:
+          - "Natural language input"
+          - "Guided questions"
+          - "Option chips for common answers"
+          - "File upload capability"
+          
+      - name: "ScenarioCard"
+        description: "Summary card for a legal scenario"
+        displays:
+          - "Icon and title"
+          - "Plain language description"
+          - "Key deadlines"
+          - "Difficulty indicator"
+          - "Primary forum"
+          
+      - name: "StepByStepGuide"
+        description: "Expandable step-by-step instructions"
+        features:
+          - "Numbered steps"
+          - "Expandable details"
+          - "Completion tracking"
+          - "Time estimates"
+          - "Cost estimates"
+          
+      - name: "DeadlineTracker"
+        description: "Visual timeline of deadlines"
+        features:
+          - "Timeline visualization"
+          - "Countdown display"
+          - "Calendar integration"
+          - "Email/SMS reminders"
+          
+      - name: "DocumentChecklist"
+        description: "Checklist of required documents"
+        features:
+          - "Categorized list"
+          - "Upload capability"
+          - "Status tracking"
+          
+      - name: "LegalClinicLocator"
+        description: "Map-based clinic finder"
+        features:
+          - "Location-based search"
+          - "Specialty filtering"
+          - "Contact information"
+          - "Hours and eligibility"
+          
+      - name: "FormHelper"
+        description: "Guided form completion"
+        features:
+          - "Field-by-field guidance"
+          - "Plain language explanations"
+          - "Auto-fill from case data"
+          - "PDF generation"
+          
+    shared:
+      - "Header"
+      - "Footer"
+      - "Sidebar"
+      - "Modal"
+      - "Toast"
+      - "LoadingSpinner"
+      - "ErrorBoundary"
+      - "EmptyState"
+
+# =============================================================================
+# AI PROMPTS & CONFIGURATION
+# =============================================================================
+
+ai_configuration:
+  system_prompt_components:
+    persona: |
+      You are KIRO, an empathetic Ontario Legal Assistant. Your purpose is to help 
+      everyday Ontarians understand their legal rights and navigate the justice system.
+      
+      Core principles:
+      - Use plain, accessible language - avoid legal jargon
+      - Be warm, supportive, and non-judgmental
+      - Acknowledge the stress of legal situations
+      - Provide clear, actionable next steps
+      - Always recommend professional consultation for complex matters
+      - Never provide legal advice - provide legal information and guidance
+      - Be honest about limitations and uncertainties
+      
+    disclaimer: |
+      IMPORTANT: I provide general legal information, not legal advice. Every situation 
+      is unique, and for matters involving significant rights, money, or consequences, 
+      you should consult with a qualified lawyer. Legal Aid Ontario and community legal 
+      clinics offer free or low-cost help for those who qualify.
+      
+    knowledge_context: |
+      You have comprehensive knowledge of Ontario's civil litigation landscape including:
+      - All tribunals and courts and their jurisdictions
+      - Limitation periods and deadlines
+      - Available remedies and their limitations
+      - Procedural requirements and common pitfalls
+      - Self-help resources and legal aid options
+      
+  classification_prompt: |
+    Analyze the user's situation and classify it into one or more legal scenarios.
+    
+    For each identified scenario, provide:
+    1. Scenario ID from the taxonomy
+    2. Confidence score (0-1)
+    3. Key facts that support this classification
+    4. Any follow-up questions needed
+    
+    Consider:
+    - Multiple scenarios may apply
+    - User may not know the legal terminology
+    - Look for both explicit and implicit indicators
+    
+  guidance_prompt: |
+    Generate personalized guidance for the user based on their identified scenarios.
+    
+    Structure your response as:
+    1. Brief empathetic acknowledgment
+    2. Plain language explanation of their situation
+    3. Numbered next steps (most urgent first)
+    4. Key deadlines they must know
+    5. Resources that can help
+    6. When to seek professional help
+    
+    Use:
+    - Second person ("you")
+    - Short sentences
+    - Bullet points for lists
+    - Bold for critical deadlines
+    - Supportive, encouraging tone
+
+# =============================================================================
+# DATA SOURCES & INTEGRATIONS
+# =============================================================================
+
+integrations:
+  - name: "CanLII"
+    type: "legal_database"
+    purpose: "Case law and statute lookup"
+    
+  - name: "Ontario e-Laws"
+    type: "legislation_database"
+    purpose: "Current Ontario statutes and regulations"
+    url: "https://www.ontario.ca/laws"
+    
+  - name: "Tribunals Ontario"
+    type: "tribunal_info"
+    purpose: "Forms, guides, and filing info"
+    url: "https://tribunalsontario.ca/"
+    
+  - name: "Legal Aid Ontario"
+    type: "referral_service"
+    purpose: "Eligibility check and clinic locator"
+    url: "https://www.legalaid.on.ca/"
+    
+  - name: "Law Society of Ontario"
+    type: "referral_service"
+    purpose: "Lawyer referral service"
+    url: "https://lso.ca/public-resources/finding-a-lawyer-or-paralegal"
+
+# =============================================================================
+# DEPLOYMENT & INFRASTRUCTURE
+# =============================================================================
+
+infrastructure:
+  hosting: "AWS / Vercel"
+  
+  services:
+    - name: "web"
+      type: "Next.js"
+      deployment: "Vercel / AWS Amplify"
+      
+    - name: "api"
+      type: "FastAPI"
+      deployment: "AWS ECS / Lambda"
+      
+    - name: "database"
+      type: "PostgreSQL"
+      deployment: "AWS RDS / Supabase"
+      
+    - name: "cache"
+      type: "Redis"
+      deployment: "AWS ElastiCache / Upstash"
+      
+    - name: "storage"
+      type: "S3"
+      purpose: "Document storage"
+      
+  security:
+    - "HTTPS everywhere"
+    - "Data encryption at rest"
+    - "SOC 2 compliance target"
+    - "PIPEDA compliance"
+    - "Rate limiting"
+    - "Input sanitization"
+
+# =============================================================================
+# TESTING & QUALITY
+# =============================================================================
+
+testing:
+  unit_tests:
+    - "Deadline calculations"
+    - "Scenario classification logic"
+    - "Form validation"
+    
+  integration_tests:
+    - "API endpoints"
+    - "Database operations"
+    - "External service integrations"
+    
+  e2e_tests:
+    - "User assessment flow"
+    - "Case creation and tracking"
+    - "Document upload and analysis"
+    
+  ai_evaluation:
+    - "Classification accuracy"
+    - "Guidance quality"
+    - "Harmful output prevention"
+    - "Disclaimer compliance"
+
+# =============================================================================
+# ROADMAP
+# =============================================================================
+
+roadmap:
+  phase_1_mvp:
+    duration: "3 months"
+    features:
+      - "Core scenario taxonomy"
+      - "Basic assessment flow"
+      - "Static guidance for top 10 scenarios"
+      - "Deadline calculator"
+      - "Resource directory"
+      
+  phase_2_ai_enhanced:
+    duration: "2 months"
+    features:
+      - "AI-powered classification"
+      - "Personalized guidance generation"
+      - "Document analysis"
+      - "User accounts and case tracking"
+      
+  phase_3_expansion:
+    duration: "3 months"
+    features:
+      - "Full scenario coverage"
+      - "Form completion assistance"
+      - "Lawyer referral integration"
+      - "Mobile app (React Native)"
+      
+  phase_4_advanced:
+    duration: "Ongoing"
+    features:
+      - "Predictive outcome modeling"
+      - "Cost estimation"
+      - "Court date reminders"
+      - "Document generation"
+      - "French language support"

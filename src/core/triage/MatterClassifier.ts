@@ -39,6 +39,20 @@ export class MatterClassifier {
     if (!hint) return 'other';
     const h = hint.toLowerCase();
     
+    // Legal malpractice (check FIRST to avoid confusion with underlying civil/criminal matters)
+    if (h.includes('malpractice') || h.includes('solicitor negligence') || 
+        h.includes('lawyer negligence') || h.includes('professional negligence') ||
+        h.includes('missed limitation') || h.includes('missed deadline') ||
+        h.includes('legal error') || h.includes('retainer') && h.includes('breach') ||
+        h.includes('lawpro') || h.includes('case within a case')) return 'legalMalpractice';
+
+      // Estate and succession (probate, wills, dependant support)
+      if (h.includes('estate') || h.includes('probate') || h.includes('succession') ||
+        h.includes('will challenge') || h.includes('will_challenge') || h.includes('inheritance') ||
+        h.includes('dependant support') || h.includes('dependant_support') || h.includes('estate trustee')) {
+        return 'estateSuccession';
+      }
+    
     // Criminal matters (police-involved, charges laid, assault, threats, etc.)
     if (h.includes('criminal') || h.includes('assault') || h.includes('threat') || 
         h.includes('uttering') || h.includes('violence') || h.includes('arrested') ||
@@ -50,7 +64,8 @@ export class MatterClassifier {
     
     // Civil negligence and property damage
     if (h === 'civil-negligence' || h.includes('negligence') || h.includes('tort') ||
-        h.includes('tree') || h.includes('damage') || h.includes('injury')) return 'civil-negligence';
+        h.includes('tree') || h.includes('damage') || h.includes('injury') ||
+        h.includes('slip') || h.includes('fall')) return 'civil-negligence';
     
     // Landlord-tenant
     if (h.includes('tenant') || h.includes('ltb') || h.includes('landlord') ||
