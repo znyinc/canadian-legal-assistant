@@ -53,10 +53,10 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
   }));
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">What You Need to Do</h2>
+    <div className="bg-white rounded-xl shadow-lg p-8 border-l-4 border-blue-500">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">What You Need to Do</h2>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {groupedActions.map(({ priority, items }) => {
           if (items.length === 0) return null;
 
@@ -65,8 +65,8 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
 
           return (
             <div key={priority} className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Icon className={`${config.color} w-5 h-5`} />
+              <h3 className={`text-sm font-bold ${config.color} flex items-center gap-2 uppercase tracking-wider`}>
+                <Icon className="w-5 h-5" />
                 {config.label}
               </h3>
 
@@ -77,7 +77,7 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
                 return (
                   <div
                     key={idx}
-                    className={`${config.bgColor} ${config.borderColor} border rounded-md overflow-hidden`}
+                    className={`${config.bgColor} ${config.borderColor} border-l-4 rounded-md overflow-hidden`}
                   >
                     <button
                       onClick={() => setExpandedIndex(isExpanded ? null : globalIdx)}
@@ -85,9 +85,9 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{step.action}</p>
+                          <p className="font-semibold text-gray-900 text-base">{step.action}</p>
                           {step.timeframe && (
-                            <p className="text-sm text-gray-600 mt-1">{step.timeframe}</p>
+                            <p className="text-sm text-gray-600 mt-1 font-medium">{step.timeframe}</p>
                           )}
                         </div>
                         <ChevronDown
@@ -100,7 +100,7 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
 
                     {isExpanded && step.details && (
                       <div className="px-4 pb-4 border-t border-current border-opacity-20">
-                        <p className="text-sm text-gray-700 mt-3">{step.details}</p>
+                        <p className="text-sm text-gray-700 mt-3 leading-relaxed">{step.details}</p>
                       </div>
                     )}
                   </div>
@@ -111,8 +111,8 @@ export const ImmediateActionsCard: React.FC<ImmediateActionsCardProps> = ({
         })}
       </div>
 
-      <p className="text-sm text-gray-600 mt-6 italic">
-        Take action on urgent items first. Use this as your roadmap.
+      <p className="text-sm text-gray-600 mt-6 italic border-t border-gray-200 pt-4">
+        💡 <strong>Start with urgent items.</strong> This is your roadmap through the legal process.
       </p>
     </div>
   );

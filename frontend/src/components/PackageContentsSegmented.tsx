@@ -70,12 +70,20 @@ export const PackageContentsSegmented: React.FC<PackageContentsSegmentedProps> =
       };
     }
 
-    // Helpful: timeline, forum map, missing evidence
+    // Helpful: timeline, forum map, missing evidence, form summaries
     if (filename.includes('timeline.md')) {
       return {
         category: 'helpful',
         filename: 'timeline.md',
         description: 'Chronological timeline of your case events and deadlines',
+      };
+    }
+
+    if (filename.includes('form_summaries/')) {
+      return {
+        category: 'helpful',
+        filename: filename.replace('form_summaries/', ''),
+        description: 'Visual mapping table and filing guide for official forms',
       };
     }
 
@@ -148,7 +156,7 @@ export const PackageContentsSegmented: React.FC<PackageContentsSegmentedProps> =
       <div key={category} className="border rounded-lg overflow-hidden mb-4">
         {/* Category Header */}
         <button
-          onClick={() => setExpandedCategory(isExpanded ? undefined : category)}
+          onClick={() => setExpandedCategory(isExpanded ? (null as any) : category)}
           className="w-full bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-3 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">

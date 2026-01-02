@@ -178,6 +178,12 @@ export interface DomainModuleInput {
   sourceManifest: SourceManifest;
   evidenceManifest?: EvidenceManifest;
   packageName?: string;
+  /** Optional free-text description to improve variable extraction */
+  description?: string;
+  /** Optional form mapping payloads for hybrid document generation */
+  formMappings?: Array<{ formId: string; variables: Record<string, any> }>;
+  /** Matter identifier for traceability in generated summaries */
+  matterId?: string;
 }
 
 export interface DomainModuleOutput {

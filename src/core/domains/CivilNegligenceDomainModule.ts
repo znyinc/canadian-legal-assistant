@@ -41,6 +41,13 @@ export class CivilNegligenceDomainModule extends BaseDomainModule {
 
     // Add forms reference at the top
     const formsRef = templates.generateFormsReference('small-claims');
+    
+    // Determine urgency and appropriate documents
+    const amountNum = typeof amount === 'number' ? amount : (typeof amount === 'string' ? parseFloat(amount) : 0);
+    const hasAmount = amountNum > 0;
+    const isSmallClaims = !hasAmount || amountNum <= 50000;
+    const needsLitigation = hasAmount && amountNum > 1000;
+    const descLower = (classification.notes?.join(' ') || '').toLowerCase();
 
     // Render demand notice from template with extracted variables
     const demandContent = templates.renderTemplate('civil/demand_notice', {
@@ -52,46 +59,57 @@ export class CivilNegligenceDomainModule extends BaseDomainModule {
       amountClaimed: amount ?? ''
     });
 
+    // ALWAYS: Demand letter (first step in settlement)
     drafts.push(mkDraft('Demand for Repair / Compensation', [{ heading: 'Demand', content: demandContent }]));
 
-    // Settlement-first demand letter (property damage) with extracted data
-    const demandLetterProperty = templates.renderTemplate('civil/demand_letter_property_damage', {
-      respondentName: respondent,
-      claimantName: claimant,
-      incidentDate: date,
-      propertyAddress: address,
-      damageDescription: extracted.particulars || classification.notes?.join('\n') || '',
-      amountClaimed: amount ?? ''
-    });
-    drafts.push(mkDraft('Demand Letter — Property Damage', [{ heading: 'Demand Letter', content: demandLetterProperty }]));
-
-    // Render Form 7A scaffold with forms reference
-    const formContent = templates.renderTemplate('civil/small_claims_form7a', {
-      claimantName: claimant,
-      respondentName: respondent,
-      amountClaimed: amount ?? '',
-      courtLocation: extracted.jurisdiction || classification.jurisdiction || 'Ontario',
-      incidentDate: date,
-      particulars: extracted.particulars || classification.notes?.join('\n') || ''
-    });
-
-    const form7aWithForms = `${formContent}\n\n${formsRef}`;
-    drafts.push(mkDraft('Small Claims Court — Form 7A (Statement of Claim)', [{ heading: 'Form 7A (Scaffold)', content: form7aWithForms }]));
-
-    // Evidence checklist remains static
+    // ALWAYS: Evidence checklist (preserve evidence immediately)
     const checklist = templates.renderTemplate('civil/evidence_checklist', {});
     drafts.push(mkDraft('Evidence Checklist — Property Damage', [{ heading: 'Checklist', content: checklist }]));
 
-    // Anticipate the Defense guidance
-    const defenseGuide = templates.renderTemplate('civil/anticipate_defense', {});
-    drafts.push(mkDraft('Anticipate the Defense — Civil Negligence', [{ heading: 'Defense Preparation', content: defenseGuide }]));
+    // ONLY IF litigation likely (amount > $1000): Settlement-first demand letter
+    if (needsLitigation) {
+      const demandLetterProperty = templates.renderTemplate('civil/demand_letter_property_damage', {
+        respondentName: respondent,
+        claimantName: claimant,
+        incidentDate: date,
+        propertyAddress: address,
+        damageDescription: extracted.particulars || classification.notes?.join('\n') || '',
+        amountClaimed: amount ?? ''
+      });
+      drafts.push(mkDraft('Demand Letter — Property Damage', [{ heading: 'Demand Letter', content: demandLetterProperty }]));
+    }
 
-    // Arborist and contractor guidance
-    const arborist = templates.renderTemplate('civil/arborist_report_guidance', {});
-    drafts.push(mkDraft('Arborist Report Guidance', [{ heading: 'Arborist Report', content: arborist }]));
+    // ONLY IF Small Claims jurisdiction: Form 7A
+    if (isSmallClaims && needsLitigation) {
+      const formContent = templates.renderTemplate('civil/small_claims_form7a', {
+        claimantName: claimant,
+        respondentName: respondent,
+        amountClaimed: amount ?? '',
+        courtLocation: extracted.jurisdiction || classification.jurisdiction || 'Ontario',
+        incidentDate: date,
+        particulars: extracted.particulars || classification.notes?.join('\n') || ''
+      });
+      const form7aWithForms = `${formContent}\n\n${formsRef}`;
+      drafts.push(mkDraft('Small Claims Court — Form 7A (Statement of Claim)', [{ heading: 'Form 7A (Scaffold)', content: form7aWithForms }]));
+    }
 
-    const contractor = templates.renderTemplate('civil/contractor_estimate_guidance', {});
-    drafts.push(mkDraft('Contractor Estimate Guidance', [{ heading: 'Repair Estimates', content: contractor }]));
+    // ONLY IF litigation likely: Defense preparation
+    if (needsLitigation) {
+      const defenseGuide = templates.renderTemplate('civil/anticipate_defense', {});
+      drafts.push(mkDraft('Anticipate the Defense — Civil Negligence', [{ heading: 'Defense Preparation', content: defenseGuide }]));
+    }
+
+    // ONLY IF tree damage: Arborist report
+    if (descLower.includes('tree') || descLower.includes('arborist')) {
+      const arborist = templates.renderTemplate('civil/arborist_report_guidance', {});
+      drafts.push(mkDraft('Arborist Report Guidance', [{ heading: 'Arborist Report', content: arborist }]));
+    }
+
+    // ONLY IF property damage requiring repair: Contractor estimate
+    if (descLower.includes('damage') || descLower.includes('repair')) {
+      const contractor = templates.renderTemplate('civil/contractor_estimate_guidance', {});
+      drafts.push(mkDraft('Contractor Estimate Guidance', [{ heading: 'Repair Estimates', content: contractor }]));
+    }
 
     return drafts;
   }

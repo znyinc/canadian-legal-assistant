@@ -92,7 +92,9 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || 'Request failed');
+      const err = new Error(error.error || 'Request failed') as any;
+      err.details = error.details;
+      throw err;
     }
 
     return response.json();
@@ -104,6 +106,8 @@ class ApiClient {
     province: string;
     domain: string;
     disputeAmount?: number;
+    structuredAnswers?: any[];
+    variables?: Record<string, string | number | boolean>;
   }): Promise<Matter> {
     return this.request<Matter>('/matters', {
       method: 'POST',

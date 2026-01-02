@@ -5,6 +5,39 @@ import { safeText } from '../utils/sanitize';
 import { SmartText } from '../components/SmartText';
 import { PackageContentsSegmented } from '../components/PackageContentsSegmented';
 
+const WarningInfo: React.FC<{ title: string; explanation: string; url?: string; urlLabel?: string }> = ({ title, explanation, url, urlLabel }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span className="relative inline-block ml-2 align-middle">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-blue-800 bg-blue-100 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        aria-label={`More info about ${title}`}
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg p-3 text-xs text-gray-800">
+          <p className="font-semibold text-gray-900 mb-1">{safeText(title)}</p>
+          <p className="mb-2 leading-snug">{safeText(explanation)}</p>
+          {url && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-700 hover:underline"
+            >
+              {safeText(urlLabel || 'Learn more')}
+            </a>
+          )}
+        </div>
+      )}
+    </span>
+  );
+};
+
 interface DocumentsPageProps {
   matterId: string;
 }
@@ -18,6 +51,32 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
   const [userConfirmedFacts, setUserConfirmedFacts] = useState<string[]>([]);
   const [confirmChecked, setConfirmChecked] = useState(false);
   const [downloadingPackageId, setDownloadingPackageId] = useState<string | null>(null);
+
+  const warningHelp = [
+    {
+      match: (w: string) => /limitation|deadline/i.test(w),
+      title: 'Limitation period',
+      explanation: 'Ontario general limitation is typically 2 years from discovery. Missing it can bar the claim entirely.',
+      url: 'https://www.ontario.ca/laws/statute/02l24',
+      urlLabel: 'Limitations Act, 2002 (e-Laws)',
+    },
+    {
+      match: (w: string) => /10-day|10 day|municipal/i.test(w),
+      title: 'Municipal 10-day notice',
+      explanation: 'Property damage claims against municipalities often require written notice within 10 days or leave of the court.',
+      url: 'https://www.ontario.ca/laws/statute/03m08',
+      urlLabel: 'Municipal Act, 2001 (e-Laws)',
+    },
+    {
+      match: (w: string) => /pdf\/a|ocpp|toronto region/i.test(w),
+      title: 'PDF/A filing format',
+      explanation: 'Toronto Region Superior Court (OCPP) requires PDF/A-1b or PDF/A-2b for electronic filings; non-compliant filings can be rejected.',
+      url: 'https://www.ontariocourts.ca/scj/practice/practice-directions/toronto/',
+      urlLabel: 'SCJ Toronto Practice Direction',
+    },
+  ];
+
+  const getWarningHelp = (warning: string) => warningHelp.find((h) => h.match(warning));
 
   useEffect(() => {
     loadDocuments();
@@ -185,9 +244,22 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                   <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded p-3">
                     <p className="text-sm font-medium text-yellow-900 mb-1">⚠️ Warnings</p>
                     <ul className="text-sm text-yellow-800 space-y-1">
-                      {packageData.warnings.map((warning: string, index: number) => (
-                        <li key={index}>• {safeText(warning)}</li>
-                      ))}
+                      {packageData.warnings.map((warning: string, index: number) => {
+                        const detail = getWarningHelp(warning);
+                        return (
+                          <li key={index} className="flex items-start gap-2">
+                            <span>• {safeText(warning)}</span>
+                            {detail && (
+                              <WarningInfo
+                                title={detail.title}
+                                explanation={detail.explanation}
+                                url={detail.url}
+                                urlLabel={detail.urlLabel}
+                              />
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}

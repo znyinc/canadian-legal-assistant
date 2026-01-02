@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { api } from '../services/api';
 import { safeText, safeURL } from '../utils/sanitize';
@@ -31,6 +32,7 @@ interface Alternative {
 }
 
 export function CaseLawPage() {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<CaseResult[]>([]);
@@ -38,12 +40,18 @@ export function CaseLawPage() {
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Use shared API client instance
+  // Auto-search if query parameter is present
+  useEffect(() => {
+    const queryParam = searchParams.get('query');
+    if (queryParam && queryParam.trim()) {
+      setSearchQuery(queryParam);
+      // Trigger search automatically
+      performSearch(queryParam);
+    }
+  }, [searchParams]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!searchQuery.trim()) {
+  const performSearch = async (query: string) => {
+    if (!query.trim()) {
       alert('Please enter a search term');
       return;
     }
@@ -54,7 +62,7 @@ export function CaseLawPage() {
     setAlternatives([]);
 
     try {
-      const data = await api.searchCaselaw(searchQuery);
+      const data = await api.searchCaselaw(query);
 
       // Sanitize results before storing/displaying to prevent DOM-based XSS
       const sanitizedResults = (data.results || []).map((r: any) => ({
@@ -88,6 +96,13 @@ export function CaseLawPage() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Use shared API client instance
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performSearch(searchQuery);
   };
 
   return (

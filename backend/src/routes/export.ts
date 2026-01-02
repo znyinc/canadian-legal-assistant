@@ -124,6 +124,15 @@ router.get('/package/:packageId', async (req: Request, res: Response) => {
       });
     }
 
+    // Add all generated package files (including form summaries, manifests, templates)
+    if (packageData.package?.files) {
+      packageData.package.files.forEach((file: any) => {
+        const name = typeof file.path === 'string' ? file.path : typeof file.filename === 'string' ? file.filename : 'file.txt';
+        const content = typeof file.content === 'string' ? file.content : JSON.stringify(file.content ?? '', null, 2);
+        archive.append(content, { name });
+      });
+    }
+
     // Add package metadata
     const metadata = {
       packageId: doc.packageId,

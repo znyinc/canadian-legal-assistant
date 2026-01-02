@@ -129,8 +129,12 @@ export class CriminalDomainModule extends BaseDomainModule {
       };
     };
 
-    // Release conditions checklist
-    if (templates['criminal/release_conditions_checklist']) {
+    // Determine which documents are needed based on case context
+    const isVictim = notes.includes('victim') || notes.includes('complainant');
+    const isAccused = notes.includes('accused') || notes.includes('defendant') || notes.includes('charged');
+    
+    // Release conditions checklist (ONLY if user is accused/defendant)
+    if (isAccused && templates['criminal/release_conditions_checklist']) {
       const partyName = classification.parties?.names?.[0] || 'Accused';
       const checklist = templateLib.renderTemplate('criminal/release_conditions_checklist', {
         date: new Date().toISOString().split('T')[0],
@@ -139,8 +143,8 @@ export class CriminalDomainModule extends BaseDomainModule {
       drafts.push(mkDraft('Release Conditions Checklist', [{ heading: 'Conditions', content: checklist }]));
     }
 
-    // Victim impact statement scaffold (if applicable)
-    if (isAssault && templates['criminal/victim_impact_scaffold']) {
+    // Victim impact statement scaffold (ONLY if victim/complainant in assault case)
+    if (isVictim && isAssault && templates['criminal/victim_impact_scaffold']) {
       const scaffold = templateLib.renderTemplate('criminal/victim_impact_scaffold', {
         date: new Date().toISOString().split('T')[0],
         victimRole: 'Victim',

@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { MatterClassifier } from '../core/triage/MatterClassifier';
+import { MatterClassifier, ClassificationInput } from '../core/triage/MatterClassifier';
 import { ForumRouter } from '../core/triage/ForumRouter';
 import { TimelineAssessor } from '../core/triage/TimelineAssessor';
 import { PillarClassifier } from '../core/triage/PillarClassifier';
@@ -14,6 +14,7 @@ import { EvidenceIndexer } from '../core/evidence/EvidenceIndexer';
 import { TimelineGenerator } from '../core/evidence/TimelineGenerator';
 import { DocumentDraftingEngine } from '../core/documents/DocumentDraftingEngine';
 import { DocumentPackager } from '../core/documents/DocumentPackager';
+import { VariableExtractor } from '../core/documents/VariableExtractor';
 import { DomainModuleRegistry } from '../core/domains/DomainModuleRegistry';
 import { AuditLogger } from '../core/audit/AuditLogger';
 import { ManifestBuilder } from '../core/audit/ManifestBuilder';
@@ -88,6 +89,8 @@ export interface DocumentRequest {
   evidenceIndex: EvidenceIndex;
   sourceManifest: SourceManifest;
   requestedTemplates?: string[];
+  description?: string;
+  matterId?: string;
 }
 
 export interface DocumentResponse {
@@ -138,6 +141,7 @@ export class IntegrationAPI {
   private actionPlanGenerator: ActionPlanGenerator;
   private upl: DisclaimerService;
   private sandbox: A2ISandboxFramework;
+  private variableExtractor: VariableExtractor;
 
   constructor(options?: {
     classifier?: MatterClassifier;
@@ -185,6 +189,7 @@ export class IntegrationAPI {
     this.audit = options?.audit ?? new AuditLogger();
     this.manifests = options?.manifests ?? new ManifestBuilder();
     this.lifecycle = options?.lifecycle ?? new DataLifecycleManager(this.audit);
+    this.variableExtractor = new VariableExtractor();
   }
 
   intake(req: IntakeRequest): IntakeResponse {
@@ -194,15 +199,33 @@ export class IntegrationAPI {
       description: req.description || (req.classification as any).description,
       notes: (req.classification as any).notes || (req.description ? [req.description] : undefined),
       tags: req.tags || (req.classification as any).tags
+    } as any;
+
+    // Build a proper classifier input so domain detection uses free-form description text
+    const classifierInput: ClassificationInput = {
+      domainHint:
+        (enrichedClassification.domainHint as string) ||
+        (enrichedClassification.description as string) ||
+        (req.description as string) ||
+        '',
+      jurisdictionHint:
+        (enrichedClassification.jurisdiction as string) ||
+        (enrichedClassification.jurisdictionHint as string) ||
+        (req.province as string),
+      claimantType: enrichedClassification.parties?.claimantType,
+      respondentType: enrichedClassification.parties?.respondentType,
+      disputeAmount: enrichedClassification.disputeAmount,
+      urgencyHint: enrichedClassification.urgency,
+      keyDates: enrichedClassification.timeline?.keyDates as string[] | undefined
     };
-    
-    // Preserve explicitly set domain/jurisdiction, otherwise run classifier
-    const classificationResult = this.classifier.classify(enrichedClassification);
+
+    // Preserve explicitly set domain/jurisdiction only when caller truly sets them; otherwise rely on detection
+    const classificationResult = this.classifier.classify(classifierInput);
     const classification = {
       ...classificationResult,
       ...(enrichedClassification.domain && { domain: enrichedClassification.domain }),
       ...(enrichedClassification.jurisdiction && { jurisdiction: enrichedClassification.jurisdiction })
-    };
+    } as any;
     const forumMap = this.router.route(classification);
     const timelineAssessment = this.assessor.assess(classification.timeline?.keyDates || []);
     // Preserve descriptive hints from the original request when running heuristics
@@ -325,9 +348,32 @@ export class IntegrationAPI {
     return { index, timeline, gaps, missingAlerts, redactedPreview: redaction.redacted };
   }
 
+  /**
+   * Lightweight helper used by HTTP routes to run intake classification from free-form text.
+   * Uses description as the domain hint so malpractice and other keyword-based detections work
+   * even when the initial domain came from a form preset.
+   */
+  classifyMatter(opts: { description: string; province?: string; domain?: Domain; disputeAmount?: number; tags?: string[] }) {
+    const result = this.intake({
+      classification: {
+        // Provide description as the domain hint so classifier can detect malpractice keywords
+        description: opts.description,
+        domainHint: opts.description,
+        jurisdiction: opts.province,
+        disputeAmount: opts.disputeAmount
+      } as any,
+      description: opts.description,
+      province: opts.province,
+      tags: opts.tags
+    });
+
+    return result;
+  }
+
   generateDocuments(req: DocumentRequest): DocumentResponse {
     const domainModule = this.pickModule(req.classification.domain);
     const evidenceManifest = this.buildEvidenceManifest(req.evidenceIndex);
+    const formMappings = this.buildFormMappings(req);
 
     if (domainModule) {
       let result = domainModule.generate({
@@ -337,7 +383,10 @@ export class IntegrationAPI {
         missingEvidence: req.missingEvidence,
         evidenceIndex: req.evidenceIndex,
         sourceManifest: req.sourceManifest,
-        evidenceManifest
+          evidenceManifest,
+          description: req.description,
+          formMappings,
+          matterId: req.matterId
       });
 
       this.audit.log('export', 'system', 'Documents generated', { domain: domainModule.domain });
@@ -381,7 +430,9 @@ export class IntegrationAPI {
           sourceManifest: req.sourceManifest,
           evidenceManifest,
           jurisdiction: req.classification.jurisdiction,
-          domain: req.classification.domain
+          domain: req.classification.domain,
+          formMappings,
+          matterId: req.matterId
         });
         result = { drafts: filteredDrafts, package: pkg, warnings: pkg.warnings, ocppValidation };
       } else {
@@ -416,7 +467,9 @@ export class IntegrationAPI {
       sourceManifest: req.sourceManifest,
       evidenceManifest,
       jurisdiction: req.classification.jurisdiction,
-      domain: req.classification.domain
+      domain: req.classification.domain,
+      formMappings,
+      matterId: req.matterId
     });
 
     this.audit.log('export', 'system', 'Documents generated (fallback)', { domain: req.classification.domain });
@@ -454,6 +507,36 @@ export class IntegrationAPI {
 
   private buildEvidenceManifest(index: EvidenceIndex): EvidenceManifest {
     return this.manifests.buildEvidenceManifest(index);
+  }
+
+  /**
+   * Build form mappings for hybrid document generation so users get visual tables + filing guides.
+   */
+  private buildFormMappings(req: DocumentRequest): Array<{ formId: string; variables: Record<string, any> }> {
+    const formIds = this.selectFormIdsForDomain(req.classification.domain);
+    if (!formIds.length) return [];
+
+    const description = req.description || req.classification.notes?.join(' ') || '';
+    const variables = this.variableExtractor.extractFromDescription(description, req.classification);
+
+    return formIds.map((formId) => ({ formId, variables }));
+  }
+
+  /**
+   * Map domains to applicable official forms for summary generation.
+   */
+  private selectFormIdsForDomain(domain: Domain): string[] {
+    switch (domain) {
+      case 'civil-negligence':
+      case 'legalMalpractice':
+        return ['form-7a-small-claims'];
+      case 'landlordTenant':
+        return ['ltb-form-t1', 'ltb-form-l1'];
+      case 'criminal':
+        return ['victim-impact-statement'];
+      default:
+        return [];
+    }
   }
 
   private seedAuthorities(): AuthorityRegistry {

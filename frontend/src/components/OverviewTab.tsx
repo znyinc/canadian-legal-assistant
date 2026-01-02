@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { safeText } from '../utils/sanitize';
-import { DeadlineAlerts } from './DeadlineAlerts';
+import { DeadlineTimeline } from './DeadlineTimeline';
+import { SituationSummaryCard } from './SituationSummaryCard';
+import { JourneyProgressBar } from './JourneyProgressBar';
+import { FooterDisclaimer } from './FooterDisclaimer';
 import { EmpathyBoundaries } from './EmpathyBoundaries';
-import { AdviceRedirectBanner } from './AdviceRedirectBanner';
-import { SandboxPlanCard } from './SandboxPlanCard';
+// import { SandboxPlanCard } from './SandboxPlanCard'; // Removed per action-first UX restructure
 import {
   AcknowledgmentBanner,
   ImmediateActionsCard,
@@ -29,8 +31,8 @@ export default function OverviewTab({
   journey,
   deadlineAlerts,
   uplBoundaries,
-  adviceRedirect,
-  sandboxPlan,
+  // adviceRedirect, // Removed per action-first UX
+  // sandboxPlan, // Removed per action-first UX
   onGenerateDocument,
 }: {
   classification: any;
@@ -48,8 +50,7 @@ export default function OverviewTab({
   onGenerateDocument?: (documentType: string) => Promise<void>;
 }) {
   const [showClassificationDetails, setShowClassificationDetails] = useState(false);
-  const [showBoundaries, setShowBoundaries] = useState(false);
-  const [showSandbox, setShowSandbox] = useState(false);
+  const [showSupportingInfo, setShowSupportingInfo] = useState(false);
 
   const handleGenerateDocument = async (documentType: string) => {
     if (onGenerateDocument) {
@@ -91,323 +92,309 @@ export default function OverviewTab({
   const pillarLabel = classification?.pillar ?? 'Unknown';
   const effectiveDeadlineAlerts = (deadlineAlerts || classification?.deadlineAlerts || []) as any[];
   const effectiveBoundaries = uplBoundaries || classification?.uplBoundaries;
-  const effectiveAdvice = adviceRedirect || classification?.adviceRedirect;
-  const effectiveSandbox = sandboxPlan || classification?.sandboxPlan;
+  // const effectiveAdvice = adviceRedirect || classification?.adviceRedirect; // Removed per action-first UX
+  // const effectiveSandbox = sandboxPlan || classification?.sandboxPlan; // Removed per action-first UX
+
+  // Prepare situation summary data
+  const situationSummary = useMemo(() => {
+    if (!classification) return null;
+
+    const domainLabels: Record<string, string> = {
+      criminal: 'Criminal matter',
+      civil: 'Civil dispute',
+      legalMalpractice: 'Legal malpractice claim',
+      municipalPropertyDamage: 'Municipal property damage',
+      landlordTenant: 'Landlord-tenant dispute',
+      employment: 'Employment issue',
+      consumerProtection: 'Consumer protection matter',
+    };
+
+    const situation = domainLabels[classification.domain] || classification.domain;
+
+    // Find most urgent deadline
+    const sortedDeadlines = [...effectiveDeadlineAlerts].sort((a, b) => a.daysRemaining - b.daysRemaining);
+    const primaryDeadline = sortedDeadlines[0];
+
+    return {
+      situation,
+      primaryDeadline: primaryDeadline ? {
+        name: primaryDeadline.limitationPeriod?.name || primaryDeadline.period?.name || 'Deadline',
+        daysRemaining: primaryDeadline.daysRemaining,
+        urgency: primaryDeadline.urgency,
+        caseLawReferences: primaryDeadline.limitationPeriod?.caseLawReferences,
+      } : undefined,
+      primaryForum: forumMap?.primaryForum,
+    };
+  }, [classification, forumMap, effectiveDeadlineAlerts]);
+
+  // Convert deadline alerts to timeline format
+  const deadlineTimelineData = useMemo(() => {
+    return effectiveDeadlineAlerts.map((alert: any) => ({
+      id: alert.periodId,
+      name: alert.period?.name || 'Deadline',
+      daysRemaining: alert.daysRemaining,
+      urgency: alert.urgency,
+      description: alert.message,
+      consequence: alert.period?.consequence,
+      action: alert.encouragement,
+    }));
+  }, [effectiveDeadlineAlerts]);
 
   return (
-    <div className="space-y-6">
-      {/* Pending banner */}
-      {showPending && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <p className="text-yellow-800 mb-4">Classification pending. This matter needs to be analyzed.</p>
-          <button
-            onClick={onClassify}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            🤖 Classify Now with AI
-          </button>
-        </div>
-      )}
+    <>
+      <div className="space-y-6 pb-20">
+        {/* Pending banner */}
+        {showPending && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <p className="text-yellow-800 mb-4">Classification pending. This matter needs to be analyzed.</p>
+            <button
+              onClick={onClassify}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              🤖 Classify Now with AI
+            </button>
+          </div>
+        )}
 
-      {effectiveAdvice && <AdviceRedirectBanner advice={effectiveAdvice} />}
+        {/* ===== ACTION-FIRST UX SECTION (Prioritized for user needs) ===== */}
 
-      {effectiveBoundaries && (
+        {/* 1. Empathetic Acknowledgment (2 lines max) */}
+        {actionPlan && (
+          <AcknowledgmentBanner
+            acknowledgment={actionPlan.acknowledgment}
+            domain={classification?.domain || 'civil'}
+          />
+        )}
+
+        {/* 2. Situation Summary Card (compact overview) */}
+        {situationSummary && (
+          <SituationSummaryCard
+            situation={situationSummary.situation}
+            primaryDeadline={situationSummary.primaryDeadline}
+            primaryForum={situationSummary.primaryForum}
+          />
+        )}
+
+        {/* 3. HERO SECTION: What to Do Now */}
+        {actionPlan && actionPlan.immediateActions.length > 0 && (
+          <ImmediateActionsCard
+            actions={actionPlan.immediateActions.map((a: any) => ({
+              priority: a.priority,
+              action: a.title,
+              timeframe: a.timeframe,
+              details: a.description,
+            }))}
+          />
+        )}
+
+        {/* 4. Visual Deadline Timeline */}
+        {deadlineTimelineData.length > 0 && (
+          <DeadlineTimeline deadlines={deadlineTimelineData} />
+        )}
+
+        {/* 5. Your Options (collapsed by default) */}
+        {actionPlan && actionPlan.settlementPathways.length > 0 && (
+          <SettlementPathwayCard
+            pathways={actionPlan.settlementPathways.map((p: any) => ({
+              name: p.title,
+              description: p.description,
+              pros: p.pros,
+              cons: p.cons,
+              isTypical: p.typical,
+            }))}
+            domain={classification?.domain || 'civil'}
+          />
+        )}
+
+        {/* 6. Journey Progress (slim progress bar) */}
+        {journey && journey.steps && journey.steps.length > 0 && (
+          <JourneyProgressBar
+            percentComplete={journey.percentComplete || 0}
+            currentStage={journey.steps.find((s: any) => s.status === 'active')?.label || 'Prepare'}
+            steps={journey.steps.map((s: any) => ({
+              heading: s.label,
+              description: s.nextSteps?.[0] || '',
+              status: s.status === 'done' ? 'complete' : s.status === 'active' ? 'current' : 'upcoming',
+            }))}
+          />
+        )}
+
+        {/* 7. Supporting Info (collapsed accordion) */}
         <div className="bg-white rounded-lg shadow p-6">
           <button
-            onClick={() => setShowBoundaries(!showBoundaries)}
+            onClick={() => setShowSupportingInfo(!showSupportingInfo)}
             className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity"
           >
-            <h2 className="text-lg font-semibold text-gray-900">Information-Only Boundaries</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Supporting Information</h2>
             <ChevronDown
               className={`w-5 h-5 text-gray-600 transition-transform ${
-                showBoundaries ? 'rotate-180' : ''
+                showSupportingInfo ? 'rotate-180' : ''
               }`}
             />
           </button>
-          {showBoundaries && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <EmpathyBoundaries plan={effectiveBoundaries} />
-            </div>
-          )}
-        </div>
-      )}
 
-      {effectiveSandbox && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <button
-            onClick={() => setShowSandbox(!showSandbox)}
-            className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity"
-          >
-            <h2 className="text-lg font-semibold text-gray-900">A2I Sandbox Readiness</h2>
-            <ChevronDown
-              className={`w-5 h-5 text-gray-600 transition-transform ${
-                showSandbox ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {showSandbox && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <SandboxPlanCard plan={effectiveSandbox} />
-            </div>
-          )}
-        </div>
-      )}
+          {showSupportingInfo && (
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-6">
+              {/* Your Role */}
+              {actionPlan && (
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Your Role in This Process</h3>
+                  <YourRoleExplainer
+                    roleExplanation={{
+                      youAre: actionPlan.roleExplanation.responsibilities,
+                      youAreNot: actionPlan.roleExplanation.whatYouAreNot,
+                    }}
+                  />
+                </div>
+              )}
 
-      {/* ===== ACTION-FIRST UX SECTION (re-ordered for natural flow) ===== */}
+              {/* Things to Avoid */}
+              {actionPlan && actionPlan.whatToAvoid.length > 0 && (
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Things to Be Careful About</h3>
+                  <WhatToAvoidSection
+                    warnings={actionPlan.whatToAvoid.map((w: any) => ({
+                      severity: w.severity,
+                      title: w.action,
+                      description: w.reason,
+                    }))}
+                  />
+                </div>
+              )}
 
-      {/* 1. Acknowledgment Banner */}
-      {actionPlan && (
-        <AcknowledgmentBanner
-          acknowledgment={actionPlan.acknowledgment}
-          domain={classification?.domain || 'civil'}
-        />
-      )}
+              {/* Next Steps Offers */}
+              {actionPlan && actionPlan.nextStepOffers.length > 0 && (
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Document Generation</h3>
+                  <NextStepsOffer
+                    offers={actionPlan.nextStepOffers.map((o: any) => ({
+                      label: o.title,
+                      description: o.description,
+                      action: 'generate' as const,
+                      documentType: o.documentType,
+                    }))}
+                    onGenerateDocument={handleGenerateDocument}
+                  />
+                </div>
+              )}
 
-      {/* 2. Immediate Actions */}
-      {actionPlan && actionPlan.immediateActions.length > 0 && (
-        <ImmediateActionsCard
-          actions={actionPlan.immediateActions.map((a: any) => ({
-            priority: a.priority,
-            action: a.title,
-            timeframe: a.timeframe,
-            details: a.description,
-          }))}
-        />
-      )}
-
-      {/* 3. What to Avoid (pairs with immediate actions) */}
-      {actionPlan && actionPlan.whatToAvoid.length > 0 && (
-        <WhatToAvoidSection
-          warnings={actionPlan.whatToAvoid.map((w: any) => ({
-            severity: w.severity,
-            title: w.action,
-            description: w.reason,
-          }))}
-        />
-      )}
-
-      {/* 4. Next Steps Offers (follow-on actions) */}
-      {actionPlan && actionPlan.nextStepOffers.length > 0 && (
-        <NextStepsOffer
-          offers={actionPlan.nextStepOffers.map((o: any) => ({
-            label: o.title,
-            description: o.description,
-            action: 'generate' as const,
-            documentType: o.documentType,
-          }))}
-          onGenerateDocument={handleGenerateDocument}
-        />
-      )}
-
-      {/* 5. Your Role Explainer (context after actions) */}
-      {actionPlan && (
-        <YourRoleExplainer
-          roleExplanation={{
-            youAre: actionPlan.roleExplanation.responsibilities,
-            youAreNot: actionPlan.roleExplanation.whatYouAreNot,
-          }}
-        />
-      )}
-
-      {/* 6. Settlement Pathways (options after knowing role) */}
-      {actionPlan && actionPlan.settlementPathways.length > 0 && (
-        <SettlementPathwayCard
-          pathways={actionPlan.settlementPathways.map((p: any) => ({
-            name: p.title,
-            description: p.description,
-            pros: p.pros,
-            cons: p.cons,
-            isTypical: p.typical,
-          }))}
-          domain={classification?.domain || 'civil'}
-        />
-      )}
-
-      {/* ===== SUPPORTING INFORMATION SECTION ===== */}
-
-      {/* Deadline Alerts (timing paired close to actions) */}
-      {effectiveDeadlineAlerts.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <DeadlineAlerts alerts={effectiveDeadlineAlerts} />
-        </div>
-      )}
-
-      {/* Quick answer: Do I need to go to court? */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Do I need to go to court?</h2>
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
-            {forumMap && forumMap.primaryForum ? (
+              {/* Forum Recommendation */}
               <div>
-                <p className="text-lg font-semibold text-gray-900 mb-2">
-                  {forumMap.primaryForum.type === 'court'
-                    ? 'Likely yes — court is the primary forum'
-                    : 'Probably not — court is not the primary forum'}
-                </p>
-                <p className="text-gray-700 mb-2">
-                  Primary forum: <strong>{forumMap.primaryForum.name}</strong> ({forumMap.primaryForum.type})
-                </p>
-                {forumMap.rationale && (
-                  <p className="text-sm text-gray-600">Rationale: {safeText(forumMap.rationale)}</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-3">Do I Need to Go to Court?</h3>
+                {forumMap && forumMap.primaryForum ? (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <p className="text-base font-semibold text-gray-900 mb-2">
+                      {forumMap.primaryForum.type === 'court'
+                        ? 'Likely yes — court is the primary forum'
+                        : 'Probably not — court is not the primary forum'}
+                    </p>
+                    <p className="text-gray-700 text-sm mb-2">
+                      Primary forum: <strong>{forumMap.primaryForum.name}</strong> ({forumMap.primaryForum.type})
+                    </p>
+                    {forumMap.rationale && (
+                      <p className="text-sm text-gray-600">{safeText(forumMap.rationale)}</p>
+                    )}
+
+                    {forumMap.alternatives && forumMap.alternatives.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-300">
+                        <p className="text-sm font-medium text-gray-700 mb-1">Alternative Forums:</p>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {forumMap.alternatives.map((alt: any) => (
+                            <li key={alt.id}>
+                              {alt.name} ({alt.type})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm">
+                    No forum recommendation available yet. Classify the matter to get tailored guidance.
+                  </p>
                 )}
               </div>
-            ) : (
-              <p className="text-gray-700">
-                No forum recommendation available yet. Classify the matter to get tailored guidance.
-              </p>
-            )}
-          </div>
-          <div className="w-48 space-y-3">
-            {forumMap && forumMap.alternatives && forumMap.alternatives.length > 0 && (
-              <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                <p className="text-sm font-medium text-gray-700 mb-2">Alternative Forums</p>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {forumMap.alternatives.map((alt: any) => (
-                    <li key={alt.id}>
-                      {alt.name} ({alt.type})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            {forumMap && forumMap.escalation && forumMap.escalation.length > 0 && (
-              <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                <p className="text-sm font-medium text-gray-700 mb-2">Escalation Path</p>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {forumMap.escalation.map((esc: any) => (
-                    <li key={esc.id}>
-                      {esc.name} ({esc.type})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+              {/* Boundaries */}
+              {effectiveBoundaries && (
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Information-Only Boundaries</h3>
+                  <EmpathyBoundaries plan={effectiveBoundaries} />
+                </div>
+              )}
+
+              {/* Classification Details */}
+              {classification && (
+                <div>
+                  <button
+                    onClick={() => setShowClassificationDetails(!showClassificationDetails)}
+                    className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity mb-3"
+                  >
+                    <h3 className="text-base font-semibold text-gray-900">Technical Classification Details</h3>
+                    <ChevronDown
+                      className={`w-5 h-5 text-gray-600 transition-transform ${
+                        showClassificationDetails ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {showClassificationDetails && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+                      <dl className="grid grid-cols-2 gap-4">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Domain</dt>
+                          <dd className="text-gray-900">{classification.domain}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Sub-category</dt>
+                          <dd className="text-gray-900">{classification.subCategory || 'N/A'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Urgency</dt>
+                          <dd className="text-gray-900">{classification.urgency || 'Standard'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Jurisdiction</dt>
+                          <dd className="text-gray-900">{classification.jurisdiction}</dd>
+                        </div>
+                      </dl>
+
+                      {(effectiveExplanation || (effectiveMatches && effectiveMatches.length > 0)) && (
+                        <div className="p-4 bg-white rounded border border-gray-300 mt-4">
+                          <h4 className="text-sm font-medium text-gray-700">
+                            Legal pillar: <span className="font-semibold text-gray-900">{pillarLabel}</span>
+                          </h4>
+
+                          {effectiveAmbiguous && effectiveMatches && effectiveMatches.length > 1 && (
+                            <p className="text-sm text-red-600 mt-1">
+                              Ambiguous: multiple legal pillars detected — {effectiveMatches.join(', ')}. Provide more detail for a
+                              clearer classification.
+                            </p>
+                          )}
+
+                          {effectiveExplanation && (
+                            <>
+                              <p className="text-sm text-gray-600 mt-2">
+                                <strong>Burden of proof:</strong> {effectiveExplanation.burdenOfProof}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-2">
+                                <strong>Overview:</strong> {effectiveExplanation.overview}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Journey Tracker */}
-      {journey && journey.steps && journey.steps.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Journey Tracker</h2>
-            {typeof journey.percentComplete === 'number' && (
-              <span className="text-sm font-medium text-gray-700">{Math.round(journey.percentComplete)}% complete</span>
-            )}
-          </div>
-          <div className="space-y-3">
-            {journey.steps.map((stage: any) => (
-              <div key={stage.id} className="border border-gray-200 rounded-lg p-3 flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{stage.label}</p>
-                  {stage.nextSteps && stage.nextSteps.length > 0 && (
-                    <ul className="list-disc list-inside text-xs text-gray-600 mt-1 space-y-1">
-                      {stage.nextSteps.slice(0, 2).map((step: string, idx: number) => (
-                        <li key={idx}>{step}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <span
-                  className={`text-xs font-semibold px-2 py-1 rounded ${
-                    stage.status === 'done'
-                      ? 'bg-green-100 text-green-800'
-                      : stage.status === 'active'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {stage.status === 'done' ? 'Done' : stage.status === 'active' ? 'In progress' : 'Not started'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Classification Details (Collapsed) */}
-      {classification && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <button
-            onClick={() => setShowClassificationDetails(!showClassificationDetails)}
-            className="w-full text-left flex items-center justify-between hover:opacity-80 transition-opacity"
-          >
-            <h2 className="text-lg font-semibold text-gray-900">Technical Classification Details</h2>
-            <ChevronDown
-              className={`w-5 h-5 text-gray-600 transition-transform ${
-                showClassificationDetails ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-
-          {showClassificationDetails && (
-            <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-              <dl className="grid grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Domain</dt>
-                  <dd className="text-gray-900">{classification.domain}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Sub-category</dt>
-                  <dd className="text-gray-900">{classification.subCategory || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Urgency</dt>
-                  <dd className="text-gray-900">{classification.urgency || 'Standard'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Jurisdiction</dt>
-                  <dd className="text-gray-900">{classification.jurisdiction}</dd>
-                </div>
-              </dl>
-
-              {(effectiveExplanation || (effectiveMatches && effectiveMatches.length > 0)) && (
-                <div className="p-4 bg-gray-50 rounded border border-gray-200 mt-4">
-                  <h3 className="text-sm font-medium text-gray-700">
-                    Legal pillar: <span className="font-semibold text-gray-900">{pillarLabel}</span>
-                  </h3>
-
-                  {effectiveAmbiguous && effectiveMatches && effectiveMatches.length > 1 && (
-                    <p className="text-sm text-red-600 mt-1">
-                      Ambiguous: multiple legal pillars detected — {effectiveMatches.join(', ')}. Provide more detail for a
-                      clearer classification.
-                    </p>
-                  )}
-
-                  {effectiveExplanation && (
-                    <>
-                      <p className="text-sm text-gray-600 mt-2">
-                        <strong>Burden of proof:</strong> {effectiveExplanation.burdenOfProof}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-2">
-                        <strong>Overview:</strong> {effectiveExplanation.overview}
-                      </p>
-                      {effectiveExplanation.nextSteps && effectiveExplanation.nextSteps.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-sm font-medium text-gray-700 mb-1">Suggested next steps</p>
-                          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                            {effectiveExplanation.nextSteps.map((s: string, i: number) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {forumMap?.rationale && (
-                <div className="mt-4">
-                  <h3 className="font-medium text-gray-900 mb-2">Forum Routing Rationale</h3>
-                  <p className="text-gray-700 text-sm">{forumMap.rationale}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      {/* Footer Disclaimer (always visible) */}
+      <FooterDisclaimer />
+    </>
   );
-}
+};

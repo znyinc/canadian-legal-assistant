@@ -35,7 +35,9 @@ export abstract class BaseDomainModule implements DomainModule {
       sourceManifest,
       evidenceManifest,
       jurisdiction: input.classification.jurisdiction,
-      domain: input.classification.domain
+      domain: input.classification.domain,
+      formMappings: input.formMappings,
+      matterId: input.matterId
     });
 
     const warnings = [pkg.warnings || [], drafts.flatMap((d) => d.missingConfirmations || [])]

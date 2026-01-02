@@ -27,7 +27,10 @@ model Matter {
   pillarMatches    String?   // JSON array of detected pillars
   pillarAmbiguous  Boolean?  // Ambiguity flag
   
-  // Metadata
+  // Metadata (wizard answers, variables)
+  metadata         String?   // JSON: { structuredAnswers, variables }
+  
+  // Data lifecycle
   legalHold        Boolean   @default(false)
   legalHoldReason  String?
   retentionDays    Int       @default(60)

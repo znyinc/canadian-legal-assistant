@@ -13,7 +13,7 @@ function getApi(req: Request) {
 const createMatterSchema = z.object({
   description: z.string().min(10),
   province: z.string().default('ON'),
-  domain: z.enum(['criminal', 'insurance', 'landlordTenant', 'employment', 'civil-negligence', 'municipalPropertyDamage', 'consumerProtection', 'humanRights', 'ocppFiling', 'treeDamage', 'legalMalpractice', 'estateSuccession', 'other']),
+  domain: z.enum(['criminal', 'insurance', 'landlordTenant', 'employment', 'civilNegligence', 'civil', 'municipalPropertyDamage', 'consumerProtection', 'humanRights', 'ocppFiling', 'family', 'legalMalpractice', 'estateSuccession', 'other']),
   disputeAmount: z
     .preprocess((v) => {
       if (v === '' || v === undefined) return null;
@@ -32,6 +32,8 @@ const createMatterSchema = z.object({
       event: z.string(),
     })).optional(),
   }).optional(),
+  structuredAnswers: z.array(z.any()).optional(),
+  variables: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
 
 const classifyMatterSchema = z.object({
@@ -58,20 +60,59 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const data = createMatterSchema.parse(req.body);
 
-    const matter = await prisma.matter.create({
+    // Create matter with initial domain
+    let matter = await prisma.matter.create({
       data: {
         description: data.description,
         province: data.province,
         domain: data.domain,
         disputeAmount: data.disputeAmount,
+        metadata: data.structuredAnswers || data.variables ? JSON.stringify({
+          structuredAnswers: data.structuredAnswers,
+          variables: data.variables,
+        }) : null,
       },
     });
+
+    // Auto-classify to detect actual domain (may override initial domain from taxonomy)
+    try {
+      const integrationApi = getApi(req);
+      const classification = integrationApi.classifyMatter({
+        description: data.description,
+        province: data.province,
+        disputeAmount: data.disputeAmount ?? undefined
+      });
+
+      if (classification?.classification) {
+        const nextDomain = classification.classification.domain || data.domain;
+        matter = await prisma.matter.update({
+          where: { id: matter.id },
+          data: {
+            domain: nextDomain,
+            classification: JSON.stringify(classification.classification),
+            forumMap: JSON.stringify(classification.forumMap),
+            pillar: classification.pillar,
+            pillarMatches: classification.pillarMatches ? JSON.stringify(classification.pillarMatches) : null,
+            pillarAmbiguous: classification.pillarAmbiguous ?? null,
+            metadata: JSON.stringify({
+              classification: classification.classification,
+              forumMap: classification.forumMap,
+              actionPlan: classification.actionPlan,
+              deadlineAlerts: classification.deadlineAlerts,
+            }),
+          },
+        });
+      }
+    } catch (classifyError) {
+      // If classification fails, continue with initial domain
+      console.warn('Classification failed, using initial domain:', classifyError);
+    }
 
     await prisma.auditEvent.create({
       data: {
         matterId: matter.id,
         action: 'created',
-        details: JSON.stringify({ description: data.description, domain: data.domain }),
+        details: JSON.stringify({ description: data.description, domain: matter.domain }),
       },
     });
 

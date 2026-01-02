@@ -17,15 +17,24 @@ export interface LimitationPeriod {
   exceptions?: string[];
   consequence: string;
   learnMoreUrl?: string;
+  caseLawReferences?: Array<{
+    caseName: string;
+    citation: string;
+    relevance: string;
+    searchQuery?: string; // Pre-filled search for case law page
+  }>;
 }
 
 export interface DeadlineAlert {
   urgency: UrgencyLevel;
   daysRemaining: number;
-  limitationPeriod: LimitationPeriod;
+  limitationPeriod: LimitationPeriod; // Full period object with case law references
   message: string;
   actionRequired: string;
   encouragement?: string;
+  // Legacy aliases for backward compatibility
+  period?: LimitationPeriod;
+  periodId?: string;
 }
 
 export class LimitationPeriodsEngine {
@@ -53,6 +62,14 @@ export class LimitationPeriodsEngine {
         ],
         consequence: 'After 2 years, you cannot start a lawsuit. The court will dismiss your claim as "statute-barred."',
         learnMoreUrl: 'https://www.ontario.ca/laws/statute/02l24',
+        caseLawReferences: [
+          {
+            caseName: 'Grant Thornton LLP v. New Brunswick',
+            citation: '2021 SCC 31',
+            relevance: 'Supreme Court interpretation of discoverability rule for limitation periods',
+            searchQuery: 'Grant Thornton discoverability limitation',
+          },
+        ],
       },
       
       // Municipal notice requirements
@@ -74,6 +91,20 @@ export class LimitationPeriodsEngine {
         ],
         consequence: 'Missing the 10-day notice deadline may prevent you from suing the municipality. You must show a reasonable excuse to proceed.',
         learnMoreUrl: 'https://www.ontario.ca/laws/statute/01m25',
+        caseLawReferences: [
+          {
+            caseName: 'Berardinelli v. Ontario Housing Corp.',
+            citation: '2005 CanLII 8684 (ON CA)',
+            relevance: 'Strict application of municipal notice requirements',
+            searchQuery: 'Berardinelli Ontario Housing municipal notice',
+          },
+          {
+            caseName: 'Seif v. Toronto',
+            citation: '2015 ONCA 321',
+            relevance: 'Reasonable excuse for delayed notice to municipality',
+            searchQuery: 'Seif Toronto reasonable excuse municipal notice',
+          },
+        ],
       },
       
       {
@@ -298,6 +329,9 @@ export class LimitationPeriodsEngine {
       message,
       actionRequired,
       encouragement,
+      // Legacy aliases for backward compatibility
+      period,
+      periodId,
     };
   }
 

@@ -28,8 +28,12 @@ export class LegalMalpracticeDomainModule extends BaseDomainModule {
 
     // Add forms reference
     const formsRef = this.templates.generateFormsReference('superior-court');
+    
+    // Determine which documents are essential vs optional based on case context
+    const hasLawyer = !lawyerName.startsWith('{{');
+    const hasDeadline = !missedDeadline.startsWith('{{');
 
-    // 1. LawPRO Immediate Notification Guide
+    // 1. LawPRO Immediate Notification Guide (ALWAYS ESSENTIAL - mandatory reporting)
     drafts.push({
       id: `${classification.id}-lawpro-notice`,
       title: 'LawPRO Immediate Notification Guide',
@@ -50,7 +54,7 @@ export class LegalMalpracticeDomainModule extends BaseDomainModule {
       )
     } as any);
 
-    // 2. Case-Within-a-Case Analysis Framework
+    // 2. Case-Within-a-Case Analysis Framework (ALWAYS ESSENTIAL - must prove underlying claim)
     drafts.push({
       id: `${classification.id}-case-analysis`,
       title: 'Case-Within-a-Case Analysis Framework',
@@ -69,45 +73,50 @@ export class LegalMalpracticeDomainModule extends BaseDomainModule {
       )
     } as any);
 
-    // 3. Expert Witness Instruction Letter Template
-    drafts.push({
-      id: `${classification.id}-expert-instruction`,
-      title: 'Expert Witness Instruction Letter Template',
-      sections: [],
-      content: this.templates.render('malpractice/expert_instruction', {
-        clientName,
-        lawyerName,
-        originalClaimType,
-        missedDeadline
-      }),
-      type: 'expert_instruction',
-      citations: [],
-      missingConfirmations: this.getMissingConfirmationsForExpert(lawyerName)
-    } as any);
+    // 3. Expert Witness Instruction Letter Template (ONLY if heading to litigation)
+    // Skip if no lawyer identified yet - this is for later stage
+    if (hasLawyer && hasDeadline) {
+      drafts.push({
+        id: `${classification.id}-expert-instruction`,
+        title: 'Expert Witness Instruction Letter Template',
+        sections: [],
+        content: this.templates.render('malpractice/expert_instruction', {
+          clientName,
+          lawyerName,
+          originalClaimType,
+          missedDeadline
+        }),
+        type: 'expert_instruction',
+        citations: [],
+        missingConfirmations: this.getMissingConfirmationsForExpert(lawyerName)
+      } as any);
+    }
 
-    // 4. Formal Demand Letter to Defendant Lawyer
-    drafts.push({
-      id: `${classification.id}-demand-letter`,
-      title: 'Formal Demand Letter to Defendant Lawyer',
-      sections: [],
-      content: this.templates.render('malpractice/demand_letter', {
-        clientName,
-        lawyerName,
-        originalClaimType,
-        missedDeadline,
-        potentialDamages: String(potentialDamages),
-        discoveryDate
-      }),
-      type: 'demand_letter',
-      citations: [],
-      missingConfirmations: this.getMissingConfirmationsForDemand(
-        clientName,
-        lawyerName,
-        String(potentialDamages)
-      )
-    } as any);
+    // 4. Formal Demand Letter to Defendant Lawyer (ONLY if lawyer identified)
+    if (hasLawyer) {
+      drafts.push({
+        id: `${classification.id}-demand-letter`,
+        title: 'Formal Demand Letter to Defendant Lawyer',
+        sections: [],
+        content: this.templates.render('malpractice/demand_letter', {
+          clientName,
+          lawyerName,
+          originalClaimType,
+          missedDeadline,
+          potentialDamages: String(potentialDamages),
+          discoveryDate
+        }),
+        type: 'demand_letter',
+        citations: [],
+        missingConfirmations: this.getMissingConfirmationsForDemand(
+          clientName,
+          lawyerName,
+          String(potentialDamages)
+        )
+      } as any);
+    }
 
-    // 5. Evidence Preservation Checklist for Malpractice Claims
+    // 5. Evidence Preservation Checklist for Malpractice Claims (ALWAYS ESSENTIAL)
     drafts.push({
       id: `${classification.id}-evidence-checklist`,
       title: 'Evidence Preservation Checklist for Malpractice Claims',

@@ -431,6 +431,66 @@ export class ActionPlanGenerator {
       }
     }
 
+    // Legal malpractice settlement options
+    if (domain === 'legalMalpractice') {
+      pathways.push({
+        title: 'Negotiated Settlement / Demand Response',
+        description: 'The lawyer or their insurer (LawPRO) may respond to your formal demand letter with a settlement offer within 21 days.',
+        pros: [
+          'Faster resolution than litigation',
+          'Often covered by claims-made insurance (LawPRO)',
+          'Preserve professional relationships if desired',
+          'Confidentiality can be negotiated',
+        ],
+        cons: [
+          'May receive less than claim amount',
+          'No public accountability',
+          'Must negotiate directly with lawyer or insurer',
+        ],
+        typical: true,
+      });
+
+      const amount = classification?.disputeAmount || 0;
+      
+      if (amount < 50000) {
+        pathways.push({
+          title: 'Small Claims Court',
+          description: 'File in Small Claims Court (jurisdiction limit $50,000). Judge decides liability and damages based on "balance of probabilities".',
+          pros: [
+            'Lower filing fees ($115-$315)',
+            'Simplified rules (no Discovery phase)',
+            'Faster timeline (6-12 months)',
+            'Enforceable court judgment',
+          ],
+          cons: [
+            'Limited to $50,000',
+            'No right to appeal on facts',
+            'Must represent yourself or hire own lawyer',
+          ],
+          typical: false,
+        });
+      } else {
+        pathways.push({
+          title: 'Superior Court Litigation',
+          description: 'File in Superior Court for amounts over $50,000. Full discovery, expert evidence, and trial if settlement fails.',
+          pros: [
+            'No dollar limit on claim',
+            'Full disclosure process (Discovery)',
+            'Expert witness testimony',
+            'Right of appeal',
+            'Enforceable court judgment',
+          ],
+          cons: [
+            'Higher filing fees ($270+)',
+            'Expensive litigation (lawyers, experts)',
+            'Lengthy timeline (2-4+ years)',
+            'Risky - if you lose, you may pay court costs',
+          ],
+          typical: false,
+        });
+      }
+    }
+
     // Employment settlement options
     if (domain === 'employment') {
       pathways.push({
@@ -671,6 +731,7 @@ export class ActionPlanGenerator {
       title: 'Generate Complete Documentation Package',
       description: 'Create a comprehensive package with all relevant documents, templates, and guidance for your case.',
       actionLabel: 'Generate Full Package',
+      documentType: 'complete_package',
     });
 
     return offers;

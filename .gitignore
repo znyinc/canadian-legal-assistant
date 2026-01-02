@@ -43,6 +43,7 @@ playwright-report/
 # Misc
 *.zip
 *.tar
+/.devserver.pids.json
 
 # Allow the example env as a template
 !backend/.env.example

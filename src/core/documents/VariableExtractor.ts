@@ -1,6 +1,6 @@
 /**
  * VariableExtractor: Extract key variables from user descriptions and matter data
- * This ensures templates are filled with actual user data, not placeholders
+ * Prefers structured wizard answers over text parsing for accuracy
  */
 
 export interface ExtractedVariables {
@@ -38,6 +38,26 @@ export interface ExtractedVariables {
 }
 
 export class VariableExtractor {
+  /**
+   * Extract variables from structured wizard answers first, fall back to text parsing
+   */
+  extractFromMatter(
+    description: string,
+    classification?: any,
+    metadata?: { structuredAnswers?: any[]; variables?: Record<string, any> }
+  ): ExtractedVariables {
+    const result: ExtractedVariables = {};
+
+    // Prefer pre-extracted variables from wizard
+    if (metadata?.variables) {
+      Object.assign(result, metadata.variables);
+      return result; // Structured data is always preferred
+    }
+
+    // Fall back to text parsing for legacy matters
+    return this.extractFromDescription(description, classification);
+  }
+
   /**
    * Extract variables from matter description and classification
    * Uses heuristic pattern matching to find names, dates, amounts, etc.

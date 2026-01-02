@@ -41,10 +41,16 @@ export class MatterClassifier {
     
     // Legal malpractice (check FIRST to avoid confusion with underlying civil/criminal matters)
     if (h.includes('malpractice') || h.includes('solicitor negligence') || 
-        h.includes('lawyer negligence') || h.includes('professional negligence') ||
-        h.includes('missed limitation') || h.includes('missed deadline') ||
-        h.includes('legal error') || h.includes('retainer') && h.includes('breach') ||
-        h.includes('lawpro') || h.includes('case within a case')) return 'legalMalpractice';
+      h.includes('lawyer negligence') || h.includes('professional negligence') ||
+      h.includes('missed limitation') || h.includes('missed deadline') ||
+      h.includes('missed filing') || h.includes('missed court filing') ||
+      h.includes('missed court date') || h.includes('failed to file') ||
+      h.includes('failed to serve') || h.includes('lawyer missed') ||
+      h.includes('lawyer error') || h.includes('attorney error') ||
+      h.includes('lawyer mistake') || h.includes('legal error') ||
+      h.includes('professional misconduct') ||
+      h.includes('retainer') && h.includes('breach') ||
+      h.includes('lawpro') || h.includes('case within a case')) return 'legalMalpractice';
 
       // Estate and succession (probate, wills, dependant support)
       if (h.includes('estate') || h.includes('probate') || h.includes('succession') ||

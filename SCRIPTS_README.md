@@ -22,6 +22,9 @@ From the project root directory:
 # Start servers and kill any existing processes on those ports
 .\startup.ps1 -Clean
 
+# Start servers with visible console windows (for troubleshooting)
+.\startup.ps1 -ShowConsole   # default when using startup.bat
+
 # Stop servers
 .\shutdown.ps1
 ```
@@ -31,8 +34,11 @@ From the project root directory:
 From the project root directory:
 
 ```batch
-REM Start servers
+REM Start servers (opens console windows for logs)
 startup.bat
+
+REM Start servers hidden (use PowerShell directly)
+powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\startup.ps1
 
 REM Stop servers
 shutdown.bat
@@ -44,8 +50,8 @@ shutdown.bat
 
 1. Checks if backend (port 3001) and frontend (port 5173/5174) are already running
 2. Kills any existing processes on those ports (if `-Clean` flag used or ports are in use)
-3. Starts backend dev server in hidden background process
-4. Starts frontend dev server in hidden background process
+3. Starts backend dev server (hidden by default, visible consoles with `-ShowConsole`)
+4. Starts frontend dev server (hidden by default, visible consoles with `-ShowConsole`)
 5. Displays URLs to access the application
 
 **Default ports:**

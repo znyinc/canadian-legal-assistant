@@ -1,5 +1,6 @@
 import { TemplateLibrary } from '../templates/TemplateLibrary';
 import { DocumentDraft, DocumentPackage, PackagedFile, SourceManifest, EvidenceManifest } from '../models';
+import { PDFSummaryGenerator } from './PDFSummaryGenerator';
 
 export interface PackageInput {
   packageName: string;
@@ -11,13 +12,19 @@ export interface PackageInput {
   evidenceManifest: EvidenceManifest;
   jurisdiction?: string; // For PDF/A format requirement detection
   domain?: string; // For determining if OCPP compliance needed
+  
+  // NEW: For form mapping and professional PDF summaries
+  formMappings?: Array<{ formId: string; variables: Record<string, any> }>;
+  matterId?: string; // For tracking generated summaries
 }
 
 export class DocumentPackager {
   private templates: TemplateLibrary;
+  private pdfSummaryGenerator: PDFSummaryGenerator;
 
   constructor(templates?: TemplateLibrary) {
     this.templates = templates ?? new TemplateLibrary();
+    this.pdfSummaryGenerator = new PDFSummaryGenerator();
   }
 
   assemble(input: PackageInput): DocumentPackage {
@@ -70,7 +77,12 @@ export class DocumentPackager {
 
     // Include domain templates as separate files for reference
     const domainTemplates = typeof (this.templates as any).domainTemplates === 'function' ? (this.templates as any).domainTemplates() : {};
+    const templatePrefixes = this.getTemplatePrefixes(input.domain);
     Object.entries(domainTemplates).forEach(([id, content]) => {
+      if (templatePrefixes.length && !templatePrefixes.some((prefix) => id.startsWith(`${prefix}/`))) {
+        return; // Skip templates that are not relevant to the current domain
+      }
+
       const safePath = `templates/${id}.md`;
       if (!files.find((f) => f.path === safePath)) {
         files.push({ path: safePath, content: String(content || '') });
@@ -82,6 +94,31 @@ export class DocumentPackager {
       files.push({
         path: 'PDF_A_CONVERSION_GUIDE.md',
         content: this.generatePDFAConversionGuide()
+      });
+    }
+
+    // NEW: Generate professional form summaries with mapping instructions
+    if (input.formMappings && input.formMappings.length > 0) {
+      input.formMappings.forEach(mapping => {
+        try {
+          const summary = this.pdfSummaryGenerator.generateSummary({
+            formId: mapping.formId,
+            variables: mapping.variables,
+            matterId: input.matterId,
+            includeFilingGuide: true,
+          });
+
+          // Add both the data summary AND the filing guide
+          files.push({
+            path: `form_summaries/${summary.filename}`,
+            content: summary.markdownContent
+          });
+
+          // Log successful generation
+          console.log(`Generated form summary: ${summary.filename} for ${summary.metadata.formName}`);
+        } catch (err) {
+          warnings.push(`Failed to generate form summary for ${mapping.formId}: ${(err as Error).message}`);
+        }
       });
     }
 
@@ -139,6 +176,43 @@ export class DocumentPackager {
     // OCPP-related domains require PDF/A for Toronto Region Superior Court
     const ocppDomains = ['ocppFiling', 'civilNegligence', 'municipalPropertyDamage'];
     return domain ? ocppDomains.includes(domain) : false;
+  }
+
+  /**
+   * Map domain to template prefixes so we only include relevant reference materials.
+   */
+  private getTemplatePrefixes(domain?: string): string[] {
+    switch (domain) {
+      case 'civil-negligence':
+      case 'civilNegligence':
+        return ['civil'];
+      case 'municipalPropertyDamage':
+        return ['municipal'];
+      case 'tree-damage':
+      case 'treeDamage':
+        return ['civil', 'municipal'];
+      case 'landlordTenant':
+        return ['ltb'];
+      case 'consumerProtection':
+        return ['consumer'];
+      case 'legalMalpractice':
+        return ['malpractice'];
+      case 'estateSuccession':
+        return ['estate'];
+      case 'criminal':
+        return ['criminal'];
+      case 'insurance':
+        return ['insurance'];
+      case 'employment':
+        return ['employment'];
+      case 'humanRights':
+      case 'human-rights':
+        return ['human-rights'];
+      case 'ocppFiling':
+        return ['civil'];
+      default:
+        return [];
+    }
   }
 
   /**

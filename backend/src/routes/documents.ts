@@ -60,7 +60,9 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
       accessLog: [],
       compiledAt: new Date().toISOString(),
     },
-    requestedTemplates: data.requestedTemplates as string[] | undefined
+    requestedTemplates: data.requestedTemplates as string[] | undefined,
+    description: matter.description || classification.notes?.join(' ') || '',
+    matterId: matter.id
   });
 
   // Generate package ID
