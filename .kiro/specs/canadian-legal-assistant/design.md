@@ -20,12 +20,18 @@ Key design principles:
 
 ## Architecture
 
-The system follows a modular, AI-enhanced architecture with comprehensive legal taxonomy coverage and sophisticated routing capabilities across all Canadian jurisdictions:
+The system follows a modular, AI-enhanced architecture with comprehensive legal taxonomy coverage, sophisticated routing capabilities across all Canadian jurisdictions, and an innovative agentic AI Decision-Support Kits system that transforms static templates into interactive, guided experiences:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Interface Layer                     │
-│         (Plain Language + Journey Tracker + AI Chat)       │
+│    (Plain Language + Journey Tracker + Kit Interfaces)     │
+├─────────────────────────────────────────────────────────────┤
+│              Agentic AI Decision-Support Kits              │
+│  Kit Orchestrator │ Kit Registry │ Kit Execution Context   │
+├─────────────────────────────────────────────────────────────┤
+│                    Core Agent Framework                     │
+│ IntakeAgent │ AnalysisAgent │ DocumentAgent │ GuidanceAgent │
 ├─────────────────────────────────────────────────────────────┤
 │                  API Gateway & AI Orchestration            │
 ├─────────────────────────────────────────────────────────────┤
@@ -53,7 +59,280 @@ The system follows a modular, AI-enhanced architecture with comprehensive legal 
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Core AI-Enhanced Services
+### Agentic AI Decision-Support Kits System
+
+The Decision-Support Kits system represents a revolutionary approach to legal guidance, transforming static templates into interactive, AI-powered experiences that guide users through complex legal processes step-by-step. This system leverages 80% of existing components while adding intelligent orchestration and personalized guidance.
+
+#### BaseKit Architecture
+
+**Purpose**: Standardized lifecycle management for all decision-support kits
+
+**Core Lifecycle Stages**:
+1. **Intake**: Conversational information gathering with dynamic question generation
+2. **Analysis**: Multi-domain classification and evidence synthesis using existing triage engine
+3. **Document**: Context-aware template selection and evidence grounding
+4. **Guidance**: Personalized action plan generation and pathway optimization
+5. **Complete**: Result aggregation and next steps presentation
+
+**Key Methods**:
+- `initialize(userContext: UserContext): KitSession`
+- `executeStage(stage: KitStage, input: StageInput): StageResult`
+- `validateTransition(fromStage: KitStage, toStage: KitStage): boolean`
+- `generateProgress(): ProgressReport`
+- `handleError(error: KitError): ErrorRecovery`
+
+#### KitOrchestrator
+
+**Purpose**: Manage kit execution, state transitions, and cross-kit communication
+
+**Key Capabilities**:
+- **Session Management**: Track user progress across multiple kit executions
+- **State Persistence**: Maintain kit state across user sessions
+- **Concurrent Execution**: Support multiple kits running simultaneously
+- **Result Aggregation**: Combine outputs from multiple kits into coherent guidance
+- **Error Recovery**: Handle failures gracefully with fallback procedures
+
+**Key Methods**:
+- `launchKit(kitId: string, userContext: UserContext): KitSession`
+- `orchestrateMultiKit(kitIds: string[], coordination: CoordinationStrategy): MultiKitSession`
+- `persistState(session: KitSession): void`
+- `recoverSession(sessionId: string): KitSession`
+- `aggregateResults(sessions: KitSession[]): AggregatedGuidance`
+
+#### Core Agent Framework
+
+##### IntakeAgent
+**Purpose**: Conversational flow management and dynamic question generation
+
+**Capabilities**:
+- Natural language processing for user responses
+- Context-aware question generation based on partial information
+- Integration with existing MatterClassifier for domain detection
+- Progressive disclosure to reduce cognitive load
+- Validation and clarification of user inputs
+
+**Integration Points**:
+- Reuses existing `MatterClassifier` for domain detection
+- Leverages `PlainLanguageTranslator` for accessible communication
+- Connects to `AuthorityRegistry` for jurisdiction-specific questions
+
+##### AnalysisAgent
+**Purpose**: Multi-domain classification and evidence synthesis
+
+**Capabilities**:
+- Advanced scenario analysis using existing classification engine
+- Evidence quality assessment and gap identification
+- Multi-domain case detection and prioritization
+- Confidence scoring and uncertainty quantification
+- Risk assessment and urgency determination
+
+**Integration Points**:
+- Extends existing `MatterClassifier` with confidence scoring
+- Utilizes `EvidenceProcessor` for document analysis
+- Leverages `LimitationPeriodsEngine` for deadline assessment
+- Connects to `CostCalculator` for financial risk evaluation
+
+##### DocumentAgent
+**Purpose**: Context-aware template selection and evidence grounding
+
+**Capabilities**:
+- Intelligent template selection based on case analysis
+- Evidence-to-field mapping for form completion
+- Dynamic document customization based on user context
+- Quality validation and completeness checking
+- Integration with existing document generation pipeline
+
+**Integration Points**:
+- Utilizes existing `TemplateLibrary` for document templates
+- Leverages `DocumentPackager` for standardized output
+- Connects to `EvidenceIndexer` for evidence grounding
+- Uses `CitationFormatter` for proper legal citations
+
+##### GuidanceAgent
+**Purpose**: Personalized action plan generation and pathway optimization
+
+**Capabilities**:
+- Dynamic step prioritization based on urgency and complexity
+- Personalized pathway recommendations considering user constraints
+- Settlement and negotiation guidance integration
+- Resource and referral recommendations
+- Follow-up scheduling and reminder generation
+
+**Integration Points**:
+- Extends existing `ActionPlanGenerator` with dynamic logic
+- Utilizes `ForumRouter` for pathway validation
+- Leverages `CostCalculator` for financial guidance
+- Connects to `AuthorityRegistry` for referral information
+
+#### High-Impact Decision-Support Kits
+
+##### Rent Increase Kit
+**Purpose**: Guide tenants through LTB T1 application process with rent calculation validation
+
+**Specialized Components**:
+- Rent increase legality checker using Ontario rent control rules
+- Evidence requirements specific to above-guideline increases
+- LTB T1 form completion with field-by-field guidance
+- Timeline management for application deadlines
+- Settlement negotiation strategies with landlords
+
+**Integration**: Leverages existing LTB domain module, limitation periods engine, and document templates
+
+##### Employment Termination Kit
+**Purpose**: Analyze ESA vs wrongful dismissal claims with severance calculation
+
+**Specialized Components**:
+- Termination analysis (with cause, without cause, constructive dismissal)
+- Severance calculation engine using ESA minimums and common law
+- Evidence gathering for wrongful dismissal claims
+- Timeline management for ESA complaints vs court filings
+- Settlement negotiation guidance and release review
+
+**Integration**: Utilizes existing employment domain module, cost calculator, and forum routing
+
+##### Small Claims Preparation Kit
+**Purpose**: Complete Form 7A preparation with evidence mapping and cost-benefit analysis
+
+**Specialized Components**:
+- Claim strength assessment and success probability
+- Evidence-to-form field mapping for Form 7A completion
+- Cost-benefit analysis including filing fees and time investment
+- Settlement demand letter generation before filing
+- Court procedure preparation and timeline management
+
+**Integration**: Leverages existing civil domain module, document packager, and cost calculator
+
+##### Motor Vehicle Accident Kit
+**Purpose**: Navigate DC-PD vs tort claim analysis with insurance coordination
+
+**Specialized Components**:
+- DC-PD eligibility assessment for Ontario accidents
+- Tort claim threshold analysis (serious impairment test)
+- Insurance coordination and subrogation guidance
+- Medical evidence requirements and timeline management
+- Settlement evaluation and negotiation strategies
+
+**Integration**: Utilizes existing tort domain module, evidence processor, and limitation periods engine
+
+##### Will Challenge Kit
+**Purpose**: Assess grounds for will challenges with evidence requirements and probate timeline
+
+**Specialized Components**:
+- Will challenge grounds assessment (capacity, undue influence, formalities)
+- Evidence gathering strategy for suspicious circumstances
+- Probate timeline integration and deadline management
+- Expert witness requirements and qualification guidance
+- Settlement alternatives and family mediation options
+
+**Integration**: Leverages existing estate domain module, evidence processor, and forum routing
+
+### Enhanced Component Integration
+
+#### Extended MatterClassifier
+**New Capabilities for Agentic Integration**:
+- Confidence scoring with uncertainty quantification
+- Multi-stage classification refinement based on additional information
+- Context retention across kit sessions
+- Integration with agent decision-making processes
+
+#### Enhanced ActionPlanGenerator
+**New Capabilities for Agentic Integration**:
+- Dynamic step prioritization based on changing circumstances
+- Conditional logic for pathway optimization
+- Integration with kit-specific guidance generation
+- Real-time adaptation based on user progress
+
+#### Upgraded DocumentPackager
+**New Capabilities for Agentic Integration**:
+- Kit-specific template selection and customization
+- Evidence-to-field mapping for form completion
+- Dynamic package composition based on kit recommendations
+- Integration with kit result aggregation
+
+#### Integrated LimitationPeriodsEngine
+**New Capabilities for Agentic Integration**:
+- Kit-specific deadline calculations and prioritization
+- Urgency escalation based on kit progress
+- Dynamic timeline adjustment based on case developments
+- Integration with kit guidance generation
+
+#### Extended CostCalculator
+**New Capabilities for Agentic Integration**:
+- Kit-specific financial modeling and risk assessment
+- Dynamic cost-benefit analysis based on case strength
+- Settlement value estimation and negotiation guidance
+- Integration with kit pathway optimization
+
+### Kit-Specific User Interface Components
+
+#### KitLauncher
+**Purpose**: Kit selection and progress visualization
+
+**Features**:
+- Interactive kit selection based on user situation
+- Progress visualization across multiple concurrent kits
+- Session management and state persistence
+- Integration with existing matter intake flow
+
+#### ConversationalInterface
+**Purpose**: Natural language processing and context retention
+
+**Features**:
+- Conversational question flow with dynamic branching
+- Context retention across kit stages
+- Natural language input processing and validation
+- Integration with existing plain language translation layer
+
+#### InteractiveChecklist
+**Purpose**: Dynamic completion tracking and evidence validation
+
+**Features**:
+- Dynamic checklist generation based on case analysis
+- Real-time completion tracking and validation
+- Evidence upload integration with quality assessment
+- Progress synchronization across kit stages
+
+#### ProgressDashboard
+**Purpose**: Multi-kit coordination and deadline management
+
+**Features**:
+- Unified view of progress across multiple kits
+- Deadline tracking and urgency visualization
+- Resource and referral management
+- Integration with existing journey tracker
+
+#### KitResults
+**Purpose**: Actionable next steps and document generation triggers
+
+**Features**:
+- Comprehensive result presentation with clear next steps
+- Document generation triggers based on kit recommendations
+- Resource and referral integration
+- Follow-up scheduling and reminder management
+
+### System Integration Architecture
+
+The agentic AI system integrates seamlessly with existing components through standardized interfaces:
+
+**API Integration**:
+- Kit endpoints integrated into existing IntegrationAPI
+- Standardized request/response formats maintaining backward compatibility
+- Session management integrated with existing user authentication
+- Audit logging extended to cover kit interactions
+
+**Data Integration**:
+- Kit state persistence using existing data lifecycle management
+- Evidence integration with existing evidence processor
+- Authority registry integration for pathway validation
+- Audit trail integration for compliance tracking
+
+**UPL Compliance Integration**:
+- Existing disclaimer system extended to cover kit interactions
+- Multi-pathway presentation maintained across all kit recommendations
+- Citation requirements enforced in kit-generated documents
+- Professional consultation recommendations integrated into kit guidance
+
+This architecture ensures that the agentic AI Decision-Support Kits system enhances the existing Canadian Legal Assistant while maintaining all established design principles, UPL compliance boundaries, and empathy-focused user experience.
 
 1. **AI-Powered Classification Engine**: Advanced NLP-based classification covering comprehensive legal taxonomy
 2. **Multi-Domain Analysis System**: Identifies complex cases spanning multiple legal areas
@@ -594,6 +873,189 @@ The frontend is organized around six core UI patterns implemented as React compo
 - **AccessibilityAudit**: WCAG 2.1 AA compliance verification and keyboard navigation testing
 
 ## Data Models
+
+### Agentic AI Decision-Support Kits Data Models
+
+```typescript
+interface BaseKit {
+  kitId: string;
+  name: string;
+  description: string;
+  targetDomains: ComprehensiveLegalDomain[];
+  lifecycle: KitLifecycle;
+  requiredComponents: string[];
+  optionalComponents: string[];
+  estimatedDuration: string;
+  complexityLevel: 'beginner' | 'intermediate' | 'advanced';
+}
+
+interface KitSession {
+  sessionId: string;
+  kitId: string;
+  userId: string;
+  currentStage: KitStage;
+  stageHistory: KitStageHistory[];
+  context: KitExecutionContext;
+  results: KitStageResult[];
+  startTime: Date;
+  lastActivity: Date;
+  status: 'active' | 'paused' | 'completed' | 'error';
+}
+
+interface KitExecutionContext {
+  userProfile: UserProfile;
+  matterClassification: ComprehensiveLegalClassification;
+  evidenceIndex: EvidenceIndex;
+  jurisdictionalFactors: JurisdictionalFactor[];
+  urgencyAssessment: UrgencyAssessment;
+  costConstraints: CostConstraints;
+  preferredPathways: string[];
+  sessionState: Record<string, any>;
+}
+
+interface KitStage {
+  stageId: string;
+  name: string;
+  description: string;
+  agent: AgentType;
+  inputs: StageInputSchema[];
+  outputs: StageOutputSchema[];
+  validationRules: ValidationRule[];
+  transitionConditions: TransitionCondition[];
+  estimatedDuration: string;
+}
+
+interface KitStageResult {
+  stageId: string;
+  agent: AgentType;
+  inputs: Record<string, any>;
+  outputs: Record<string, any>;
+  confidence: number;
+  validationResults: ValidationResult[];
+  recommendations: string[];
+  nextSteps: string[];
+  timestamp: Date;
+}
+
+interface AgentResponse {
+  agentType: AgentType;
+  confidence: number;
+  recommendations: Recommendation[];
+  questions: DynamicQuestion[];
+  evidence: EvidenceRequirement[];
+  pathways: PathwayOption[];
+  warnings: Warning[];
+  nextActions: NextAction[];
+}
+
+interface DynamicQuestion {
+  questionId: string;
+  text: string;
+  type: 'text' | 'select' | 'multiselect' | 'date' | 'number' | 'boolean';
+  options?: QuestionOption[];
+  validation: ValidationRule[];
+  dependencies: QuestionDependency[];
+  helpText?: string;
+  required: boolean;
+}
+
+interface PathwayOption {
+  pathwayId: string;
+  name: string;
+  description: string;
+  pros: string[];
+  cons: string[];
+  estimatedCost: CostEstimate;
+  estimatedTimeline: string;
+  successProbability: number;
+  requiredEvidence: EvidenceRequirement[];
+  nextSteps: NextAction[];
+  alternativePathways: string[];
+}
+
+interface KitResult {
+  kitId: string;
+  sessionId: string;
+  completionStatus: 'complete' | 'partial' | 'abandoned';
+  recommendations: Recommendation[];
+  generatedDocuments: GeneratedDocument[];
+  actionPlan: ActionPlan;
+  pathwaySelection: PathwayOption;
+  evidenceGaps: EvidenceGap[];
+  followUpActions: NextAction[];
+  referrals: ProfessionalReferral[];
+  estimatedOutcome: OutcomeEstimate;
+}
+
+interface MultiKitSession {
+  sessionId: string;
+  userId: string;
+  activeKits: KitSession[];
+  coordinationStrategy: CoordinationStrategy;
+  sharedContext: SharedKitContext;
+  aggregatedResults: AggregatedGuidance;
+  conflictResolution: ConflictResolution[];
+  overallProgress: number;
+  estimatedCompletion: Date;
+}
+
+interface AggregatedGuidance {
+  prioritizedActions: PrioritizedAction[];
+  consolidatedDocuments: GeneratedDocument[];
+  unifiedTimeline: TimelineEvent[];
+  resourceAllocation: ResourceAllocation;
+  riskAssessment: RiskAssessment;
+  successProbability: number;
+  alternativeStrategies: AlternativeStrategy[];
+}
+
+type AgentType = 'intake' | 'analysis' | 'document' | 'guidance';
+type KitStage = 'intake' | 'analysis' | 'document' | 'guidance' | 'complete';
+```
+
+### Enhanced Component Data Models
+
+```typescript
+interface EnhancedMatterClassification extends ComprehensiveLegalClassification {
+  confidenceBreakdown: ConfidenceBreakdown;
+  uncertaintyFactors: UncertaintyFactor[];
+  classificationHistory: ClassificationStep[];
+  agentRecommendations: AgentRecommendation[];
+  refinementSuggestions: RefinementSuggestion[];
+}
+
+interface EnhancedActionPlan extends ActionPlan {
+  dynamicPrioritization: DynamicPriority[];
+  conditionalLogic: ConditionalStep[];
+  adaptationTriggers: AdaptationTrigger[];
+  progressTracking: ProgressMetric[];
+  kitIntegration: KitIntegrationPoint[];
+}
+
+interface EnhancedDocumentPackage extends DocumentPackage {
+  kitSpecificTemplates: KitTemplate[];
+  evidenceFieldMapping: EvidenceFieldMap[];
+  dynamicCustomization: CustomizationRule[];
+  qualityAssessment: QualityMetric[];
+  completenessValidation: CompletenessCheck[];
+}
+
+interface EnhancedLimitationPeriod extends LimitationPeriod {
+  kitSpecificCalculation: KitDeadlineCalculation;
+  urgencyEscalation: UrgencyEscalationRule[];
+  dynamicAdjustment: TimelineAdjustment[];
+  integrationPoints: KitIntegrationPoint[];
+  contextualGuidance: ContextualGuidance[];
+}
+
+interface EnhancedCostCalculation extends CostCalculation {
+  kitSpecificModeling: KitFinancialModel;
+  dynamicRiskAssessment: DynamicRiskFactor[];
+  settlementValuation: SettlementEstimate;
+  pathwayOptimization: PathwayOptimization[];
+  financialGuidance: FinancialGuidance[];
+}
+```
 
 ### Core AI-Enhanced Data Types
 
