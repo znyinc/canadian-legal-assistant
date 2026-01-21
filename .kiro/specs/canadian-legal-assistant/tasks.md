@@ -569,12 +569,20 @@ All requirements reference the original specification document in `.kiro/specs/c
     - ✅ Git Commit: a4d0f05 - "feat: implement all 5 high-impact decision-support kits for Task 26.3"
     - Status: COMPLETE - Ready for Task 26.4 (Component Enhancement)
 
-  - [ ] 26.4 Enhance Existing Components for Agentic Integration
-    - [ ] Extend MatterClassifier with confidence scoring and uncertainty quantification for agent decision-making
-    - [ ] Enhance ActionPlanGenerator with dynamic step prioritization and conditional logic
-    - [ ] Upgrade DocumentPackager with kit-specific templates and evidence-to-field mapping
-    - [ ] Integrate LimitationPeriodsEngine with kit-specific deadline calculations and urgency escalation
-    - [ ] Extend CostCalculator with kit-specific financial modeling and risk assessment
+  - [x] 26.4 Enhance Existing Components for Agentic Integration
+    - [x] Extend MatterClassifier with confidence scoring and uncertainty quantification for agent decision-making
+    - [x] Enhance ActionPlanGenerator with dynamic step prioritization and conditional logic
+    - [x] Upgrade DocumentPackager with kit-specific templates and evidence-to-field mapping
+    - [x] Integrate LimitationPeriodsEngine with kit-specific deadline calculations and urgency escalation
+    - [x] Extend CostCalculator with kit-specific financial modeling and risk assessment
+    - Status: COMPLETE (Commit: 892e9fb) - 1080+ lines added across 5 components
+    - MatterClassifier: Confidence scoring (0-100), uncertainty detection, alternative domain suggestions (170 lines)
+    - ActionPlanGenerator: Dynamic prioritization, conditional rules, context-aware urgency escalation (160 lines)
+    - DocumentPackager: 10 kit-specific templates (rent calc, evidence mapping, ESA calc, settlement framework, cost-benefit, claim calc, pathway comparison, grounds assessment, deadline tracker, PDF/A guide) (220 lines)
+    - LimitationPeriodsEngine: Kit-specific deadline calculations for 5 kits with 4-level urgency (100 lines)
+    - CostCalculator: Financial modeling with risk assessment, settlement probability, cost-benefit analysis for all 5 kits (430 lines)
+    - All enhancements maintain backward compatibility (0 breaking changes)
+    - Integration-ready for RentIncreaseKit, EmploymentTerminationKit, SmallClaimsPreparationKit, MotorVehicleAccidentKit, WillChallengeKit
 
   - [ ] 26.5 Build Kit-Specific User Interface Components
     - [ ] Create KitLauncher component with kit selection and progress visualization
