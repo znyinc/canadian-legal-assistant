@@ -10,10 +10,10 @@ All requirements reference the original specification document in `.kiro/specs/c
 ## Phase 1: Core System (Tasks 1-12)
 
 - [x] 1. Set up project structure and core interfaces
-  - ✅ Create directory structure for core services, domain modules, and data access layers
-  - ✅ Define TypeScript interfaces for core data models (MatterClassification, ForumMap, EvidenceIndex, etc.)
-  - ✅ Configure project dependencies and build system
-  - ✅ Set up basic unit testing framework
+  - [x] Create directory structure for core services, domain modules, and data access layers
+  - [x] Define TypeScript interfaces for core data models (MatterClassification, ForumMap, EvidenceIndex, etc.)
+  - [x] Configure project dependencies and build system
+  - [x] Set up basic unit testing framework
 
 - [x] 2. Implement Authority Registry and Source Access Control
   - [x] 2.1 Create Authority Registry data model and storage
