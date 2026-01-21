@@ -16,6 +16,21 @@ export interface PackageInput {
   // NEW: For form mapping and professional PDF summaries
   formMappings?: Array<{ formId: string; variables: Record<string, any> }>;
   matterId?: string; // For tracking generated summaries
+  
+  // Task 26.4.3: Kit-specific template support
+  kitType?: string; // 'rent-increase' | 'employment-termination' | 'small-claims' | etc.
+  kitContext?: KitTemplateContext; // Context for kit-specific document generation
+}
+
+/**
+ * Context for kit-specific template generation (Task 26.4.3)
+ */
+export interface KitTemplateContext {
+  analysisResults?: Record<string, any>; // Kit-specific analysis data
+  evidenceMappings?: Array<{ evidenceId: string; formField: string; explanation: string }>;
+  calculatedValues?: Record<string, number>; // Financial calculations, percentages, etc.
+  deadlineDetails?: Array<{ deadline: string; urgency: string; description: string }>;
+  pathwayRecommendations?: Array<{ pathway: string; score: number; reasoning: string }>;
 }
 
 export class DocumentPackager {
@@ -40,6 +55,12 @@ export class DocumentPackager {
         'All documents must be converted to PDF/A-1b or PDF/A-2b before submission.',
         'See PDF_A_CONVERSION_GUIDE.md in this package for instructions.'
       );
+    }
+
+    // Task 26.4.3: Add kit-specific templates if applicable
+    if (input.kitType && input.kitContext) {
+      const kitTemplates = this.generateKitSpecificTemplates(input.kitType, input.kitContext);
+      files.push(...kitTemplates);
     }
 
     // Required manifest files
@@ -325,4 +346,155 @@ Toronto Region Superior Court requires:
 **Source**: Ontario Superior Court of Justice OCPP Requirements
 `;
   }
+
+  /**
+   * Generate kit-specific templates with evidence-to-field mapping (Task 26.4.3)
+   */
+  private generateKitSpecificTemplates(
+    kitType: string,
+    context: KitTemplateContext
+  ): PackagedFile[] {
+    const files: PackagedFile[] = [];
+
+    switch (kitType) {
+      case 'rent-increase':
+        files.push({
+          path: 'kit_templates/rent_calculation_worksheet.md',
+          content: this.generateRentCalculationWorksheet(context),
+        });
+        files.push({
+          path: 'kit_templates/evidence_mapping_to_form_t1.md',
+          content: this.generateEvidenceMappingGuide('LTB Form T1', context.evidenceMappings),
+        });
+        break;
+
+      case 'employment-termination':
+        files.push({
+          path: 'kit_templates/esa_entitlement_calculation.md',
+          content: this.generateESACalculation(context.calculatedValues),
+        });
+        files.push({
+          path: 'kit_templates/settlement_negotiation_framework.md',
+          content: this.generateSettlementFramework(context.pathwayRecommendations),
+        });
+        break;
+
+      case 'small-claims':
+        files.push({
+          path: 'kit_templates/form_7a_evidence_mapping.md',
+          content: this.generateEvidenceMappingGuide('Form 7A', context.evidenceMappings),
+        });
+        files.push({
+          path: 'kit_templates/cost_benefit_analysis.md',
+          content: this.generateCostBenefitAnalysis(context.calculatedValues),
+        });
+        break;
+
+      case 'motor-vehicle-accident':
+        files.push({
+          path: 'kit_templates/claim_value_calculation.md',
+          content: this.generateClaimCalculation(context.calculatedValues),
+        });
+        files.push({
+          path: 'kit_templates/dcpd_vs_tort_comparison.md',
+          content: this.generatePathwayComparison(context.pathwayRecommendations),
+        });
+        break;
+
+      case 'will-challenge':
+        files.push({
+          path: 'kit_templates/grounds_assessment_matrix.md',
+          content: this.generateGroundsAssessment(context.analysisResults),
+        });
+        files.push({
+          path: 'kit_templates/probate_deadline_tracker.md',
+          content: this.generateDeadlineTracker(context.deadlineDetails),
+        });
+        break;
+    }
+
+    return files;
+  }
+
+  private generateRentCalculationWorksheet(context: KitTemplateContext): string {
+    const calc = context.calculatedValues || {};
+    return `# Rent Increase Calculation Worksheet\n\n## Current Rent Analysis\n- **Current Monthly Rent**: $${calc.currentRent || 0}\n- **Current Annual Rent**: $${(calc.currentRent || 0) * 12}\n\n## Proposed Rent Analysis\n- **Proposed Monthly Rent**: $${calc.proposedRent || 0}\n- **Proposed Annual Rent**: $${(calc.proposedRent || 0) * 12}\n\n## Increase Analysis\n- **Monthly Increase**: $${(calc.proposedRent || 0) - (calc.currentRent || 0)}\n- **Percentage Increase**: ${calc.increasePercentage || 0}%\n- **RTA Guideline**: ${calc.rtaGuideline || 0}%\n- **Compliance**: ${(calc.increasePercentage || 0) <= (calc.rtaGuideline || 0) ? '✓ Within guideline' : '✗ Above guideline'}\n\nGenerated: ${new Date().toISOString().split('T')[0]}\n`;
+  }
+
+  private generateEvidenceMappingGuide(formName: string, mappings?: Array<{ evidenceId: string; formField: string; explanation: string }>): string {
+    let guide = `# Evidence Mapping to ${formName}\n\nThis guide shows which pieces of evidence support each form field.\n\n`;
+    if (!mappings || mappings.length === 0) {
+      guide += '_(No evidence mappings available)_\n';
+    } else {
+      mappings.forEach((mapping, index) => {
+        guide += `## ${index + 1}. ${mapping.formField}\n- **Evidence**: ${mapping.evidenceId}\n- **How to use**: ${mapping.explanation}\n\n`;
+      });
+    }
+    return guide;
+  }
+
+  private generateESACalculation(values?: Record<string, number>): string {
+    const v = values || {};
+    return `# Employment Standards Act (ESA) Entitlement Calculation\n\n## Termination Pay (ESA minimum)\n- **Weeks of pay**: ${v.terminationWeeks || 0}\n- **Amount**: $${v.terminationPay || 0}\n\n## Severance Pay (if applicable)\n- **Weeks of pay**: ${v.severanceWeeks || 0}\n- **Amount**: $${v.severancePay || 0}\n\n## Total ESA Entitlement\n- **Combined total**: $${(v.terminationPay || 0) + (v.severancePay || 0)}\n- **Less amount received**: $${v.amountReceived || 0}\n- **Shortfall**: $${Math.max(0, (v.terminationPay || 0) + (v.severancePay || 0) - (v.amountReceived || 0))}\n\nGenerated: ${new Date().toISOString().split('T')[0]}\n`;
+  }
+
+  private generateSettlementFramework(recommendations?: Array<{ pathway: string; score: number; reasoning: string }>): string {
+    let framework = `# Settlement Negotiation Framework\n\n`;
+    if (!recommendations || recommendations.length === 0) {
+      framework += '_(No pathway recommendations available)_\n';
+    } else {
+      framework += `## Recommended Pathway\n\n`;
+      recommendations.forEach((rec, index) => {
+        framework += `### ${index + 1}. ${rec.pathway} (Score: ${rec.score}/100)\n${rec.reasoning}\n\n`;
+      });
+    }
+    return framework;
+  }
+
+  private generateCostBenefitAnalysis(values?: Record<string, number>): string {
+    const v = values || {};
+    return `# Cost-Benefit Analysis\n\n## Claim Amount\n- **Total claim**: $${v.claimAmount || 0}\n\n## Filing Costs\n- **Court filing fee**: $${v.filingFee || 0}\n- **Service costs**: $${v.serviceCosts || 50}\n- **Total costs**: $${(v.filingFee || 0) + (v.serviceCosts || 50)}\n\n## Net Recovery\n- **If successful**: $${(v.claimAmount || 0) - ((v.filingFee || 0) + (v.serviceCosts || 50))}\n\nGenerated: ${new Date().toISOString().split('T')[0]}\n`;
+  }
+
+  private generateClaimCalculation(values?: Record<string, number>): string {
+    const v = values || {};
+    return `# Motor Vehicle Accident Claim Calculation\n\n## Property Damage\n- **Vehicle damage**: $${v.vehicleDamage || 0}\n- **Deductible**: $${v.deductible || 0}\n- **Net property claim**: $${Math.max(0, (v.vehicleDamage || 0) - (v.deductible || 0))}\n\n## Medical Expenses\n- **Medical costs**: $${v.medicalCosts || 0}\n\n## Income Loss\n- **Lost income**: $${v.incomeLoss || 0}\n\n## Total Claim Value\n- **Combined total**: $${(v.vehicleDamage || 0) + (v.medicalCosts || 0) + (v.incomeLoss || 0)}\n\nGenerated: ${new Date().toISOString().split('T')[0]}\n`;
+  }
+
+  private generatePathwayComparison(recommendations?: Array<{ pathway: string; score: number; reasoning: string }>): string {
+    let comparison = `# Pathway Comparison\n\n`;
+    if (!recommendations || recommendations.length === 0) {
+      comparison += '_(No pathway recommendations available)_\n';
+    } else {
+      recommendations.forEach((rec, index) => {
+        comparison += `## ${index + 1}. ${rec.pathway}\n**Score**: ${rec.score}/100\n\n${rec.reasoning}\n\n`;
+      });
+    }
+    return comparison;
+  }
+
+  private generateGroundsAssessment(analysis?: Record<string, any>): string {
+    let assessment = `# Will Challenge Grounds Assessment\n\n`;
+    if (!analysis || Object.keys(analysis).length === 0) {
+      assessment += '_(No grounds analysis available)_\n';
+    } else {
+      for (const [key, value] of Object.entries(analysis)) {
+        assessment += `## ${key}\n${JSON.stringify(value, null, 2)}\n\n`;
+      }
+    }
+    return assessment;
+  }
+
+  private generateDeadlineTracker(deadlines?: Array<{ deadline: string; urgency: string; description: string }>): string {
+    let tracker = `# Probate Deadline Tracker\n\n`;
+    if (!deadlines || deadlines.length === 0) {
+      tracker += '_(No deadline details available)_\n';
+    } else {
+      deadlines.forEach((d, index) => {
+        tracker += `## ${index + 1}. ${d.deadline}\n- **Urgency**: ${d.urgency}\n- **Description**: ${d.description}\n\n`;
+      });
+    }
+    return tracker;
+  }
 }
+

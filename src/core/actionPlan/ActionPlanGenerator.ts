@@ -72,10 +72,38 @@ export interface ActionPlan {
 }
 
 /**
+ * Priority context for dynamic step ordering (Task 26.4.2)
+ */
+export interface PriorityContext {
+  daysUntilDeadline?: number;
+  hasActiveDeadline: boolean;
+  evidencePreservationCritical: boolean;
+  financialUrgency: boolean;
+  safetyRisk: boolean;
+}
+
+/**
+ * Conditional logic rule for dynamic action generation (Task 26.4.2)
+ */
+export interface ConditionalRule {
+  condition: (context: PriorityContext, classification: MatterClassification) => boolean;
+  action: ActionStep;
+  reason: string;
+}
+
+/**
  * Generates action-first, empathetic action plans from matter classifications.
  * Converts technical legal classifications into user-friendly, actionable guidance.
+ * 
+ * Task 26.4.2: Enhanced with dynamic step prioritization and conditional logic for agent integration
  */
 export class ActionPlanGenerator {
+  private conditionalRules: ConditionalRule[] = [];
+
+  constructor() {
+    this.loadConditionalRules();
+  }
+
   /**
    * Generate complete action plan from classification
    */
@@ -90,6 +118,117 @@ export class ActionPlanGenerator {
       whatToAvoid: this.generateWhatToAvoid(domain, classification),
       nextStepOffers: this.generateNextStepOffers(domain, classification),
     };
+  }
+
+  /**
+   * Generate action plan with dynamic prioritization based on context (Task 26.4.2)
+   */
+  generateWithPrioritization(
+    classification: MatterClassification,
+    context: PriorityContext
+  ): ActionPlan {
+    const domain = classification.domain || 'other';
+    const baseActions = this.generateImmediateActions(domain, classification);
+
+    // Apply conditional rules to add context-specific actions
+    const conditionalActions = this.conditionalRules
+      .filter(rule => rule.condition(context, classification))
+      .map(rule => rule.action);
+
+    // Combine and re-prioritize all actions
+    const allActions = [...baseActions, ...conditionalActions];
+    const prioritizedActions = this.reprioritizeActions(allActions, context);
+
+    return {
+      acknowledgment: this.generateAcknowledgment(domain, classification),
+      immediateActions: prioritizedActions,
+      roleExplanation: this.generateRoleExplanation(domain, classification),
+      settlementPathways: this.generateSettlementPathways(domain, classification),
+      whatToAvoid: this.generateWhatToAvoid(domain, classification),
+      nextStepOffers: this.generateNextStepOffers(domain, classification),
+    };
+  }
+
+  /**
+   * Re-prioritize actions based on dynamic context
+   */
+  private reprioritizeActions(actions: ActionStep[], context: PriorityContext): ActionStep[] {
+    return actions
+      .map(action => {
+        let newPriority = action.priority;
+
+        // Escalate priority based on context
+        if (context.hasActiveDeadline && context.daysUntilDeadline && context.daysUntilDeadline <= 7) {
+          if (action.title.includes('Notice') || action.title.includes('Deadline')) {
+            newPriority = 'urgent';
+          }
+        }
+
+        if (context.evidencePreservationCritical && action.title.includes('Evidence')) {
+          newPriority = 'urgent';
+        }
+
+        if (context.safetyRisk && action.title.includes('Safety')) {
+          newPriority = 'urgent';
+        }
+
+        return { ...action, priority: newPriority };
+      })
+      .sort((a, b) => {
+        const priorityOrder = { urgent: 1, soon: 2, 'when-ready': 3 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+  }
+
+  /**
+   * Load conditional rules for dynamic action generation
+   */
+  private loadConditionalRules(): void {
+    // Municipal 10-day notice rule
+    this.conditionalRules.push({
+      condition: (ctx, classification) =>
+        classification.domain === 'municipalPropertyDamage' && ctx.hasActiveDeadline && (ctx.daysUntilDeadline || 0) <= 10,
+      action: {
+        id: 'municipal-urgent-notice',
+        priority: 'urgent',
+        title: 'URGENT: File 10-Day Municipal Notice NOW',
+        description: 'You have less than 10 days remaining to file notice with the municipality. Missing this deadline will prevent you from suing. Drop everything and file today.',
+        timeframe: `${0} days remaining`,
+        completed: false,
+      },
+      reason: 'Municipal notice deadline is critical and imminent',
+    });
+
+    // Evidence preservation for injury cases
+    this.conditionalRules.push({
+      condition: (ctx, classification) =>
+        ctx.evidencePreservationCritical &&
+        (classification.domain === 'civil-negligence' || classification.domain === 'municipalPropertyDamage'),
+      action: {
+        id: 'critical-evidence-preservation',
+        priority: 'urgent',
+        title: 'Preserve Physical Evidence Immediately',
+        description: 'Evidence degradation is a critical risk. Photograph and secure all physical evidence before it is altered, cleaned, or discarded.',
+        timeframe: 'Within 24 hours',
+        completed: false,
+      },
+      reason: 'Physical evidence is at risk of being lost or altered',
+    });
+
+    // Financial urgency for employment termination
+    this.conditionalRules.push({
+      condition: (ctx, classification) =>
+        ctx.financialUrgency && classification.domain === 'employment',
+      action: {
+        id: 'financial-hardship-action',
+        priority: 'urgent',
+        title: 'Apply for Employment Insurance (EI)',
+        description: 'If you are facing financial hardship, apply for EI benefits immediately. You can still pursue legal action while receiving EI.',
+        timeframe: 'Within 48 hours',
+        completed: false,
+      },
+      reason: 'Financial urgency requires immediate income replacement',
+    });
   }
 
   /**

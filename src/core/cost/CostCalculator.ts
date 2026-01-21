@@ -552,4 +552,443 @@ export class CostCalculator {
     const perPersonIncrease = 7000;
     return baseThreshold + (householdSize - 1) * perPersonIncrease;
   }
+
+  /**
+   * ========================================================================
+   * TASK 26.4.5: KIT-SPECIFIC FINANCIAL MODELING AND RISK ASSESSMENT
+   * ========================================================================
+   */
+
+  /**
+   * Estimate costs and financial risks for a specific decision-support kit
+   * @param kitType - The type of kit being used
+   * @param context - Kit-specific financial context
+   * @returns Detailed cost estimate with risk assessment and settlement probability
+   */
+  estimateKitCosts(kitType: string, context: KitCostContext): KitCostEstimate {
+    switch (kitType) {
+      case 'rent-increase':
+        return this.calculateRentTribunalCosts(context);
+      case 'employment-termination':
+        return this.calculateEmploymentLitigationCosts(context);
+      case 'small-claims':
+        return this.calculateSmallClaimsCosts(context);
+      case 'motor-vehicle-accident':
+        return this.calculateAccidentClaimCosts(context);
+      case 'will-challenge':
+        return this.calculateProbateLitigationCosts(context);
+      default:
+        // Generic cost estimate for unknown kits
+        return {
+          totalCost: { min: 0, max: 1000 },
+          breakdown: [],
+          settlementProbability: 'moderate',
+          riskAssessment: {
+            financialRisk: 'moderate',
+            riskFactors: ['Unknown kit type - generic estimate provided'],
+            mitigationStrategies: ['Consider consulting with legal professional for accurate cost assessment'],
+          },
+          recommendation: 'Consult with legal professional for accurate cost assessment',
+        };
+    }
+  }
+
+  /**
+   * Calculate costs for LTB rent increase challenge
+   */
+  private calculateRentTribunalCosts(context: KitCostContext): KitCostEstimate {
+    const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+      {
+        item: 'LTB Filing Fee',
+        cost: { min: 53, max: 53 },
+        explanation: 'Standard Tenant Application (Form T1) filing fee',
+      },
+      {
+        item: 'Document Preparation',
+        cost: { min: 0, max: 200 },
+        explanation: 'Photocopying, printing evidence, organizing documentation',
+      },
+      {
+        item: 'Representation (Optional)',
+        cost: { min: 0, max: 2000 },
+        explanation: 'Paralegal or community legal clinic (most LTB hearings can be self-represented)',
+      },
+      {
+        item: 'Lost Wages',
+        cost: { min: 0, max: 300 },
+        explanation: 'Time off work for hearing (1-2 hours typical)',
+      },
+    ];
+
+    const totalMin = breakdown.reduce((sum, item) => sum + item.cost.min, 0);
+    const totalMax = breakdown.reduce((sum, item) => sum + item.cost.max, 0);
+
+    return {
+      totalCost: { min: totalMin, max: totalMax },
+      breakdown,
+      settlementProbability: 'high',
+      riskAssessment: {
+        financialRisk: 'minimal',
+        riskFactors: [
+          'Low filing fee ($53)',
+          'LTB does not typically award costs against losing party',
+          'Self-representation is common and effective',
+        ],
+        mitigationStrategies: [
+          'Apply for fee waiver if receiving Ontario Works or ODSP',
+          'Use community legal clinic for free representation',
+          'Request hearing date that minimizes work disruption',
+        ],
+      },
+      recommendation: 'Low financial risk. LTB is designed for self-represented tenants. Consider free legal clinic support.',
+    };
+  }
+
+  /**
+   * Calculate costs for employment termination litigation
+   */
+  private calculateEmploymentLitigationCosts(context: KitCostContext): KitCostEstimate {
+    const claimAmount = context.claimAmount || 10000;
+    const complexity = context.complexity || 'moderate';
+
+    // ESA complaint (Ministry of Labour) - FREE
+    if (claimAmount <= 10000) {
+      const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+        {
+          item: 'Ministry of Labour ESA Complaint',
+          cost: { min: 0, max: 0 },
+          explanation: 'Free government process for up to $10,000 in termination pay/severance',
+        },
+        {
+          item: 'Documentation',
+          cost: { min: 0, max: 50 },
+          explanation: 'Printing pay stubs, employment records, termination letter',
+        },
+      ];
+
+      return {
+        totalCost: { min: 0, max: 50 },
+        breakdown,
+        settlementProbability: 'high',
+        riskAssessment: {
+          financialRisk: 'minimal',
+          riskFactors: ['Zero cost for ESA complaint process', 'No legal fees required'],
+          mitigationStrategies: [
+            'File ESA complaint within 2 years of termination',
+            'Gather all employment records before filing',
+          ],
+        },
+        recommendation: 'Start with free ESA complaint. Zero financial risk. Settlement probability high if claim is valid.',
+      };
+    }
+
+    // Civil action (Small Claims or Superior Court)
+    const useSmallClaims = claimAmount <= 50000;
+    const legalFees = complexity === 'high' ? { min: 10000, max: 50000 } : complexity === 'moderate' ? { min: 5000, max: 15000 } : { min: 2000, max: 5000 };
+
+    const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+      {
+        item: 'Filing Fee',
+        cost: useSmallClaims ? { min: 115, max: 315 } : { min: 270, max: 270 },
+        explanation: useSmallClaims ? 'Small Claims Court filing fee (tiered by claim amount)' : 'Superior Court of Justice filing fee',
+      },
+      {
+        item: 'Legal Fees',
+        cost: legalFees,
+        explanation: 'Employment lawyer consultation and representation (often contingency or partial contingency)',
+      },
+      {
+        item: 'Disbursements',
+        cost: { min: 500, max: 2000 },
+        explanation: 'Court costs, expert reports, document production',
+      },
+    ];
+
+    const totalMin = breakdown.reduce((sum, item) => sum + item.cost.min, 0);
+    const totalMax = breakdown.reduce((sum, item) => sum + item.cost.max, 0);
+
+    return {
+      totalCost: { min: totalMin, max: totalMax },
+      breakdown,
+      settlementProbability: 'high',
+      riskAssessment: {
+        financialRisk: claimAmount > 20000 ? 'moderate' : 'significant',
+        riskFactors: [
+          'Legal fees can exceed ESA entitlements',
+          'Settlement negotiations common (80% of cases settle pre-trial)',
+          'Risk of cost award if case dismissed',
+        ],
+        mitigationStrategies: [
+          'Negotiate contingency fee arrangement (lawyer takes % of settlement)',
+          'Pursue settlement before trial to minimize legal fees',
+          'Consider Legal Aid Ontario if income-eligible',
+          'Small claims route cheaper but caps recovery at $50,000',
+        ],
+      },
+      recommendation: claimAmount > 20000 ? 'Moderate financial risk. Seek contingency fee lawyer. Settlement probability high.' : 'Significant financial risk. Legal fees may exceed ESA entitlements. Start with free ESA complaint first.',
+    };
+  }
+
+  /**
+   * Calculate costs for Small Claims Court action
+   */
+  private calculateSmallClaimsCosts(context: KitCostContext): KitCostEstimate {
+    const claimAmount = context.claimAmount || 5000;
+    const complexity = context.complexity || 'low';
+    const likelihoodOfSuccess = context.likelihoodOfSuccess || 'moderate';
+
+    // Filing fee tiered by claim amount
+    const filingFee = claimAmount <= 750 ? 115 : claimAmount <= 10000 ? 145 : claimAmount <= 25000 ? 215 : 315;
+
+    const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+      {
+        item: 'Filing Fee (Form 7A)',
+        cost: { min: filingFee, max: filingFee },
+        explanation: `Small Claims Court filing fee (tiered: $750→$115, $10K→$145, $25K→$215, $50K→$315)`,
+      },
+      {
+        item: 'Service of Claim',
+        cost: { min: 60, max: 150 },
+        explanation: 'Process server or bailiff to serve defendant with claim',
+      },
+      {
+        item: 'Document Preparation',
+        cost: { min: 50, max: 200 },
+        explanation: 'Evidence organization, photocopying, witness summaries',
+      },
+      {
+        item: 'Representation (Optional)',
+        cost: complexity === 'high' ? { min: 1000, max: 5000 } : { min: 0, max: 2000 },
+        explanation: 'Paralegal representation (optional - many Small Claims plaintiffs self-represent)',
+      },
+      {
+        item: 'Lost Wages',
+        cost: { min: 100, max: 500 },
+        explanation: 'Time off work for settlement conference, trial (1-2 days total)',
+      },
+      {
+        item: 'Enforcement Costs',
+        cost: { min: 0, max: 500 },
+        explanation: 'Sheriff enforcement, garnishment fees (only if defendant does not pay judgment)',
+      },
+    ];
+
+    const totalMin = breakdown.reduce((sum, item) => sum + item.cost.min, 0);
+    const totalMax = breakdown.reduce((sum, item) => sum + item.cost.max, 0);
+
+    // Calculate recovery probability
+    const recoveryRate = likelihoodOfSuccess === 'high' ? 0.8 : likelihoodOfSuccess === 'moderate' ? 0.5 : 0.3;
+    const expectedRecovery = claimAmount * recoveryRate;
+    const netRecovery = { min: expectedRecovery - totalMax, max: expectedRecovery - totalMin };
+
+    return {
+      totalCost: { min: totalMin, max: totalMax },
+      breakdown,
+      settlementProbability: 'high',
+      riskAssessment: {
+        financialRisk: netRecovery.min < 0 ? 'significant' : netRecovery.min < claimAmount * 0.3 ? 'moderate' : 'minimal',
+        riskFactors: [
+          `Net recovery: $${netRecovery.min.toFixed(0)} to $${netRecovery.max.toFixed(0)} (${(recoveryRate * 100).toFixed(0)}% success rate assumed)`,
+          'Small Claims Court typically awards costs of $100-$500 to winning party (does NOT cover full legal fees)',
+          'Enforcement costs if defendant does not voluntarily pay judgment',
+          'Risk of cost award ($100-$500) if claim dismissed',
+        ],
+        mitigationStrategies: [
+          'Pursue settlement at mandatory settlement conference (no trial costs)',
+          'Self-represent to minimize costs (Small Claims designed for this)',
+          'Send demand letter before filing to encourage settlement',
+          'Fee waiver available if receiving Ontario Works or ODSP',
+        ],
+      },
+      recommendation: netRecovery.min > claimAmount * 0.5 ? 'Claim amount justifies costs. Strong case. Proceed with confidence.' : netRecovery.min > 0 ? 'Moderate risk-reward. Consider settlement first. Self-representation recommended.' : 'Warning: Expected costs may exceed expected recovery. Reconsider or pursue settlement aggressively.',
+    };
+  }
+
+  /**
+   * Calculate costs for motor vehicle accident claim
+   */
+  private calculateAccidentClaimCosts(context: KitCostContext): KitCostEstimate {
+    const claimAmount = context.claimAmount || 10000;
+    const complexity = context.complexity || 'moderate';
+    const hasInsurance = context.hasInsurance !== false; // Assume true unless explicitly false
+
+    // Direct Compensation - Property Damage (DC-PD) - through own insurer
+    if (hasInsurance && claimAmount <= 5000) {
+      const deductible = 500; // Typical collision deductible
+      const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+        {
+          item: 'Insurance Deductible',
+          cost: { min: deductible, max: deductible },
+          explanation: 'Collision deductible paid to own insurer (waived if 0% at fault)',
+        },
+        {
+          item: 'Reporting Costs',
+          cost: { min: 0, max: 50 },
+          explanation: 'Police report copy, accident scene photos',
+        },
+      ];
+
+      return {
+        totalCost: { min: deductible, max: deductible + 50 },
+        breakdown,
+        settlementProbability: 'high',
+        riskAssessment: {
+          financialRisk: 'minimal',
+          riskFactors: [
+            'DC-PD is no-fault system (own insurer pays, faster resolution)',
+            'Deductible waived if 0% at fault',
+            'No legal fees required for DC-PD claims',
+          ],
+          mitigationStrategies: [
+            'Report to own insurer within 7 days',
+            'Gather evidence (photos, police report, witness statements)',
+            'Challenge fault determination if incorrectly assigned',
+          ],
+        },
+        recommendation: 'Low financial risk. DC-PD is fastest pathway. No legal representation needed for minor property damage.',
+      };
+    }
+
+    // Tort claim (sue at-fault driver) - for serious injury or significant property damage
+    const legalFees = complexity === 'high' ? { min: 5000, max: 20000 } : { min: 2000, max: 10000 };
+    const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+      {
+        item: 'Legal Fees',
+        cost: legalFees,
+        explanation: 'Personal injury lawyer (typically contingency fee: 25-40% of settlement)',
+      },
+      {
+        item: 'Medical Reports',
+        cost: { min: 500, max: 2000 },
+        explanation: 'Expert medical opinions, functional capacity evaluations',
+      },
+      {
+        item: 'Disbursements',
+        cost: { min: 300, max: 1000 },
+        explanation: 'Court filing fees, police reports, accident reconstruction',
+      },
+    ];
+
+    const totalMin = breakdown.reduce((sum, item) => sum + item.cost.min, 0);
+    const totalMax = breakdown.reduce((sum, item) => sum + item.cost.max, 0);
+
+    return {
+      totalCost: { min: totalMin, max: totalMax },
+      breakdown,
+      settlementProbability: 'high',
+      riskAssessment: {
+        financialRisk: claimAmount > 50000 ? 'minimal' : 'moderate',
+        riskFactors: [
+          'Contingency fee lawyers take 25-40% of settlement (no upfront cost)',
+          'Most personal injury cases settle before trial (90%)',
+          'Threshold for tort claims: permanent serious injury or property damage >$2,000',
+          'Risk of cost award if claim dismissed (rare in personal injury)',
+        ],
+        mitigationStrategies: [
+          'Negotiate contingency fee agreement (no payment unless you win)',
+          'Accept reasonable settlement offer to avoid trial costs',
+          'Ensure claim exceeds tort threshold before proceeding',
+          'Most personal injury lawyers offer free consultations',
+        ],
+      },
+      recommendation: claimAmount > 50000 ? 'Strong case justifies legal fees. Contingency fee minimizes risk. Proceed with confidence.' : claimAmount > 10000 ? 'Moderate risk-reward. Seek contingency fee lawyer. Settlement probability high.' : 'Consider DC-PD pathway first. Legal fees may exceed recovery for small property-only claims.',
+    };
+  }
+
+  /**
+   * Calculate costs for will challenge (probate litigation)
+   */
+  private calculateProbateLitigationCosts(context: KitCostContext): KitCostEstimate {
+    const estateValue = context.claimAmount || 100000;
+    const complexity = context.complexity || 'high';
+    const hasValidGrounds = context.likelihoodOfSuccess !== 'low';
+
+    const legalFees = complexity === 'high' ? { min: 25000, max: 100000 } : { min: 10000, max: 50000 };
+    const breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[] = [
+      {
+        item: 'Legal Fees',
+        cost: legalFees,
+        explanation: 'Estate litigation lawyer (hourly rates $300-$600/hour; trials can take 20-100+ hours)',
+      },
+      {
+        item: 'Expert Witnesses',
+        cost: { min: 5000, max: 20000 },
+        explanation: 'Medical capacity assessments, handwriting analysis, property valuations',
+      },
+      {
+        item: 'Mediation',
+        cost: { min: 2000, max: 5000 },
+        explanation: 'Mandatory mediation (often court-ordered before trial)',
+      },
+      {
+        item: 'Court Costs',
+        cost: { min: 1000, max: 5000 },
+        explanation: 'Filing fees, motion costs, trial preparation disbursements',
+      },
+    ];
+
+    const totalMin = breakdown.reduce((sum, item) => sum + item.cost.min, 0);
+    const totalMax = breakdown.reduce((sum, item) => sum + item.cost.max, 0);
+
+    // Calculate cost-benefit ratio
+    const potentialRecovery = hasValidGrounds ? estateValue * 0.5 : estateValue * 0.2; // Assume 50% share if successful, 20% if weak grounds
+    const netRecovery = { min: potentialRecovery - totalMax, max: potentialRecovery - totalMin };
+
+    return {
+      totalCost: { min: totalMin, max: totalMax },
+      breakdown,
+      settlementProbability: 'moderate',
+      riskAssessment: {
+        financialRisk: netRecovery.min < 0 ? 'substantial' : 'significant',
+        riskFactors: [
+          `Estate value: $${estateValue.toLocaleString()}; Potential recovery: $${potentialRecovery.toLocaleString()}`,
+          `Net recovery: $${netRecovery.min.toLocaleString()} to $${netRecovery.max.toLocaleString()}`,
+          'Probate litigation is extremely expensive ($50K-$200K typical)',
+          'Risk of adverse cost award (loser pays winner\'s costs - can be $50K+)',
+          'Family disputes rarely settle quickly (2-5 years typical)',
+          '6-month limitation from grant of probate (strict deadline)',
+        ],
+        mitigationStrategies: [
+          'Pursue mediation aggressively (court will order it anyway)',
+          'Consider family settlement agreement to avoid litigation',
+          'Ensure valid grounds (lack of capacity, undue influence, fraud, improper execution)',
+          'Expert medical evidence critical for capacity challenges',
+          'Some estate lawyers work on contingency (rare but possible)',
+        ],
+      },
+      recommendation: netRecovery.min > 100000 ? 'High-value estate justifies litigation costs. Ensure valid grounds before proceeding.' : netRecovery.min > 0 ? 'Moderate risk-reward. Pursue mediation first. Litigation should be last resort.' : 'Warning: Legal costs likely to exceed recovery. Only proceed if grounds are exceptionally strong and estate is substantial.',
+    };
+  }
+}
+
+/**
+ * ========================================================================
+ * TASK 26.4.5: KIT-SPECIFIC INTERFACES
+ * ========================================================================
+ */
+
+/**
+ * Financial context for kit-specific cost estimation
+ */
+export interface KitCostContext {
+  claimAmount?: number;
+  complexity?: 'low' | 'moderate' | 'high';
+  likelihoodOfSuccess?: 'low' | 'moderate' | 'high';
+  hasInsurance?: boolean;
+  estateValue?: number;
+}
+
+/**
+ * Kit-specific cost estimate with risk assessment
+ */
+export interface KitCostEstimate {
+  totalCost: { min: number; max: number };
+  breakdown: { item: string; cost: { min: number; max: number }; explanation: string }[];
+  settlementProbability: 'low' | 'moderate' | 'high';
+  riskAssessment: {
+    financialRisk: 'minimal' | 'moderate' | 'significant' | 'substantial';
+    riskFactors: string[];
+    mitigationStrategies: string[];
+  };
+  recommendation: string;
 }

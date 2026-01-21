@@ -479,4 +479,112 @@ export class LimitationPeriodsEngine {
     
     return 'You have time to do this right. Take it step by step.';
   }
+
+  /**
+   * Kit-specific deadline calculations with urgency escalation (Task 26.4.4)
+   */
+  calculateKitDeadlines(
+    kitType: string,
+    relevantDates: Record<string, string>, // e.g., { damageDate: '2025-01-01', filingDate: '2025-06-01' }
+    domain: string
+  ): Array<{ deadline: string; urgency: UrgencyLevel; description: string; daysRemaining: number }> {
+    const deadlines: Array<{ deadline: string; urgency: UrgencyLevel; description: string; daysRemaining: number }> = [];
+    const now = new Date();
+
+    switch (kitType) {
+      case 'rent-increase':
+        // 90-day notice requirement for rent increases
+        if (relevantDates.effectiveDate) {
+          const effectiveDate = new Date(relevantDates.effectiveDate);
+          const noticeDeadline = new Date(effectiveDate);
+          noticeDeadline.setDate(noticeDeadline.getDate() - 90);
+          const daysRemaining = Math.floor((noticeDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          deadlines.push({
+            deadline: noticeDeadline.toISOString().split('T')[0],
+            urgency: this.escalateUrgency(daysRemaining),
+            description: '90-day notice required before rent increase effective date',
+            daysRemaining,
+          });
+        }
+        break;
+
+      case 'employment-termination':
+        // 2-year ESA claim deadline
+        if (relevantDates.terminationDate) {
+          const termDate = new Date(relevantDates.terminationDate);
+          const esaDeadline = new Date(termDate);
+          esaDeadline.setFullYear(esaDeadline.getFullYear() + 2);
+          const daysRemaining = Math.floor((esaDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          deadlines.push({
+            deadline: esaDeadline.toISOString().split('T')[0],
+            urgency: this.escalateUrgency(daysRemaining),
+            description: 'Employment Standards Act claim deadline (2 years from termination)',
+            daysRemaining,
+          });
+        }
+        break;
+
+      case 'small-claims':
+        // 2-year general limitation
+        if (relevantDates.incidentDate) {
+          const incidentDate = new Date(relevantDates.incidentDate);
+          const claimDeadline = new Date(incidentDate);
+          claimDeadline.setFullYear(claimDeadline.getFullYear() + 2);
+          const daysRemaining = Math.floor((claimDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          deadlines.push({
+            deadline: claimDeadline.toISOString().split('T')[0],
+            urgency: this.escalateUrgency(daysRemaining),
+            description: 'Small Claims Court filing deadline (2-year limitation)',
+            daysRemaining,
+          });
+        }
+        break;
+
+      case 'motor-vehicle-accident':
+        // 2-year limitation for tort claims
+        if (relevantDates.accidentDate) {
+          const accidentDate = new Date(relevantDates.accidentDate);
+          const tortDeadline = new Date(accidentDate);
+          tortDeadline.setFullYear(tortDeadline.getFullYear() + 2);
+          const daysRemaining = Math.floor((tortDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          deadlines.push({
+            deadline: tortDeadline.toISOString().split('T')[0],
+            urgency: this.escalateUrgency(daysRemaining),
+            description: 'Tort claim deadline for motor vehicle accident (2 years)',
+            daysRemaining,
+          });
+        }
+        break;
+
+      case 'will-challenge':
+        // 6-month probate deadline
+        if (relevantDates.deathDate) {
+          const deathDate = new Date(relevantDates.deathDate);
+          const probateDeadline = new Date(deathDate);
+          probateDeadline.setMonth(probateDeadline.getMonth() + 6);
+          const daysRemaining = Math.floor((probateDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          deadlines.push({
+            deadline: probateDeadline.toISOString().split('T')[0],
+            urgency: this.escalateUrgency(daysRemaining),
+            description: 'Will challenge filing deadline (6 months from death)',
+            daysRemaining,
+          });
+        }
+        break;
+    }
+
+    return deadlines;
+  }
+
+  /**
+   * Escalate urgency based on days remaining (Task 26.4.4)
+   */
+  private escalateUrgency(daysRemaining: number): UrgencyLevel {
+    if (daysRemaining < 0) return 'critical';
+    if (daysRemaining <= 10) return 'critical';
+    if (daysRemaining <= 30) return 'warning';
+    if (daysRemaining <= 90) return 'caution';
+    return 'info';
+  }
 }
+
