@@ -1,7 +1,7 @@
 # Development Log
 
-**Last Updated:** December 31, 2025  
-**Current Status:** UX restructure complete (action-first layout), all tests passing (382/382)
+**Last Updated:** January 21, 2026  
+**Current Status:** Task 26.2 Agent Framework complete, Phase 3 Agentic AI Enhancement in progress
 
 ## Core Foundation (Tasks 1-13) ✅ COMPLETE
 
@@ -1325,3 +1325,78 @@ The criminal pillar is now functionally complete with:
   - **Unfair practice documentation:** Checklist for evidence gathering (ads, screenshots, contracts, witnesses, timeline, receipts, recordings)
   - **Multi-pathway presentation:** CPO complaint + Small Claims Court + chargeback (if applicable) + Better Business Bureau (informal)
 - **Status:** ✅ Task 24 complete; ready for Task 25 or user direction
+---
+
+## Phase 3: Agentic AI Enhancement (Task 26) 
+
+### Task 26.2: Core Agent Framework (Completed 2026-01-21)
+
+**Context:** Implementing specialized agents for advanced conversational and analytical workflows in Phase 3 Agentic AI Enhancement.
+
+**Decisions:**
+- Create 4 specialized agents with distinct responsibilities: IntakeAgent (conversational), AnalysisAgent (evidence synthesis), DocumentAgent (template mapping), GuidanceAgent (pathway optimization)
+- Use 80% reuse from existing system components (MatterClassifier, ActionPlanGenerator, DocumentPackager, etc.)
+- Implement dependency injection pattern for testability and loose coupling
+- Comprehensive test coverage: 155+ tests across 4 agent files
+
+**Actions:**
+
+**IntakeAgent Implementation** ([src/core/agents/IntakeAgent.ts](src/core/agents/IntakeAgent.ts)):
+- Class with 9 public methods: generateInitialQuestions(), generateFollowUpQuestions(), processResponse(), analyzeResponses(), reset()
+- Features: 3 initial questions (domain/jurisdiction/urgency), domain-specific follow-ups (employment/landlord-tenant/criminal/civil/insurance)
+- Confidence calculation: base 20% + component percentages + user confidence, range 0-100
+- Evidence requirement identification: universal (identity) + domain-specific (employment: records+communication, landlord-tenant: lease+notices+financial, civil: photos+medical, insurance: policy+claim, criminal: police report+timeline)
+- Conversation history tracking with multi-turn support
+- Tests: 45 comprehensive tests covering initial questions, follow-ups, response processing, confidence scoring, evidence requirements, reset, conversation flow
+
+**AnalysisAgent Implementation** ([src/core/agents/AnalysisAgent.ts](src/core/agents/AnalysisAgent.ts)):
+- Class with 8 main methods: analyze(), analyzeClassification(), synthesizeEvidence(), analyzeDeadlines(), assessCaseStrength(), identifyRisks(), identifyOpportunities(), generateNarrative()
+- Features: Evidence synthesis (count by type, timeline, credibility scoring strong/weak/conflicting), deadline analysis (urgency classification: critical/warning/caution/info), case strength assessment (strong/moderate/weak/insufficient)
+- Risk & opportunity identification (insufficient evidence, critical deadlines, timeline gaps, domain-specific factors)
+- Narrative generation with classification, evidence status, timeline, deadlines, risks, opportunities, next steps
+- Tests: 40 comprehensive tests covering analysis, synthesis, deadlines, case strength, risks/opportunities, narratives, different matter types
+
+**DocumentAgent Implementation** ([src/core/agents/DocumentAgent.ts](src/core/agents/DocumentAgent.ts)):
+- Class with 6 main methods: generateDocuments(), getDocumentRecommendations(), assessTemplateMappings(), assessReadiness(), generateEvidenceManifestSummary(), generateNarrative()
+- Features: Domain-specific document recommendations (3-5 key documents per domain), template mapping with variable extraction, evidence gap analysis, readiness score aggregation (0-100%)
+- Missing information identification and next steps generation
+- Evidence manifest preparation for packaging
+- Tests: 27 comprehensive tests covering document generation, recommendations, readiness assessment, domain-specific logic, narrative generation
+
+**GuidanceAgent Implementation** ([src/core/agents/GuidanceAgent.ts](src/core/agents/GuidanceAgent.ts)):
+- Class with 8 main methods: generateGuidance(), getPersonalizedRecommendations(), optimizePathways(), assessCosts(), getForumType(), identifyPersonalizationFactors(), generatePathwayRationale(), generateNarrative()
+- Features: Personalized recommendations (5 per matter with resources), pathway optimization (settlement vs litigation), cost assessment (filing fees, fee waiver eligibility), action plan integration
+- Personalization factors: domain-specific (ESA 2-year, LTB informal, Crown prosecution), financial (fee waiver threshold: $25k single, $39k family of 3), timeline-based (urgency level)
+- Multi-pathway support with cost/timeframe/pros/cons comparison
+- Tests: 46 comprehensive tests covering guidance generation, recommendations, pathways, cost assessment, personalization, edge cases
+
+**Integration Points:**
+- MatterClassifier: Used by IntakeAgent and AnalysisAgent for classification synthesis
+- ActionPlanGenerator: Used by GuidanceAgent for action plan generation
+- DocumentPackager: Used by DocumentAgent for document packaging
+- TemplateLibrary: Used by DocumentAgent for template selection
+- DomainModuleRegistry: Used by DocumentAgent for domain module access
+- LimitationPeriodsEngine: Used by AnalysisAgent and GuidanceAgent for deadline analysis
+- CostCalculator: Used by GuidanceAgent for cost assessment and fee waiver eligibility
+
+**Outputs:**
+- Production code: 2060+ lines across 5 files (IntakeAgent 460, AnalysisAgent 500, DocumentAgent 550, GuidanceAgent 550, index.ts 40)
+- Test code: 800+ lines across 4 files (155+ tests total)
+- All agents implement consistent dependency injection pattern
+- Barrel export file for public API surface
+- Zero new security vulnerabilities introduced
+- All agents tested across multiple domains and edge cases
+
+**Commit:** a14a9d5 - "feat: implement core agent framework for Task 26.2"
+
+**Status:** ✅ Task 26.2 complete (4 agents, 155+ tests, 2060+ lines production code)
+
+### Next Steps (Task 26.3)
+- Implement 5 High-Impact Decision-Support Kits:
+  1. RentIncreaseKit (LTB rent increase applications)
+  2. EmploymentTerminationKit (wrongful dismissal workflows)
+  3. SmallClaimsPreparationKit (Form 7A + evidence organization)
+  4. MotorVehicleAccidentKit (accident documentation + insurance claims)
+  5. WillChallengeKit (will contest evidence gathering + expert coordination)
+- Each kit extends BaseKit and orchestrates 4 agents (IntakeAgent → AnalysisAgent → DocumentAgent → GuidanceAgent)
+- Target: 5 production-ready kits with comprehensive tests
