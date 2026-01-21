@@ -542,12 +542,17 @@ All requirements reference the original specification document in `.kiro/specs/c
     - ✅ Comprehensive documentation and examples
     - Status: COMPLETE - Ready for agent framework integration
 
-  - [ ] 26.2 Build Core Agent Framework (IntakeAgent, AnalysisAgent, DocumentAgent, GuidanceAgent)
-    - [ ] Create IntakeAgent with conversational flow management and dynamic question generation
-    - [ ] Implement AnalysisAgent with multi-domain classification and evidence synthesis
-    - [ ] Build DocumentAgent with context-aware template selection and evidence grounding
-    - [ ] Create GuidanceAgent with personalized action plan generation and pathway optimization
-    - [ ] Integrate existing system components (80% reuse): domain modules, templates, triage system, evidence processing
+  - [x] 26.2 Build Core Agent Framework (IntakeAgent, AnalysisAgent, DocumentAgent, GuidanceAgent)
+    - [x] Create IntakeAgent with conversational flow management and dynamic question generation
+    - [x] Implement AnalysisAgent with multi-domain classification and evidence synthesis
+    - [x] Build DocumentAgent with context-aware template selection and evidence grounding
+    - [x] Create GuidanceAgent with personalized action plan generation and pathway optimization
+    - [x] Integrate existing system components (80% reuse): domain modules, templates, triage system, evidence processing
+    - ✅ Production Code: 2060+ lines across 5 files (IntakeAgent 460, AnalysisAgent 500, DocumentAgent 550, GuidanceAgent 550, index.ts 40)
+    - ✅ Test Coverage: 155+ tests across 4 files (800+ lines test code)
+    - ✅ Integration: MatterClassifier, ActionPlanGenerator, DocumentPackager, TemplateLibrary, DomainModuleRegistry, LimitationPeriodsEngine, CostCalculator
+    - ✅ All agents implemented with dependency injection pattern and comprehensive tests
+    - Status: COMPLETE - Ready for Task 26.3 (High-Impact Decision-Support Kits)
 
   - [ ] 26.3 Implement High-Impact Decision-Support Kits
     - [ ] **Rent Increase Kit**: LTB T1 application guidance with rent calculation validation and evidence requirements
