@@ -2,6 +2,7 @@ import {
   MatterClassification,
   DocumentDraft,
   EvidenceIndex,
+    EvidenceItem,
   SourceManifest
 } from '../models';
 import { TemplateLibrary } from '../templates/TemplateLibrary';
@@ -92,8 +93,8 @@ export class DocumentAgent {
 
     if (domainModule) {
       try {
-        const output = domainModule.generate(classification);
-        domainDrafts.push(...output.documents);
+        const output = domainModule.generate(classification as any);
+        domainDrafts.push(...output.drafts);
       } catch (error) {
         // Log error but continue - can generate standard documents
         console.warn(`Failed to generate domain documents for ${classification.domain}:`, error);
@@ -101,10 +102,7 @@ export class DocumentAgent {
     }
 
     // Get document recommendations
-    const recommendations = this.getDocumentRecommendations(
-      classification,
-      evidenceIndex
-    );
+    const recommendations = this.getDocumentRecommendations(classification, evidenceIndex);
 
     // Assess template mappings for evidence grounding
     const templateMappings = this.assessTemplateMappings(
@@ -128,10 +126,8 @@ export class DocumentAgent {
       drafts: domainDrafts,
       sourceManifest,
       evidenceManifest: {
-        attachmentIds: evidenceIndex.evidence?.map((e, i) => `attach_${i}`) || [],
-        filenames: evidenceIndex.evidence?.map(e => e.filename || '') || [],
-        summary: this.generateEvidenceManifestSummary(evidenceIndex),
-        timeline
+        items: [],
+        compiledAt: new Date().toISOString()
       },
       jurisdiction: classification.jurisdiction,
       domain: classification.domain
@@ -224,7 +220,7 @@ export class DocumentAgent {
       });
     }
 
-    if (classification.domain === 'civilNegligence') {
+    if (classification.domain === 'civil-negligence') {
       recommendations.push({
         templateId: 'civil/demand_notice',
         title: 'Demand Notice',
@@ -324,7 +320,7 @@ export class DocumentAgent {
       jurisdictionName: classification.jurisdiction
     };
 
-    const evidenceTypes = new Set(evidence.evidence?.map(e => e.type) || []);
+  const evidenceTypes = new Set<string>(evidence.items?.map(e => e.type || '') || []);
     const missingEvidence: string[] = [];
 
     if (!evidenceTypes.has('identity')) missingEvidence.push('Identity documents');
@@ -361,7 +357,7 @@ export class DocumentAgent {
         variables: employmentVariables,
         missingVariables: ['employerName', 'positionTitle', 'employmentStartDate'],
         evidenceGaps: employmentMissing,
-        readinessScore: evidence.evidence?.length ? 60 : 30
+        readinessScore: evidence.items?.length ? 60 : 30
       });
     }
 
@@ -387,11 +383,11 @@ export class DocumentAgent {
         variables: ltbVariables,
         missingVariables: ['landlordName', 'propertyAddress', 'rentAmount'],
         evidenceGaps: ltbMissing,
-        readinessScore: evidence.evidence?.length ? 50 : 20
+        readinessScore: evidence.items?.length ? 50 : 20
       });
     }
 
-    if (classification.domain === 'civilNegligence') {
+    if (classification.domain === 'civil-negligence') {
       const civilVariables = {
         ...standardVariables,
         injuryDescription: '',
@@ -410,7 +406,7 @@ export class DocumentAgent {
         variables: civilVariables,
         missingVariables: ['incidentDate', 'damageDescription', 'claimAmount'],
         evidenceGaps: civilMissing,
-        readinessScore: evidence.evidence?.length ? 60 : 30
+        readinessScore: evidence.items?.length ? 60 : 30
       });
     }
 
@@ -466,12 +462,12 @@ export class DocumentAgent {
    * Generate evidence manifest summary
    */
   private generateEvidenceManifestSummary(evidenceIndex: EvidenceIndex): string {
-    if (!evidenceIndex.evidence || evidenceIndex.evidence.length === 0) {
+    if (!evidenceIndex.items || evidenceIndex.items.length === 0) {
       return 'No evidence uploaded yet.';
     }
 
     const typeCount: Record<string, number> = {};
-    evidenceIndex.evidence.forEach(e => {
+    evidenceIndex.items.forEach((e: EvidenceItem) => {
       const type = e.type || 'other';
       typeCount[type] = (typeCount[type] || 0) + 1;
     });
@@ -480,7 +476,7 @@ export class DocumentAgent {
       .map(([type, count]) => `${count} ${type}`)
       .join(', ');
 
-    return `${evidenceIndex.evidence.length} pieces of evidence: ${typeSummary}`;
+    return `${evidenceIndex.items.length} pieces of evidence: ${typeSummary}`;
   }
 
   /**
@@ -520,3 +516,5 @@ ${readiness.nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
     return narrative;
   }
 }
+
+

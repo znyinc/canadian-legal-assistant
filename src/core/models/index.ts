@@ -209,6 +209,9 @@ export type AuditEventType =
   | 'deletion'
   | 'retention-update'
   | 'legal-hold'
+  | 'kit-event'
+  | 'kit-execution'
+  | 'error'
   | 'other';
 
 export interface AuditEvent {

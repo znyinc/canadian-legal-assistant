@@ -22,6 +22,21 @@ import { DataLifecycleManager } from '../core/lifecycle/DataLifecycleManager';
 import { OCPPValidator } from '../core/ocpp/OCPPValidator';
 import { LimitationPeriodsEngine, DeadlineAlert } from '../core/limitation/LimitationPeriodsEngine';
 import { ActionPlanGenerator, ActionPlan } from '../core/actionPlan/ActionPlanGenerator';
+import { CostCalculator } from '../core/cost/CostCalculator';
+import { FormMappingRegistry } from '../core/templates/FormMappingRegistry';
+// Task 26.6: Kit imports disabled pending Task 26.7 interface alignment
+// import {
+//   KitRegistry,
+//   KitOrchestrator,
+//   KitExecutionEvent,
+//   KitIntakeData,
+//   KitResult as KitWorkflowResult,
+//   RentIncreaseKit,
+//   EmploymentTerminationKit,
+//   SmallClaimsPreparationKit,
+//   MotorVehicleAccidentKit,
+//   WillChallengeKit
+// } from '../core/kits';
 import { initialAuthorities } from '../data/authorities';
 import {
   Domain,
@@ -105,6 +120,28 @@ export interface DocumentResponse {
   };
 }
 
+// Task 26.6: Kit interfaces disabled pending Task 26.7 interface alignment
+// export interface KitExecutionRequest {
+//   kitId: string;
+//   sessionId?: string;
+//   userId?: string;
+//   intake: KitIntakeData;
+//   trackStages?: boolean;
+// }
+
+// export interface KitExecutionResponse {
+//   sessionId: string;
+//   kitId: string;
+//   result: KitWorkflowResult;
+//   forumMap: any;
+//   uplBoundaries?: ReturnType<DisclaimerService['empathyBoundaryPlan']>;
+//   adviceRedirect?: ReturnType<DisclaimerService['adviceRequestGuidance']>;
+//   journey?: JourneyProgress;
+//   executionLog?: KitExecutionEvent[];
+// }
+
+// type StoredKitResult = KitExecutionResponse & { completedAt: string };
+
 export interface ExportRequest {
   actor: string;
   items: string[];
@@ -142,6 +179,10 @@ export class IntegrationAPI {
   private upl: DisclaimerService;
   private sandbox: A2ISandboxFramework;
   private variableExtractor: VariableExtractor;
+  // Task 26.6: Kit fields disabled pending Task 26.7 interface alignment
+  // private kitRegistry: KitRegistry;
+  // private kitOrchestrator: KitOrchestrator;
+  // private kitResults: Map<string, StoredKitResult[]>;
 
   constructor(options?: {
     classifier?: MatterClassifier;
@@ -166,6 +207,9 @@ export class IntegrationAPI {
     actionPlanGenerator?: ActionPlanGenerator;
     upl?: DisclaimerService;
     sandbox?: A2ISandboxFramework;
+    // Task 26.6: Kit options disabled pending Task 26.7 interface alignment
+    // kitRegistry?: KitRegistry;
+    // kitOrchestrator?: KitOrchestrator;
   }) {
     this.authorities = options?.authorities ?? this.seedAuthorities();
     this.classifier = options?.classifier ?? new MatterClassifier();
@@ -190,6 +234,22 @@ export class IntegrationAPI {
     this.manifests = options?.manifests ?? new ManifestBuilder();
     this.lifecycle = options?.lifecycle ?? new DataLifecycleManager(this.audit);
     this.variableExtractor = new VariableExtractor();
+    
+    // Task 26.6: Kit initialization disabled pending Task 26.7 interface alignment
+    // this.kitRegistry = options?.kitRegistry ?? new KitRegistry();
+    // this.kitOrchestrator = options?.kitOrchestrator ?? new KitOrchestrator();
+    // this.kitResults = new Map();
+
+    // Wire kit orchestration events into audit log
+    // this.kitOrchestrator.onExecutionEvent((event: KitExecutionEvent) => {
+    //   this.audit.log('kit-event', 'system', `Kit ${event.kitId} ${event.type}`, {
+    //     sessionId: event.sessionId,
+    //     stage: event.stage,
+    //     timestamp: event.timestamp.toISOString()
+    //   });
+    // });
+
+    // this.registerDefaultKits();
   }
 
   intake(req: IntakeRequest): IntakeResponse {
@@ -505,6 +565,130 @@ export class IntegrationAPI {
     return this.registry.list();
   }
 
+  // Task 26.6: Kit methods disabled pending Task 26.7 interface alignment
+  // /**
+  //  * List all available kits with metadata for UI discovery
+  //  */
+  // listKits(criteria?: {
+  //   domains?: string[];
+  //   tags?: string[];
+  //   complexity?: 'simple' | 'moderate' | 'complex';
+  //   maxDuration?: number;
+  // }) {
+  //   const kits = criteria ? this.kitRegistry.searchKits(criteria) : this.kitRegistry.getAllKits();
+  //   return kits.map(kit => ({
+  //     kitId: kit.kitId,
+  //     kitName: kit.kitName,
+  //     kitDescription: kit.kitDescription,
+  //     domains: kit.domains,
+  //     estimatedDuration: kit.estimatedDuration,
+  //     complexity: kit.complexity,
+  //     tags: kit.tags
+  //   }));
+  // }
+
+  // /**
+  //  * Execute a kit with forum routing, UPL compliance, and result persistence
+  //  */
+  // async executeKit(req: KitExecutionRequest): Promise<KitExecutionResponse> {
+  //   const sessionId = req.sessionId || `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  //   const userId = req.userId;
+
+  //   // Create kit instance with session tracking
+  //   const kit = this.kitRegistry.createKit(req.kitId, sessionId, userId);
+  //   if (!kit) {
+  //     throw new Error(`Kit ${req.kitId} not found or inactive`);
+  //   }
+
+  //   // Execute kit with orchestrator (handles lifecycle and progress tracking)
+  //   const result: KitWorkflowResult = await this.kitOrchestrator.executeKit(
+  //     sessionId,
+  //     kit,
+  //     req.intake
+  //   );
+
+  //   // Extract classification from kit result for forum routing
+  //   const classification = result.classification;
+    
+  //   // Forum routing validation
+  //   const forumMap = classification 
+  //     ? this.router.route(classification) 
+  //     : { primary: 'Information Only', alternatives: [], escalation: undefined };
+
+  //   // UPL compliance boundaries
+  //   const uplBoundaries = classification
+  //     ? this.upl.empathyBoundaryPlan({
+  //         jurisdiction: classification.jurisdiction,
+  //         domain: classification.domain,
+  //         audience: 'self-represented'
+  //       })
+  //     : undefined;
+
+  //   const adviceRedirect = result.guidance
+  //     ? this.upl.adviceRequestGuidance(result.guidance)
+  //     : undefined;
+
+  //   // Journey progress tracking
+  //   const journey = classification
+  //     ? this.journey.buildProgress({
+  //         classification,
+  //         forumMap,
+  //         evidenceCount: 0, // Kit may enhance this in future
+  //         documentsGenerated: !!result.documents
+  //       })
+  //     : undefined;
+
+  //   // Build execution log from orchestrator events (if tracking enabled)
+  //   const executionLog = this.kitOrchestrator.getExecutionLog(sessionId);
+
+  //   // Construct response
+  //   const response: KitExecutionResponse = {
+  //     sessionId,
+  //     kitId: req.kitId,
+  //     result,
+  //     forumMap,
+  //     uplBoundaries,
+  //     adviceRedirect,
+  //     journey,
+  //     executionLog
+  //   };
+
+  //   // Persist result in memory for retrieval
+  //   const storedResult: StoredKitResult = {
+  //     ...response,
+  //     completedAt: new Date().toISOString()
+  //   };
+
+  //   if (!this.kitResults.has(sessionId)) {
+  //     this.kitResults.set(sessionId, []);
+  //   }
+  //   this.kitResults.get(sessionId)!.push(storedResult);
+
+  //   // Audit log kit execution
+  //   this.audit.log('kit-execution', userId || 'anonymous', `Kit ${req.kitId} executed`, {
+  //     sessionId,
+  //     kitId: req.kitId,
+  //     domain: classification?.domain,
+  //     jurisdiction: classification?.jurisdiction
+  //   });
+
+  //   return response;
+  // }
+
+  // /**
+  //  * Retrieve execution log for a session (all kit events)
+  //  */
+  // getExecutionLog(sessionId: string): KitExecutionEvent[] {
+  //   return this.kitOrchestrator.getExecutionLog(sessionId);
+  // }
+
+  // /**
+  //  * Retrieve all stored kit results for a session
+  //  */
+  // getKitResults(sessionId: string): StoredKitResult[] | undefined {
+  //   return this.kitResults.get(sessionId);
+  // }
+
   private buildEvidenceManifest(index: EvidenceIndex): EvidenceManifest {
     return this.manifests.buildEvidenceManifest(index);
   }
@@ -538,6 +722,99 @@ export class IntegrationAPI {
         return [];
     }
   }
+
+  /**
+   * Register the five default decision-support kits with sensible metadata. This is idempotent and
+   * safe to call even if consumers inject their own registry populated elsewhere.
+   * 
+   * Task 26.6: Disabled pending Task 26.7 interface alignment
+   */
+  // private registerDefaultKits(): void {
+  //   if (this.kitRegistry.getKitCount() > 0) {
+  //     return;
+  //   }
+
+  //   const safeRegister = (metadata: Parameters<KitRegistry['registerKit']>[0]) => {
+  //     try {
+  //       this.kitRegistry.registerKit(metadata);
+  //     } catch (err: any) {
+  //       this.audit.log('error', 'system', `Kit registration failed for ${metadata.kitId}`, {
+  //         message: err?.message || String(err)
+  //       });
+  //     }
+  //   };
+
+  //   safeRegister({
+  //     kitId: 'rent-increase-kit',
+  //     kitName: 'LTB Rent Increase Application Kit',
+  //     kitDescription: 'Validates rent increase compliance and prepares LTB T1 application materials.',
+  //     domains: ['landlordTenant'],
+  //     estimatedDuration: 45,
+  //     complexity: 'moderate',
+  //     tags: ['ltb', 'rent', 'increase', 't1', 'landlord-tenant'],
+  //     factory: (sessionId?: string, userId?: string) =>
+  //       new RentIncreaseKit(sessionId, userId, this.actionPlanGenerator, this.limitationEngine, new CostCalculator()),
+  //     isActive: true
+  //   });
+
+  //   safeRegister({
+  //     kitId: 'employment-termination-kit',
+  //     kitName: 'Employment Termination Analysis Kit',
+  //     kitDescription: 'Assesses ESA vs wrongful dismissal, severance, and next-step pathways.',
+  //     domains: ['employment'],
+  //     estimatedDuration: 60,
+  //     complexity: 'moderate',
+  //     tags: ['employment', 'termination', 'severance', 'esa', 'wrongful-dismissal'],
+  //     factory: (sessionId?: string, userId?: string) =>
+  //       new EmploymentTerminationKit(sessionId, userId, this.actionPlanGenerator, this.limitationEngine, new CostCalculator()),
+  //     isActive: true
+  //   });
+
+  //   safeRegister({
+  //     kitId: 'small-claims-kit',
+  //     kitName: 'Small Claims Court Preparation Kit',
+  //     kitDescription: 'Prepares Form 7A with evidence mapping, filing guidance, and cost analysis.',
+  //     domains: ['civil-negligence', 'consumerProtection', 'legalMalpractice'],
+  //     estimatedDuration: 50,
+  //     complexity: 'moderate',
+  //     tags: ['small-claims', 'form-7a', 'civil', 'evidence', 'filing'],
+  //     factory: (sessionId?: string, userId?: string) =>
+  //       new SmallClaimsPreparationKit(
+  //         sessionId,
+  //         userId,
+  //         this.actionPlanGenerator,
+  //         new FormMappingRegistry(),
+  //         new CostCalculator()
+  //       ),
+  //     isActive: true
+  //   });
+
+  //   safeRegister({
+  //     kitId: 'motor-vehicle-accident-kit',
+  //     kitName: 'Motor Vehicle Accident Claim Kit',
+  //     kitDescription: 'Analyzes DC-PD vs tort, insurance coordination, and settlement evaluation.',
+  //     domains: ['civil-negligence'],
+  //     estimatedDuration: 55,
+  //     complexity: 'complex',
+  //     tags: ['mva', 'dc-pd', 'tort', 'insurance', 'accident'],
+  //     factory: (sessionId?: string, userId?: string) =>
+  //       new MotorVehicleAccidentKit(sessionId, userId, this.actionPlanGenerator, new CostCalculator()),
+  //     isActive: true
+  //   });
+
+  //   safeRegister({
+  //     kitId: 'will-challenge-kit',
+  //     kitName: 'Will Challenge Kit',
+  //     kitDescription: 'Grounds assessment for will contests with probate timelines and evidence needs.',
+  //     domains: ['civil-negligence'],
+  //     estimatedDuration: 65,
+  //     complexity: 'complex',
+  //     tags: ['estate', 'probate', 'will', 'challenge', 'undue-influence'],
+  //     factory: (sessionId?: string, userId?: string) =>
+  //       new WillChallengeKit(sessionId, userId, this.actionPlanGenerator, this.limitationEngine),
+  //     isActive: true
+  //   });
+  // }
 
   private seedAuthorities(): AuthorityRegistry {
     const registry = new AuthorityRegistry();

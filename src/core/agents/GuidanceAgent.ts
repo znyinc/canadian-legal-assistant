@@ -1,10 +1,7 @@
-import {
-  MatterClassification,
-  ActionPlan,
-  DeadlineAlert
-} from '../models';
-import { ActionPlanGenerator } from '../actionPlan/ActionPlanGenerator';
-import { LimitationPeriodsEngine, DeadlineAlert as LimitationDeadlineAlert } from '../limitation/LimitationPeriodsEngine';
+import { MatterClassification } from '../models';
+import { ActionPlan, ActionPlanGenerator } from '../actionPlan/ActionPlanGenerator';
+import { LimitationPeriodsEngine, DeadlineAlert } from '../limitation/LimitationPeriodsEngine';
+import { FormattedResource } from '../templates/TemplateLibrary';
 import { CostCalculator } from '../cost/CostCalculator';
 
 /**
@@ -261,7 +258,7 @@ export class GuidanceAgent {
       });
     }
 
-    if (classification.domain === 'civilNegligence') {
+    if (classification.domain === 'civil-negligence') {
       recommendations.push({
         id: 'rec-demand-letter',
         title: 'Send Formal Demand Letter',
@@ -372,7 +369,7 @@ export class GuidanceAgent {
     }
 
     // Sort by applicability
-    recommendations.sort((a, b) => b.applicability - a.applicability);
+    recommendations.sort((a: any, b) => b.applicability - a.applicability);
 
     return recommendations.slice(0, 5); // Top 5 recommendations
   }
@@ -432,7 +429,7 @@ export class GuidanceAgent {
         estimatedCost: 10000,
         estimatedTimeframe: '12-24 months'
       });
-    } else if (classification.domain === 'civilNegligence') {
+    } else if (classification.domain === 'civil-negligence') {
       recommendedPathway = 'Demand & Settlement';
 
       if (!disputeAmount || disputeAmount < 50000) {
@@ -542,7 +539,7 @@ export class GuidanceAgent {
   private getForumType(domain: string): string {
     if (domain === 'landlordTenant') return 'LTB';
     if (domain === 'employment') return 'MOL';
-    if (domain === 'civilNegligence' || domain === 'consumerProtection')
+    if (domain === 'civil-negligence' || domain === 'consumerProtection')
       return 'SmallClaims';
     if (domain === 'criminal') return 'Court';
     return 'Other';

@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "canadian-legal-assistant",
+    "type": "monorepo",
+    "stack": {
+      "frontend": "React 18.3 + Vite + TypeScript + Tailwind CSS",
+      "backend": "Express + Prisma + SQLite + TypeScript",
+      "testing": "Vitest (unit) + Playwright (E2E)",
+      "security": "Snyk"
+    }
+  },
+  "steering": {
+    "criticalFirst": "00-CRITICAL.md",
+    "loadOrder": [
+      "00-CRITICAL.md",
+      "01-architecture.md",
+      "react-patterns.md",
+      "typescript-standards.md",
+      "api-design.md",
+      "database-patterns.md",
+      "testing-standards.md",
+      "error-handling.md",
+      "validation-patterns.md",
+      "styling-conventions.md",
+      "git-conventions.md"
+    ],
+    "applyTo": {
+      "all": [
+        "00-CRITICAL.md",
+        "01-architecture.md",
+        "typescript-standards.md",
+        "error-handling.md",
+        "git-conventions.md"
+      ],
+      "frontend/**": [
+        "react-patterns.md",
+        "styling-conventions.md"
+      ],
+      "backend/**": [
+        "api-design.md",
+        "database-patterns.md",
+        "validation-patterns.md"
+      ],
+      "tests/**": [
+        "testing-standards.md"
+      ],
+      "src/core/**": [
+        "typescript-standards.md"
+      ]
+    }
+  },
+  "documentation": {
+    "maxSteeringSize": "20KB",
+    "docsFolder": "docs/",
+    "strategy": "Keep steering files concise. If a category exceeds 20KB, move detailed examples to .copilot/docs/[category]/"
+  },
+  "references": {
+    "mainDocs": [
+      "README.md",
+      "USERGUIDE.md",
+      "AGENTS.md"
+    ],
+    "specs": [
+      ".kiro/specs/canadian-legal-assistant/design.md",
+      ".kiro/specs/canadian-legal-assistant/requirements.md",
+      ".kiro/specs/canadian-legal-assistant/tasks.md"
+    ]
+  }
+}

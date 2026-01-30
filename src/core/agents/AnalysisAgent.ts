@@ -1,6 +1,7 @@
 import {
   MatterClassification,
   EvidenceIndex,
+    EvidenceItem,
   Domain,
   Jurisdiction
 } from '../models';
@@ -167,8 +168,8 @@ export class AnalysisAgent {
     let earliest: string | null = null;
     let latest: string | null = null;
 
-    if (evidenceIndex.evidence && evidenceIndex.evidence.length > 0) {
-      evidenceIndex.evidence.forEach(ev => {
+    if (evidenceIndex.items && evidenceIndex.items.length > 0) {
+      evidenceIndex.items.forEach((ev: EvidenceItem) => {
         const type = ev.type || 'other';
         byType[type] = (byType[type] || 0) + 1;
 
@@ -187,14 +188,14 @@ export class AnalysisAgent {
       this.assessEvidenceCredibility(evidenceIndex);
 
     const summary = this.generateEvidenceSummary(
-      evidenceIndex.evidence?.length || 0,
+      evidenceIndex.items?.length || 0,
       byType,
       earliest,
       latest
     );
 
     return {
-      totalCount: evidenceIndex.evidence?.length || 0,
+      totalCount: evidenceIndex.items?.length || 0,
       byType,
       timeline: {
         earliest,
@@ -241,7 +242,7 @@ export class AnalysisAgent {
       .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
     const limitationPeriods = relevantPeriods.map(period => ({
-      type: period.type,
+      type: period.name,
       expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0], // Mock date
@@ -342,15 +343,15 @@ export class AnalysisAgent {
     const weak: string[] = [];
     const conflicting: string[] = [];
 
-    if (!evidenceIndex.evidence) {
+    if (!evidenceIndex.items) {
       return { strongEvidence: strong, weakEvidence: weak, conflictingEvidence: conflicting };
     }
 
-    evidenceIndex.evidence.forEach(ev => {
+    evidenceIndex.items.forEach((ev: EvidenceItem) => {
       // Categorize by credibility score and type
-      if (ev.credibilityScore >= 0.8) {
+      if ((ev.credibilityScore ?? 0) >= 0.8) {
         strong.push(`${ev.type}: ${ev.filename || 'Document'}`);
-      } else if (ev.credibilityScore < 0.5) {
+      } else if ((ev.credibilityScore ?? 0) < 0.5) {
         weak.push(`${ev.type}: ${ev.filename || 'Document'}`);
       }
 
@@ -441,7 +442,7 @@ export class AnalysisAgent {
     }
 
     // Domain-specific risks
-    if (classification.domain === 'employment' && !classification.timeline.keyDates?.length) {
+    if (classification.domain === 'employment' && !(classification.timeline?.keyDates?.length)) {
       risks.push('Employment timeline not fully documented - key dates needed');
     }
 
@@ -533,3 +534,4 @@ ${opportunities.length > 0 ? opportunities.map(o => `- ${o}`).join('\n') : '- Co
     return narrative;
   }
 }
+

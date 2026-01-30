@@ -10,6 +10,7 @@ import documentsRouter from './routes/documents.js';
 import auditRouter from './routes/audit.js';
 import caselawRouter from './routes/caselaw.js';
 import exportRouter from './routes/export.js';
+// import kitsRouter from './routes/kits.js';  // Temporarily disabled - Task 26.6 integration pending
 
 const app = express();
 
@@ -59,6 +60,7 @@ function createApp() {
   app.use('/api/audit', auditRouter);
   app.use('/api/caselaw', caselawRouter);
   app.use('/api/export', exportRouter);
+  // app.use('/api/kits', kitsRouter);  // Temporarily disabled - Task 26.6 integration pending
 
   // Error handling
   app.use(errorHandler);

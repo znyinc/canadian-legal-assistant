@@ -1,9 +1,10 @@
 import { BaseKit } from './BaseKit';
 
 /**
- * Kit Factory Function - creates kit instances
+ * Kit Factory Function - creates kit instances. Session/user IDs are optional so callers can
+ * keep kit execution aligned with their own session management.
  */
-export type KitFactory = () => BaseKit;
+export type KitFactory = (sessionId?: string, userId?: string) => BaseKit;
 
 /**
  * Kit Metadata - describes a registered kit
@@ -68,8 +69,8 @@ export class KitRegistry {
     if (!metadata.isActive) {
       throw new Error(`Kit ${kitId} is not active`);
     }
-    
-    const kit = metadata.factory();
+
+    const kit = metadata.factory(sessionId, userId);
     return kit;
   }
 

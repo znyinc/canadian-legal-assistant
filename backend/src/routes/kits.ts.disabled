@@ -1,0 +1,158 @@
+import express, { Request, Response } from 'express';
+import type { IntegrationAPI } from '../../../src/api/IntegrationAPI';
+import type { KitExecutionRequest } from '../../../src/api/IntegrationAPI';
+
+const router = express.Router();
+
+/**
+ * GET /api/kits - List all available kits with optional filtering
+ * 
+ * Query params:
+ * - domains: comma-separated domain list (e.g., "landlordTenant,employment")
+ * - tags: comma-separated tag list (e.g., "ltb,rent")
+ * - complexity: simple | moderate | complex
+ * - maxDuration: number (minutes)
+ */
+router.get('/', (req: Request, res: Response) => {
+  try {
+    const api = req.app.locals.integrationAPI as IntegrationAPI;
+    if (!api) {
+      return res.status(500).json({ error: 'IntegrationAPI not initialized' });
+    }
+
+    const criteria: any = {};
+    
+    if (req.query.domains) {
+      criteria.domains = (req.query.domains as string).split(',').map(d => d.trim());
+    }
+    
+    if (req.query.tags) {
+      criteria.tags = (req.query.tags as string).split(',').map(t => t.trim());
+    }
+    
+    if (req.query.complexity) {
+      criteria.complexity = req.query.complexity as 'simple' | 'moderate' | 'complex';
+    }
+    
+    if (req.query.maxDuration) {
+      criteria.maxDuration = parseInt(req.query.maxDuration as string, 10);
+    }
+
+    const kits = api.listKits(Object.keys(criteria).length > 0 ? criteria : undefined);
+    
+    res.json({
+      count: kits.length,
+      kits
+    });
+  } catch (error: any) {
+    console.error('Error listing kits:', error);
+    res.status(500).json({ error: error.message || 'Failed to list kits' });
+  }
+});
+
+/**
+ * POST /api/kits/:kitId/execute - Execute a kit with provided intake data
+ * 
+ * Body: KitExecutionRequest
+ * - kitId: string (from URL param)
+ * - sessionId?: string (optional, auto-generated if not provided)
+ * - userId?: string (optional)
+ * - intake: KitIntakeData (custom fields vary by kit)
+ * - trackStages?: boolean (default false)
+ */
+router.post('/:kitId/execute', async (req: Request, res: Response) => {
+  try {
+    const api = req.app.locals.integrationAPI as IntegrationAPI;
+    if (!api) {
+      return res.status(500).json({ error: 'IntegrationAPI not initialized' });
+    }
+
+    const { kitId } = req.params;
+    const { sessionId, userId, intake, trackStages } = req.body;
+
+    if (!intake) {
+      return res.status(400).json({ error: 'Missing required field: intake' });
+    }
+
+    const executionRequest: KitExecutionRequest = {
+      kitId,
+      sessionId,
+      userId,
+      intake,
+      trackStages: trackStages ?? false
+    };
+
+    const result = await api.executeKit(executionRequest);
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('Error executing kit:', error);
+    
+    if (error.message?.includes('not found') || error.message?.includes('not active')) {
+      return res.status(404).json({ error: error.message });
+    }
+    
+    res.status(500).json({ error: error.message || 'Failed to execute kit' });
+  }
+});
+
+/**
+ * GET /api/kits/logs/:sessionId - Retrieve execution log for a session
+ * 
+ * Returns all kit execution events for the specified session
+ */
+router.get('/logs/:sessionId', (req: Request, res: Response) => {
+  try {
+    const api = req.app.locals.integrationAPI as IntegrationAPI;
+    if (!api) {
+      return res.status(500).json({ error: 'IntegrationAPI not initialized' });
+    }
+
+    const { sessionId } = req.params;
+    const events = api.getExecutionLog(sessionId);
+
+    res.json({
+      sessionId,
+      eventCount: events.length,
+      events
+    });
+  } catch (error: any) {
+    console.error('Error retrieving execution log:', error);
+    res.status(500).json({ error: error.message || 'Failed to retrieve execution log' });
+  }
+});
+
+/**
+ * GET /api/kits/results/:sessionId - Retrieve all stored kit results for a session
+ * 
+ * Returns all completed kit executions for the specified session
+ */
+router.get('/results/:sessionId', (req: Request, res: Response) => {
+  try {
+    const api = req.app.locals.integrationAPI as IntegrationAPI;
+    if (!api) {
+      return res.status(500).json({ error: 'IntegrationAPI not initialized' });
+    }
+
+    const { sessionId } = req.params;
+    const results = api.getKitResults(sessionId);
+
+    if (!results) {
+      return res.status(404).json({ 
+        error: 'No results found for session',
+        sessionId 
+      });
+    }
+
+    res.json({
+      sessionId,
+      resultCount: results.length,
+      results
+    });
+  } catch (error: any) {
+    console.error('Error retrieving kit results:', error);
+    res.status(500).json({ error: error.message || 'Failed to retrieve kit results' });
+  }
+});
+
+export default router;
