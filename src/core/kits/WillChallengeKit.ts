@@ -25,7 +25,9 @@ export class WillChallengeKit extends BaseKit {
     super(
       'will-challenge-kit',
       'Will Challenge Kit',
-      'Assessment and guidance for contesting a will: grounds, evidence, and probate timeline'
+      'Assessment and guidance for contesting a will: grounds, evidence, and probate timeline',
+      sessionId,
+      userId
     );
     
     this.actionPlanGenerator = actionPlanGenerator || new ActionPlanGenerator();
@@ -40,6 +42,7 @@ export class WillChallengeKit extends BaseKit {
       contestGrounds,
       relationshipToDeceased,
       expectedInheritance,
+      actualInheritance,
       actualeInheritance,
     } = data.customFields || {};
 
@@ -57,7 +60,7 @@ export class WillChallengeKit extends BaseKit {
     this.updateSystemContext('contestGrounds', contestGrounds || []);
     this.updateSystemContext('relationshipToDeceased', relationshipToDeceased);
     this.updateSystemContext('expectedInheritance', expectedInheritance || 0);
-    this.updateSystemContext('actualInheritance', actualeInheritance || 0);
+    this.updateSystemContext('actualInheritance', actualInheritance ?? actualeInheritance ?? 0);
   }
 
   protected async performAnalysis(): Promise<any> {
@@ -220,11 +223,15 @@ export class WillChallengeKit extends BaseKit {
 
   protected async generateGuidance(): Promise<{ actionPlan: ActionPlan; guidance: string }> {
     const classification: MatterClassification = {
+      id: `kit-${this.state.sessionId}`,
       domain: 'civil-negligence',
-      pillar: 'Civil',
       jurisdiction: 'Ontario',
-      description: `Will challenge: Grounds assessment for ${this.state.systemContext.deceasedName}'s estate`,
-      urgencyLevel: 'critical',
+      parties: {
+        claimantType: 'individual',
+        respondentType: 'individual'
+      },
+      urgency: 'high',
+      notes: [`Will challenge: Grounds assessment for ${this.state.systemContext.deceasedName}'s estate`]
     };
 
     const actionPlan = await this.actionPlanGenerator.generate(classification);
@@ -318,10 +325,15 @@ Next steps:
       kitId: this.kitId,
       sessionId: this.state.sessionId,
       classification: {
+        id: `kit-${this.state.sessionId}`,
         domain: 'civil-negligence',
-        pillar: 'Civil',
         jurisdiction: 'Ontario',
-        description: `Will challenge for ${this.state.systemContext.deceasedName}'s estate`,
+        parties: {
+          claimantType: 'individual',
+          respondentType: 'individual'
+        },
+        urgency: 'high',
+        notes: [`Will challenge for ${this.state.systemContext.deceasedName}'s estate`]
       },
       actionPlan: this.state.actionPlan!,
       documents: this.state.documents || [],

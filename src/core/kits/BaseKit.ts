@@ -243,6 +243,7 @@ export abstract class BaseKit {
       kitName: this.kitName,
       kitDescription: this.kitDescription,
       sessionId: this.state.sessionId,
+      userId: this.state.userId,
     };
   }
 

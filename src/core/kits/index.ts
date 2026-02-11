@@ -9,9 +9,15 @@
  * - WillChallengeKit: Will contest grounds assessment
  */
 
-export { BaseKit, KitStage, KitExecutionState, KitResult, KitIntakeData } from './BaseKit';
-export { KitOrchestrator, KitExecutionEvent, KitExecutionContext } from './KitOrchestrator';
-export { KitRegistry, KitMetadata, KitFactory, getGlobalKitRegistry, resetGlobalKitRegistry } from './KitRegistry';
+// Classes and runtime values
+export { BaseKit } from './BaseKit';
+export { KitOrchestrator } from './KitOrchestrator';
+export { KitRegistry, getGlobalKitRegistry, resetGlobalKitRegistry } from './KitRegistry';
+
+// Type-only exports (interfaces)
+export type { KitStage, KitExecutionState, KitResult, KitIntakeData } from './BaseKit';
+export type { KitExecutionEvent, KitExecutionContext } from './KitOrchestrator';
+export type { KitMetadata, KitFactory } from './KitRegistry';
 
 // High-Impact Decision-Support Kits (Task 26.3)
 export { RentIncreaseKit } from './RentIncreaseKit';

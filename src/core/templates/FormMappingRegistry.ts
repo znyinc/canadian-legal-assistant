@@ -93,6 +93,16 @@ export class FormMappingRegistry {
   }
 
   /**
+   * Get a form mapping by its official form name/title
+   */
+  getFormByTitle(formName: string): OfficialFormMapping | undefined {
+    const target = formName.trim().toLowerCase();
+    return Array.from(this.mappings.values()).find(mapping =>
+      mapping.formName.toLowerCase() === target
+    );
+  }
+
+  /**
    * Generate instructional overlay for a specific form
    * Returns step-by-step guide for completing official form
    */

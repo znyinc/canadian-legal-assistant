@@ -27,29 +27,30 @@ describe('DocumentAgent', () => {
     };
 
     mockEvidenceIndex = {
-      attachmentIds: ['att1', 'att2'],
-      evidence: [
+      items: [
         {
           id: 'ev1',
-          type: 'lease',
+          type: 'PDF',
           filename: 'lease_agreement.pdf',
           hash: 'hash1',
           date: '2024-01-01',
           credibilityScore: 0.99,
+          provenance: 'user-provided',
           tags: ['lease', 'essential']
         },
         {
           id: 'ev2',
-          type: 'communication',
+          type: 'PDF',
           filename: 'landlord_email.pdf',
           hash: 'hash2',
           date: '2025-01-10',
           credibilityScore: 0.85,
+          provenance: 'user-provided',
           tags: ['communication']
         }
       ],
-      summary: 'Landlord-tenant evidence',
-      timeline: 'Jan 2024-Jan 2025'
+      generatedAt: new Date().toISOString(),
+      sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
   });
 
@@ -62,7 +63,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result).toBeDefined();
@@ -73,7 +74,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toBeDefined();
@@ -81,14 +82,14 @@ describe('DocumentAgent', () => {
     });
 
     it('should handle different domains', async () => {
-      const domains = ['employment', 'civilNegligence', 'insurance'];
+      const domains = ['employment', 'civil-negligence', 'insurance'];
 
       for (const domain of domains) {
         mockClassification.domain = domain as any;
         const result = await agent.generateDocuments(
           mockClassification,
           mockEvidenceIndex,
-          { entries: [], summary: 'Test' }
+          { entries: [], compiledAt: new Date().toISOString() }
         );
 
         expect(result).toBeDefined();
@@ -97,16 +98,15 @@ describe('DocumentAgent', () => {
 
     it('should handle empty evidence', async () => {
       const emptyEvidence: EvidenceIndex = {
-        attachmentIds: [],
-        evidence: [],
-        summary: 'No evidence',
-        timeline: ''
+        items: [],
+        generatedAt: new Date().toISOString(),
+        sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
       };
 
       const result = await agent.generateDocuments(
         mockClassification,
         emptyEvidence,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result).toBeDefined();
@@ -118,7 +118,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result).toBeDefined();
@@ -129,7 +129,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const ltDocuments = result.recommendations.filter(r =>
@@ -143,7 +143,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       result.recommendations.forEach(rec => {
@@ -155,7 +155,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const intakeRecommended = result.recommendations.some(r =>
@@ -171,7 +171,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.readinessAssessment.overallReadiness).toBeGreaterThanOrEqual(0);
@@ -182,7 +182,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(Array.isArray(result.readinessAssessment.missingInformation)).toBe(true);
@@ -192,7 +192,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.readinessAssessment.nextSteps).toBeDefined();
@@ -201,16 +201,15 @@ describe('DocumentAgent', () => {
 
     it('should recommend evidence gathering when insufficient', async () => {
       const sparseEvidence: EvidenceIndex = {
-        attachmentIds: [],
-        evidence: [],
-        summary: 'No evidence',
-        timeline: ''
+        items: [],
+        generatedAt: new Date().toISOString(),
+        sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
       };
 
       const result = await agent.generateDocuments(
         mockClassification,
         sparseEvidence,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.readinessAssessment.overallReadiness).toBeLessThan(50);
@@ -227,7 +226,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         empClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const empRecommendations = result.recommendations.filter(r =>
@@ -240,13 +239,13 @@ describe('DocumentAgent', () => {
     it('should generate civil negligence documents', async () => {
       const civilClassification: MatterClassification = {
         ...mockClassification,
-        domain: 'civilNegligence'
+        domain: 'civil-negligence'
       };
 
       const result = await agent.generateDocuments(
         civilClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const civilRecommendations = result.recommendations.filter(r =>
@@ -265,7 +264,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         insClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const insRecommendations = result.recommendations.filter(r =>
@@ -284,7 +283,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         crimClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       const crimRecommendations = result.recommendations.filter(r =>
@@ -300,37 +299,37 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
-      expect(result.packageInput.evidenceManifest.attachmentIds.length).toBe(2);
+      expect(result.packageInput.evidenceManifest.items.length).toBe(2);
     });
 
     it('should include evidence filenames in manifest', async () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
-      expect(result.packageInput.evidenceManifest.filenames.length).toBeGreaterThan(0);
+      const filenames = result.packageInput.evidenceManifest.items.map(item => item.filename);
+      expect(filenames.length).toBeGreaterThan(0);
     });
 
     it('should generate summary for empty evidence', async () => {
       const emptyEvidence: EvidenceIndex = {
-        attachmentIds: [],
-        evidence: [],
-        summary: 'No evidence',
-        timeline: ''
+        items: [],
+        generatedAt: new Date().toISOString(),
+        sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
       };
 
       const result = await agent.generateDocuments(
         mockClassification,
         emptyEvidence,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
-      expect(result.packageInput.evidenceManifest.summary).toBeDefined();
+      expect(result.packageInput.evidenceManifest.compiledAt).toBeDefined();
     });
   });
 
@@ -339,7 +338,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toContain('landlordTenant');
@@ -349,7 +348,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toContain('Ontario');
@@ -359,7 +358,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toContain('Document') ||
@@ -370,7 +369,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toContain('Readiness');
@@ -380,7 +379,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.generationNarrative).toContain('Next Step') ||
@@ -393,7 +392,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.packageInput).toBeDefined();
@@ -404,7 +403,7 @@ describe('DocumentAgent', () => {
       const result = await agent.generateDocuments(
         mockClassification,
         mockEvidenceIndex,
-        { entries: [], summary: 'Test' }
+        { entries: [], compiledAt: new Date().toISOString() }
       );
 
       expect(result.packageInput.jurisdiction).toBe('Ontario');

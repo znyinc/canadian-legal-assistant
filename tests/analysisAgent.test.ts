@@ -29,38 +29,40 @@ describe('AnalysisAgent', () => {
     };
 
     mockEvidenceIndex = {
-      attachmentIds: ['att1', 'att2', 'att3'],
-      evidence: [
+      items: [
         {
           id: 'ev1',
-          type: 'employment_records',
+          type: 'PDF',
           filename: 'employment_contract.pdf',
           hash: 'hash1',
           date: '2024-12-01',
           credibilityScore: 0.95,
+          provenance: 'user-provided',
           tags: ['contract', 'essential']
         },
         {
           id: 'ev2',
-          type: 'communication',
-          filename: 'emails.pdf',
+          type: 'TXT',
+          filename: 'emails.txt',
           hash: 'hash2',
           date: '2025-01-10',
           credibilityScore: 0.85,
+          provenance: 'user-provided',
           tags: ['emails', 'evidence']
         },
         {
           id: 'ev3',
-          type: 'pay_records',
+          type: 'PDF',
           filename: 'pay_stubs.pdf',
           hash: 'hash3',
           date: '2024-11-30',
           credibilityScore: 0.90,
+          provenance: 'user-provided',
           tags: ['financial', 'essential']
         }
       ],
-      summary: 'Employment termination evidence',
-      timeline: 'Jan 1-15, 2025'
+      generatedAt: new Date().toISOString(),
+      sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
   });
 
@@ -78,8 +80,8 @@ describe('AnalysisAgent', () => {
 
       expect(result.evidenceSynthesis).toBeDefined();
       expect(result.evidenceSynthesis.totalCount).toBe(3);
-      expect(result.evidenceSynthesis.byType['employment_records']).toBe(1);
-      expect(result.evidenceSynthesis.byType['communication']).toBe(1);
+      expect(result.evidenceSynthesis.byType['PDF']).toBe(2);
+      expect(result.evidenceSynthesis.byType['TXT']).toBe(1);
     });
 
     it('should analyze deadlines', () => {
@@ -144,10 +146,9 @@ describe('AnalysisAgent', () => {
 
     it('should handle empty evidence index', () => {
       const emptyEvidence: EvidenceIndex = {
-        attachmentIds: [],
-        evidence: [],
-        summary: 'No evidence',
-        timeline: ''
+        items: [],
+        generatedAt: new Date().toISOString(),
+        sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
       };
 
       const result = agent.analyze(mockClassification, emptyEvidence);
@@ -205,10 +206,9 @@ describe('AnalysisAgent', () => {
 
     it('should rate weak case with insufficient evidence', () => {
       const weakEvidence: EvidenceIndex = {
-        attachmentIds: [],
-        evidence: [],
-        summary: 'No evidence',
-        timeline: ''
+        items: [],
+        generatedAt: new Date().toISOString(),
+        sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
       };
 
       const result = agent.analyze(mockClassification, weakEvidence);

@@ -134,6 +134,7 @@ Before filing with Ontario Superior Court:
       jurisdiction === 'Ontario' &&
       (domain === 'ocppFiling' || 
        domain === 'civilNegligence' || 
+       domain === 'civil-negligence' || 
        domain === 'municipalPropertyDamage')
     );
   }

@@ -13,14 +13,18 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
+        id: 'cn-1',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
         parties: { names: ['Alice'] },
         timeline: { start: '2024-01-01' },
-        disputeAmount: 500
+        disputeAmount: 5000,
+        notes: ['Tree damage to fence']
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 
@@ -37,15 +41,18 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
+        id: 'cn-2',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
         parties: { names: ['Alice Smith'] },
         timeline: { start: '2025-12-01' },
-        disputeAmount: 750,
+        disputeAmount: 1750,
         notes: ['Tree fell on fence', 'Damage to north side']
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 
@@ -55,7 +62,7 @@ describe('CivilNegligenceDomainModule', () => {
     expect(demandDraft).toBeDefined();
     expect(demandDraft.sections[0].content).toContain('Alice Smith');
     expect(demandDraft.sections[0].content).toContain('2025-12-01');
-    expect(demandDraft.sections[0].content).toContain('$750');
+    expect(demandDraft.sections[0].content).toContain('$1750');
     expect(demandDraft.sections[0].content).toContain('Settlement Path');
   });
 
@@ -63,12 +70,16 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
-        parties: { names: ['Bob Johnson'] }
+        id: 'cn-3',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
+        parties: { names: ['Bob Johnson'] },
+        disputeAmount: 2000
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 
@@ -84,12 +95,17 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
-        parties: { names: ['Carol White'] }
+        id: 'cn-4',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
+        parties: { names: ['Carol White'] },
+        disputeAmount: 2000,
+        notes: ['Tree damage']
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 
@@ -105,12 +121,17 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
-        parties: { names: ['Dave Brown'] }
+        id: 'cn-5',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
+        parties: { names: ['Dave Brown'] },
+        disputeAmount: 2000,
+        notes: ['Property damage repair needed']
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 
@@ -126,13 +147,17 @@ describe('CivilNegligenceDomainModule', () => {
     const mod = new CivilNegligenceDomainModule();
     const input: any = {
       classification: {
+        id: 'cn-6',
+        domain: 'civil-negligence',
+        jurisdiction: 'Ontario',
         parties: { names: ['Eve Green'] },
-        disputeAmount: 1000
+        disputeAmount: 5000,
+        notes: ['Tree damage', 'Repair work needed']
       },
       forumMap: '',
       timeline: '',
       missingEvidence: '',
-      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { sources: [] } },
+      evidenceIndex: { items: [], generatedAt: new Date().toISOString(), sourceManifest: { entries: [], compiledAt: new Date().toISOString() } },
       sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
     };
 

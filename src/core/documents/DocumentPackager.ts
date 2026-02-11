@@ -195,7 +195,7 @@ export class DocumentPackager {
     if (jurisdiction !== 'Ontario') return false;
     
     // OCPP-related domains require PDF/A for Toronto Region Superior Court
-    const ocppDomains = ['ocppFiling', 'civilNegligence', 'municipalPropertyDamage'];
+    const ocppDomains = ['ocppFiling', 'civil-negligence', 'civilNegligence', 'municipalPropertyDamage'];
     return domain ? ocppDomains.includes(domain) : false;
   }
 

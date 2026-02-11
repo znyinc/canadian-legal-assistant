@@ -28,7 +28,9 @@ export class EmploymentTerminationKit extends BaseKit {
     super(
       'employment-termination-kit',
       'Employment Termination Analysis Kit',
-      'Guidance for wrongful dismissal, severance, and termination pay disputes'
+      'Guidance for wrongful dismissal, severance, and termination pay disputes',
+      sessionId,
+      userId
     );
     
     this.actionPlanGenerator = actionPlanGenerator || new ActionPlanGenerator();
@@ -207,12 +209,18 @@ Your leverage: Years of service (${this.state.systemContext.yearsOfService}), ES
    * Kit-specific guidance generation
    */
   protected async generateGuidance(): Promise<{ actionPlan: ActionPlan; guidance: string }> {
+    const employeeName = this.state.systemContext.employeeName;
     const classification: MatterClassification = {
+      id: `kit-${this.state.sessionId}`,
       domain: 'employment',
-      pillar: 'Civil',
       jurisdiction: 'Ontario',
-      description: `Employment termination: ${this.state.analysisResult.recommendedPathway} pathway recommended`,
-      urgencyLevel: 'warning',
+      parties: {
+        claimantType: 'individual',
+        respondentType: 'business',
+        names: employeeName ? [employeeName] : undefined
+      },
+      urgency: 'medium',
+      notes: [`Employment termination: ${this.state.analysisResult.recommendedPathway} pathway recommended`]
     };
 
     const actionPlan = await this.actionPlanGenerator.generate(classification);
@@ -274,14 +282,21 @@ Based on available information, your wrongful dismissal risk appears moderate to
    * Kit-specific result finalization
    */
   protected async finalizeResults(): Promise<KitResult> {
+    const employeeName = this.state.systemContext.employeeName;
     return {
       kitId: this.kitId,
       sessionId: this.state.sessionId,
       classification: {
+        id: `kit-${this.state.sessionId}`,
         domain: 'employment',
-        pillar: 'Civil',
         jurisdiction: 'Ontario',
-        description: this.state.userInputs.description,
+        parties: {
+          claimantType: 'individual',
+          respondentType: 'business',
+          names: employeeName ? [employeeName] : undefined
+        },
+        urgency: 'medium',
+        notes: this.state.userInputs.description ? [this.state.userInputs.description] : []
       },
       actionPlan: this.state.actionPlan!,
       documents: this.state.documents || [],

@@ -28,7 +28,9 @@ export class RentIncreaseKit extends BaseKit {
     super(
       'rent-increase-kit',
       'LTB Rent Increase Application Kit',
-      'Guidance for landlord rent increase applications with LTB T1 compliance'
+      'Guidance for landlord rent increase applications with LTB T1 compliance',
+      sessionId,
+      userId
     );
     
     this.actionPlanGenerator = actionPlanGenerator || new ActionPlanGenerator();
@@ -158,13 +160,24 @@ export class RentIncreaseKit extends BaseKit {
    * Kit-specific guidance generation
    */
   protected async generateGuidance(): Promise<{ actionPlan: ActionPlan; guidance: string }> {
+    const deadlineDays = this.state.analysisResult?.deadlineDays;
+    const urgency = typeof deadlineDays === 'number' && deadlineDays < 60 ? 'high' : 'medium';
+    const tenantName = this.state.systemContext.tenantName;
     // Create matter classification for action plan generation
     const classification: MatterClassification = {
+      id: `kit-${this.state.sessionId}`,
       domain: 'landlordTenant',
-      pillar: 'Administrative',
       jurisdiction: 'Ontario',
-      description: `Rent increase dispute: ${this.state.systemContext.currentRent} → ${this.state.systemContext.proposedRent}/month`,
-      urgencyLevel: this.state.systemContext.deadlineDays < 60 ? 'critical' : 'warning',
+      parties: {
+        claimantType: 'individual',
+        respondentType: 'business',
+        names: tenantName ? [tenantName] : undefined
+      },
+      urgency,
+      notes: [
+        `Rent increase dispute: ${this.state.systemContext.currentRent} → ${this.state.systemContext.proposedRent}/month`,
+        this.state.systemContext.propertyAddress ? `Property: ${this.state.systemContext.propertyAddress}` : ''
+      ].filter(Boolean)
     };
 
     // Generate action plan using ActionPlanGenerator
@@ -209,14 +222,21 @@ ${this.state.analysisResult.deadlineMetStatus === 'compliant'
    * Kit-specific result finalization
    */
   protected async finalizeResults(): Promise<KitResult> {
+    const tenantName = this.state.systemContext.tenantName;
     return {
       kitId: this.kitId,
       sessionId: this.state.sessionId,
       classification: {
+        id: `kit-${this.state.sessionId}`,
         domain: 'landlordTenant',
-        pillar: 'Administrative',
         jurisdiction: 'Ontario',
-        description: this.state.userInputs.description,
+        parties: {
+          claimantType: 'individual',
+          respondentType: 'business',
+          names: tenantName ? [tenantName] : undefined
+        },
+        urgency: 'medium',
+        notes: this.state.userInputs.description ? [this.state.userInputs.description] : []
       },
       actionPlan: this.state.actionPlan!,
       documents: this.state.documents || [],

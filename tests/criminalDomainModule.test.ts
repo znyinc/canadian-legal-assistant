@@ -48,6 +48,7 @@ describe('CriminalDomainModule', () => {
       domain: 'criminal',
       subCategory: 'assault',
       partyName: 'Jane Smith',
+      notes: ['accused', 'assault']
     };
 
     const evidenceManifest = {
@@ -79,6 +80,7 @@ describe('CriminalDomainModule', () => {
       domain: 'criminal',
       subCategory: 'assault',
       claimantType: 'Victim',
+      notes: ['victim', 'assault']
     };
 
     const evidenceManifest = {
@@ -375,7 +377,7 @@ describe('Criminal Domain Templates', () => {
     const classification = {
       domain: 'criminal',
       subCategory: 'assault',
-      notes: ['assault'],
+      notes: ['assault', 'victim', 'accused'],
     };
 
     const evidenceManifest = {
@@ -412,7 +414,7 @@ describe('Criminal Domain Templates', () => {
       domain: 'criminal',
       jurisdiction: 'Ontario',
       notes: ['Assault', 'Neighbor dispute'],
-      timeline: '2025-12-21',
+      timeline: { start: '2025-12-21' },
     };
 
     const { drafts } = await criminalModule.generateDocuments(

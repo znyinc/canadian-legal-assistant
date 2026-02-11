@@ -25,7 +25,9 @@ export class MotorVehicleAccidentKit extends BaseKit {
     super(
       'motor-vehicle-accident-kit',
       'Motor Vehicle Accident Claim Kit',
-      'Guidance for motor vehicle accident claims: DC-PD, insurance, and tort options'
+      'Guidance for motor vehicle accident claims: DC-PD, insurance, and tort options',
+      sessionId,
+      userId
     );
     
     this.actionPlanGenerator = actionPlanGenerator || new ActionPlanGenerator();
@@ -158,11 +160,15 @@ I will provide repair quotes and documentation upon request.
 
   protected async generateGuidance(): Promise<{ actionPlan: ActionPlan; guidance: string }> {
     const classification: MatterClassification = {
+      id: `kit-${this.state.sessionId}`,
       domain: 'civil-negligence',
-      pillar: 'Civil',
       jurisdiction: 'Ontario',
-      description: `Motor vehicle accident: Claim value $${this.state.analysisResult.claimValue.total}`,
-      urgencyLevel: 'warning',
+      parties: {
+        claimantType: 'individual',
+        respondentType: 'individual'
+      },
+      urgency: 'medium',
+      notes: [`Motor vehicle accident: Claim value $${this.state.analysisResult.claimValue.total}`]
     };
 
     const actionPlan = await this.actionPlanGenerator.generate(classification);
@@ -240,10 +246,15 @@ I will provide repair quotes and documentation upon request.
       kitId: this.kitId,
       sessionId: this.state.sessionId,
       classification: {
+        id: `kit-${this.state.sessionId}`,
         domain: 'civil-negligence',
-        pillar: 'Civil',
         jurisdiction: 'Ontario',
-        description: this.state.userInputs.description,
+        parties: {
+          claimantType: 'individual',
+          respondentType: 'individual'
+        },
+        urgency: 'medium',
+        notes: this.state.userInputs.description ? [this.state.userInputs.description] : []
       },
       actionPlan: this.state.actionPlan!,
       documents: this.state.documents || [],

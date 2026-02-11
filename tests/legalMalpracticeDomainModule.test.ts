@@ -3,7 +3,6 @@ import { LegalMalpracticeDomainModule } from '../src/core/domains/LegalMalpracti
 import {
   MatterClassification,
   ForumMap,
-  Timeline,
   EvidenceIndex,
   AuthorityRef
 } from '../src/core/models';
@@ -26,15 +25,10 @@ describe('LegalMalpracticeDomainModule', () => {
     rationale: 'Legal malpractice claims proceed in Superior Court'
   };
 
-  const mockTimeline: Timeline = {
-    items: [],
-    gaps: [],
-    missingTypes: []
-  };
+  const mockTimeline = '';
 
   const mockEvidenceIndex: EvidenceIndex = {
     items: [],
-    sources: [],
     generatedAt: new Date().toISOString(),
     sourceManifest: { entries: [], compiledAt: new Date().toISOString() }
   };
@@ -68,7 +62,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'malpractice-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     expect(output.drafts).toHaveLength(5);
@@ -106,7 +100,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'lawpro-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     const lawproNotice = output.drafts.find((d) => d.type === 'lawpro_notice');
@@ -140,7 +134,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'case-analysis-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     const caseAnalysis = output.drafts.find((d) => d.type === 'case_within_case');
@@ -171,7 +165,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'expert-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     const expertLetter = output.drafts.find((d) => d.type === 'expert_instruction');
@@ -208,7 +202,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'demand-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     const demandLetter = output.drafts.find((d) => d.type === 'demand_letter');
@@ -241,7 +235,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'checklist-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     const checklist = output.drafts.find((d) => d.type === 'evidence_checklist');
@@ -273,7 +267,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'missing-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     // Check that missing confirmations are flagged
@@ -307,7 +301,7 @@ describe('LegalMalpracticeDomainModule', () => {
       evidenceIndex: mockEvidenceIndex,
       sourceManifest: mockEvidenceIndex.sourceManifest,
       packageName: 'full-package-test',
-      missingEvidence: []
+      missingEvidence: ''
     });
 
     expect(output.package.name).toBe('full-package-test');

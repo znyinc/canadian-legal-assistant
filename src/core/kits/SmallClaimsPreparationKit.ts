@@ -28,7 +28,9 @@ export class SmallClaimsPreparationKit extends BaseKit {
     super(
       'small-claims-kit',
       'Small Claims Court Preparation Kit',
-      'Complete guidance for filing Small Claims Court actions with Form 7A'
+      'Complete guidance for filing Small Claims Court actions with Form 7A',
+      sessionId,
+      userId
     );
     
     this.actionPlanGenerator = actionPlanGenerator || new ActionPlanGenerator();
@@ -90,7 +92,9 @@ export class SmallClaimsPreparationKit extends BaseKit {
     const strengthFactors = this.assessClaimStrength(this.state.userInputs.description);
 
     // Get Form 7A field mappings
-    const form7aMapping = this.formRegistry.getFormByTitle('Form 7A - Statement of Claim');
+    const form7aMapping =
+      this.formRegistry.getFormByTitle('Small Claims Court Form 7A - Statement of Claim') ||
+      this.formRegistry.getMapping('form-7a-small-claims');
 
     // Analyze evidence mapping
     const evidenceMapping = this.mapEvidenceToForm7A();
@@ -217,12 +221,18 @@ Example:
    * Kit-specific guidance generation
    */
   protected async generateGuidance(): Promise<{ actionPlan: ActionPlan; guidance: string }> {
+    const claimantName = this.state.systemContext.claimantName;
     const classification: MatterClassification = {
+      id: `kit-${this.state.sessionId}`,
       domain: 'civil-negligence',
-      pillar: 'Civil',
       jurisdiction: 'Ontario',
-      description: `Small Claims action: $${this.state.systemContext.claimAmount} claim for ${this.state.systemContext.basis}`,
-      urgencyLevel: 'warning',
+      parties: {
+        claimantType: 'individual',
+        respondentType: 'individual',
+        names: claimantName ? [claimantName] : undefined
+      },
+      urgency: 'medium',
+      notes: [`Small Claims action: $${this.state.systemContext.claimAmount} claim for ${this.state.systemContext.basis}`]
     };
 
     const actionPlan = await this.actionPlanGenerator.generate(classification);
@@ -309,14 +319,21 @@ ${this.state.analysisResult.strengthFactors.map((f: string) => `- ${f}`).join('\
    * Kit-specific result finalization
    */
   protected async finalizeResults(): Promise<KitResult> {
+    const claimantName = this.state.systemContext.claimantName;
     return {
       kitId: this.kitId,
       sessionId: this.state.sessionId,
       classification: {
+        id: `kit-${this.state.sessionId}`,
         domain: 'civil-negligence',
-        pillar: 'Civil',
         jurisdiction: 'Ontario',
-        description: this.state.userInputs.description,
+        parties: {
+          claimantType: 'individual',
+          respondentType: 'individual',
+          names: claimantName ? [claimantName] : undefined
+        },
+        urgency: 'medium',
+        notes: this.state.userInputs.description ? [this.state.userInputs.description] : []
       },
       actionPlan: this.state.actionPlan!,
       documents: this.state.documents || [],

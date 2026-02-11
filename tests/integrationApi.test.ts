@@ -103,7 +103,7 @@ describe('IntegrationAPI', () => {
         jurisdiction: 'Ontario',
         parties: { claimantType: 'individual', respondentType: 'individual', names: ['Alice'] },
         timeline: { start: '2025-01-01' },
-        disputeAmount: 500,
+        disputeAmount: 5000,
         status: 'classified'
       } as any,
       forumMap: 'Forum map',
