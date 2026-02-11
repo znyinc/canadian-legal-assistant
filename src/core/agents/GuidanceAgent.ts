@@ -1,7 +1,6 @@
 import { MatterClassification } from '../models';
 import { ActionPlan, ActionPlanGenerator } from '../actionPlan/ActionPlanGenerator';
 import { LimitationPeriodsEngine, DeadlineAlert } from '../limitation/LimitationPeriodsEngine';
-import { FormattedResource } from '../templates/TemplateLibrary';
 import { CostCalculator } from '../cost/CostCalculator';
 
 /**
@@ -507,28 +506,27 @@ export class GuidanceAgent {
     disputeAmount?: number,
     userProfile?: any
   ): GuidanceResult['costAssessment'] {
-    // Calculate filing fees based on forum type
-    const forum = this.getForumType(classification.domain);
-    const filingFees = this.costCalculator.calculateCost(forum, disputeAmount || 0);
+    const forum = this.getForumType(classification.domain, disputeAmount);
+    const costEstimate = this.costCalculator.calculateCost(forum, disputeAmount || 0);
+    const otherCostsMin = costEstimate.otherCosts.reduce((sum, item) => sum + item.estimatedRange.min, 0);
+    const otherCostsMax = costEstimate.otherCosts.reduce((sum, item) => sum + item.estimatedRange.max, 0);
 
-    // Assess fee waiver eligibility
-    const feeWaiverEligible = this.costCalculator.assessFeeWaiver({
-      householdIncome: userProfile?.householdIncome || 0,
-      householdSize: userProfile?.householdSize || 1,
-      jurisdiction: classification.jurisdiction
-    }).eligible;
+    const feeWaiver = this.costCalculator.assessFeeWaiver(
+      forum,
+      userProfile?.householdIncome,
+      userProfile?.householdSize,
+      userProfile?.financialHardship === true
+    );
 
     const costBreakdown: Record<string, number> = {
-      'Filing Fees': filingFees.filingFees || 0,
-      'Service Fees': filingFees.serviceProcessing || 0,
-      'Other Professional': filingFees.other || 0
+      'Filing Fees': costEstimate.filingFees.amount,
+      'Other Costs (min)': otherCostsMin,
+      'Other Costs (max)': otherCostsMax
     };
 
-    const totalCost = Object.values(costBreakdown).reduce((a, b) => a + b, 0);
-
     return {
-      estimatedCost: totalCost,
-      feeWaiverEligible,
+      estimatedCost: costEstimate.totalEstimatedCost.max,
+      feeWaiverEligible: feeWaiver.available,
       costBreakdown
     };
   }
@@ -536,13 +534,17 @@ export class GuidanceAgent {
   /**
    * Get forum type for cost calculation
    */
-  private getForumType(domain: string): string {
-    if (domain === 'landlordTenant') return 'LTB';
-    if (domain === 'employment') return 'MOL';
-    if (domain === 'civil-negligence' || domain === 'consumerProtection')
-      return 'SmallClaims';
-    if (domain === 'criminal') return 'Court';
-    return 'Other';
+  private getForumType(domain: string, disputeAmount?: number): string {
+    if (domain === 'landlordTenant') return 'Landlord and Tenant Board';
+    if (domain === 'employment') return 'Ministry of Labour';
+    if (domain === 'civil-negligence' || domain === 'consumerProtection') {
+      if (disputeAmount && disputeAmount > 50000) {
+        return 'Ontario Superior Court of Justice';
+      }
+      return 'Small Claims Court';
+    }
+    if (domain === 'criminal') return 'Ontario Superior Court of Justice';
+    return 'Small Claims Court';
   }
 
   /**

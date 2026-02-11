@@ -93,7 +93,14 @@ export class DocumentAgent {
 
     if (domainModule) {
       try {
-        const output = domainModule.generate(classification as any);
+        const output = domainModule.generate({
+          classification,
+          forumMap,
+          timeline,
+          missingEvidence: missingEvidenceChecklist,
+          evidenceIndex,
+          sourceManifest
+        });
         domainDrafts.push(...output.drafts);
       } catch (error) {
         // Log error but continue - can generate standard documents
@@ -118,6 +125,19 @@ export class DocumentAgent {
     );
 
     // Prepare package input
+    const evidenceManifest = {
+      items: (evidenceIndex.items || []).map(item => ({
+        id: item.id,
+        filename: item.filename,
+        type: item.type,
+        hash: item.hash,
+        provenance: item.provenance,
+        credibilityScore: item.credibilityScore,
+        date: item.date
+      })),
+      compiledAt: new Date().toISOString()
+    };
+
     const packageInput: PackageInput = {
       packageName: `${classification.domain}_package_${Date.now()}`,
       forumMap,
@@ -125,10 +145,7 @@ export class DocumentAgent {
       missingEvidenceChecklist,
       drafts: domainDrafts,
       sourceManifest,
-      evidenceManifest: {
-        items: [],
-        compiledAt: new Date().toISOString()
-      },
+      evidenceManifest,
       jurisdiction: classification.jurisdiction,
       domain: classification.domain
     };

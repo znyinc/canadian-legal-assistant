@@ -1,13 +1,11 @@
 import {
   MatterClassification,
-  ClassificationInput,
   EvidenceIndex,
   PartyType,
   Domain,
   Jurisdiction
 } from '../models';
-import { MatterClassifier } from '../triage/MatterClassifier';
-import { BaseKit } from '../kits/BaseKit';
+import { MatterClassifier, ClassificationInput } from '../triage/MatterClassifier';
 
 /**
  * Conversational question for gathering information
@@ -439,7 +437,7 @@ export class IntakeAgent {
       });
     }
 
-    if (classification.domain === 'civilNegligence') {
+    if (classification.domain === 'civil-negligence') {
       requirements.push({
         type: 'incident-photos',
         priority: 'essential',
@@ -549,7 +547,7 @@ Based on your responses:
 - Timeline: ${urgency}
 
 This matter has been classified as: **${classification.domain}** in **${classification.jurisdiction}**
-Urgency Level: **${classification.urgency.toUpperCase()}**
+Urgency Level: **${(classification.urgency ?? 'unknown').toUpperCase()}**
 
 The system will use this classification to provide you with relevant information about:
 - Which court or tribunal handles this type of case
