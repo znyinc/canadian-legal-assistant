@@ -74,7 +74,6 @@ describe('AdvisorResponseView', () => {
     expect(screen.getByText(/gut-punch/i)).toBeInTheDocument();
     expect(screen.getByText(/Your Situation in Plain English/i)).toBeInTheDocument();
     expect(screen.getByText(/Key Insight/i)).toBeInTheDocument();
-    expect(screen.getByText(/What You Lost vs What You May Have Gained/i)).toBeInTheDocument();
     expect(screen.getByText(/Case within a case/i)).toBeInTheDocument();
     expect(screen.getByText(/Send complaint to lawyer/i)).toBeInTheDocument();
     expect(screen.getByLabelText('pathway-diagram')).toBeInTheDocument();

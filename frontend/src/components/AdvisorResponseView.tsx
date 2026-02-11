@@ -155,24 +155,7 @@ export const AdvisorResponseView: React.FC<AdvisorResponseViewProps> = ({
         <p className="text-amber-900 text-sm leading-snug">{safeText(caseProfile.keyInsight)}</p>
       </div>
 
-      {/* 4. Situation comparison table */}
-      <div className="bg-white shadow rounded-lg p-4">
-        <h3 className="text-base font-semibold text-gray-900 mb-3">What You Lost vs What You May Have Gained</h3>
-        <div className="overflow-hidden border border-gray-200 rounded-lg">
-          <div className="grid grid-cols-2 bg-gray-50 text-gray-700 text-sm font-medium">
-            <div className="px-4 py-2 border-r border-gray-200">What You Lost</div>
-            <div className="px-4 py-2">What You May Have Gained</div>
-          </div>
-          {caseProfile.lostVsGained.map((row, idx) => (
-            <div key={idx} className="grid grid-cols-2 text-sm border-t border-gray-200">
-              <div className="px-4 py-2 border-r border-gray-200 text-gray-800">{safeText(row.lost)}</div>
-              <div className="px-4 py-2 text-gray-800">{safeText(row.gained)}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Things to know (exactly 3) */}
+      {/* 4. Things to know (exactly 3) */}
       <div className="bg-white shadow rounded-lg p-4">
         <h3 className="text-base font-semibold text-gray-900 mb-3">The Three Things You Need to Know</h3>
         <ol className="list-decimal list-inside space-y-2 text-sm text-gray-800">
