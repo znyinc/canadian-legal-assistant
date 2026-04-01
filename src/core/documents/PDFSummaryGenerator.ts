@@ -41,6 +41,14 @@ export interface PDFSummaryResult {
     authority: string;
     generatedDate: string;
     matterId?: string;
+    accessibility: {
+      pdfStandard: 'PDF/A-1b';
+      taggedPdf: true;
+      language: 'en-CA';
+      title: string;
+      includesTableHeaders: true;
+      ocrRequiredForScannedDocuments: true;
+    };
   };
   
   /** Suggested filename */
@@ -79,6 +87,9 @@ export class PDFSummaryGenerator {
     // Prominent Disclaimer
     content += this.generateDisclaimer(dataSummary.formName, dataSummary.officialUrl);
 
+    // Accessibility profile for AODA/PDF-A workflow
+    content += this.generateAccessibilityProfile(dataSummary.formName);
+
     // Data Summary Table
     content += this.generateDataTable(dataSummary);
 
@@ -102,6 +113,14 @@ export class PDFSummaryGenerator {
         authority: dataSummary.authority,
         generatedDate,
         matterId: options.matterId,
+        accessibility: {
+          pdfStandard: 'PDF/A-1b',
+          taggedPdf: true,
+          language: 'en-CA',
+          title: `Summary of Information for ${dataSummary.formName}`,
+          includesTableHeaders: true,
+          ocrRequiredForScannedDocuments: true,
+        },
       },
       filename: this.generateFilename(options.formId, options.matterId),
     };
@@ -130,6 +149,20 @@ export class PDFSummaryGenerator {
            `3. Sign and file the official form (not this summary)\n\n` +
            `**This is legal information, not legal advice.** Consider consulting a lawyer or licensed paralegal for advice specific to your situation.\n\n` +
            `---\n\n`;
+  }
+
+  /**
+   * Generate accessibility profile section for PDF conversion steps.
+   */
+  private generateAccessibilityProfile(formName: string): string {
+    return `## Accessibility Profile (AODA + PDF/A)\n\n` +
+           `When converting this summary to PDF for sharing/filing prep, use these settings:\n\n` +
+           `- **PDF standard:** PDF/A-1b\n` +
+           `- **Tagged PDF:** Required (headings, lists, table headers)\n` +
+           `- **Language metadata:** en-CA\n` +
+           `- **Document title metadata:** Summary of Information for ${formName}\n` +
+           `- **Scanned pages:** OCR text layer required for screen-reader access\n\n` +
+           `These settings support Ontario accessibility expectations and reduce filing rejection risk.\n\n`;
   }
 
   /**

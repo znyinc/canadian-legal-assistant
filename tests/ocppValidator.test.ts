@@ -77,6 +77,30 @@ describe('OCPPValidator', () => {
       expect(result.warnings.some((w) => w.includes('Unable to verify PDF/A'))).toBe(true);
     });
 
+    it('warns when tagged PDF structure cannot be verified', () => {
+      const result = validator.validateFiling({
+        filename: 'MOTION.pdf',
+        fileSize: 5 * 1024 * 1024,
+        isPDFA: true,
+        isTaggedPdf: undefined,
+        jurisdiction: 'Ontario'
+      });
+
+      expect(result.warnings.some((w) => w.includes('tagged PDF structure'))).toBe(true);
+    });
+
+    it('warns when OCR layer is missing for scanned pages', () => {
+      const result = validator.validateFiling({
+        filename: 'MOTION.pdf',
+        fileSize: 5 * 1024 * 1024,
+        isPDFA: true,
+        hasOCRTextLayer: false,
+        jurisdiction: 'Ontario'
+      });
+
+      expect(result.warnings.some((w) => w.includes('OCR text'))).toBe(true);
+    });
+
     it('skips validation for non-Ontario jurisdiction', () => {
       const result = validator.validateFiling({
         filename: 'bad filename.pdf',
@@ -101,6 +125,8 @@ describe('OCPPValidator', () => {
       expect(checklist).toContain('LibreOffice');
       expect(checklist).toContain('MS Word');
       expect(checklist).toContain('Adobe Acrobat');
+      expect(checklist).toContain('Tagged PDF structure');
+      expect(checklist).toContain('OCR text layer');
     });
   });
 

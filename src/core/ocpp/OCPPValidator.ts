@@ -39,6 +39,9 @@ export class OCPPValidator {
     filename: string;
     fileSize: number;
     isPDFA?: boolean;
+    pdfaLevel?: string;
+    isTaggedPdf?: boolean;
+    hasOCRTextLayer?: boolean;
     pageSize?: string;
     jurisdiction?: string;
   }): OCPPValidationResult {
@@ -75,6 +78,31 @@ export class OCPPValidator {
     } else if (params.isPDFA === undefined) {
       warnings.push(
         'Unable to verify PDF/A compliance. Ensure document is saved in PDF/A-1b or PDF/A-2b format before filing.'
+      );
+    }
+
+    // 3b. Optional PDF/A level check
+    if (params.isPDFA && params.pdfaLevel && !['PDF/A-1b', 'PDF/A-2b'].includes(params.pdfaLevel)) {
+      warnings.push(
+        `PDF/A level "${params.pdfaLevel}" is unusual for Toronto OCPP e-filing. Prefer PDF/A-1b or PDF/A-2b.`
+      );
+    }
+
+    // 3c. Tagged PDF accessibility check
+    if (params.isTaggedPdf === false) {
+      warnings.push(
+        'Tagged PDF structure is recommended for accessibility (headings, lists, and table headers).'
+      );
+    } else if (params.isTaggedPdf === undefined) {
+      warnings.push(
+        'Unable to verify tagged PDF structure. Enable "Tagged PDF" during export for accessibility.'
+      );
+    }
+
+    // 3d. OCR check for scanned documents
+    if (params.hasOCRTextLayer === false) {
+      warnings.push(
+        'Scanned pages appear to be missing OCR text. Add an OCR text layer for accessibility compliance.'
       );
     }
 
@@ -116,6 +144,8 @@ Before filing with Ontario Superior Court:
 ☐ Open in Adobe Reader → verify shows "PDF/A"
 ☐ Print preview → all pages render correctly
 ☐ Accessibility check (if using assistive tech)
+☐ Tagged PDF structure present (headings/lists/tables)
+☐ OCR text layer present for scanned pages
 
 ## Conversion Tools
 - LibreOffice: File → Export as PDF → Select "PDF/A-1b"

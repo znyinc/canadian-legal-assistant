@@ -115,6 +115,30 @@ describe('PDFSummaryGenerator', () => {
       expect(result.markdownContent).toContain('Generated:');
     });
 
+    it('should include accessibility metadata profile', () => {
+      const generator = new PDFSummaryGenerator();
+      const result = generator.generateSummary({
+        formId: 'form-7a-small-claims',
+        variables: {},
+      });
+
+      expect(result.metadata.accessibility.pdfStandard).toBe('PDF/A-1b');
+      expect(result.metadata.accessibility.taggedPdf).toBe(true);
+      expect(result.metadata.accessibility.ocrRequiredForScannedDocuments).toBe(true);
+    });
+
+    it('should include accessibility profile guidance in markdown', () => {
+      const generator = new PDFSummaryGenerator();
+      const result = generator.generateSummary({
+        formId: 'form-7a-small-claims',
+        variables: {},
+      });
+
+      expect(result.markdownContent).toContain('Accessibility Profile (AODA + PDF/A)');
+      expect(result.markdownContent).toContain('Tagged PDF');
+      expect(result.markdownContent).toContain('OCR text layer');
+    });
+
     it('should throw error for non-existent form', () => {
       const generator = new PDFSummaryGenerator();
       
