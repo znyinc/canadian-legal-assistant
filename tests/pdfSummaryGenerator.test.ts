@@ -320,6 +320,9 @@ describe('PDFSummaryGenerator', () => {
       expect(forms).toContain('ltb-form-t1');
       expect(forms).toContain('ltb-form-l1');
       expect(forms).toContain('victim-impact-statement');
+      expect(forms).toContain('hrto-form-1');
+      expect(forms).toContain('esa-claim-form');
+      expect(forms).toContain('family-form-8-application');
     });
 
     it('should check if form mapping exists', () => {
@@ -327,6 +330,7 @@ describe('PDFSummaryGenerator', () => {
 
       expect(generator.hasFormMapping('form-7a-small-claims')).toBe(true);
       expect(generator.hasFormMapping('ltb-form-t1')).toBe(true);
+      expect(generator.hasFormMapping('hrto-form-1')).toBe(true);
       expect(generator.hasFormMapping('non-existent-form')).toBe(false);
     });
   });

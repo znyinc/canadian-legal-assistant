@@ -634,5 +634,242 @@ export class FormMappingRegistry {
         'Focus on impact, not blame or character attacks',
       ],
     });
+
+    // Human Rights Tribunal of Ontario - Form 1 Application
+    this.mappings.set('hrto-form-1', {
+      formId: 'hrto-form-1',
+      formName: 'HRTO Form 1 - Application under Section 34 of the Human Rights Code',
+      officialUrl: 'https://tribunalsontario.ca/hrto/forms-filing/',
+      authority: 'Human Rights Tribunal of Ontario',
+      jurisdiction: 'Ontario',
+      lastVerified: '2026-03-31',
+      sections: [
+        {
+          id: 'applicant-information',
+          title: 'Applicant Information',
+          fields: [
+            {
+              variableName: 'applicantName',
+              officialSection: 'Part 1',
+              sectionLabel: 'Applicant Name',
+              instructions: 'Full legal name of person filing the application',
+            },
+            {
+              variableName: 'applicantContact',
+              officialSection: 'Part 1',
+              sectionLabel: 'Applicant Contact Information',
+              instructions: 'Address, phone, and email for tribunal correspondence',
+            },
+          ],
+        },
+        {
+          id: 'respondent-information',
+          title: 'Respondent Information',
+          fields: [
+            {
+              variableName: 'respondentName',
+              officialSection: 'Part 2',
+              sectionLabel: 'Respondent Name',
+              instructions: 'Name of employer, landlord, service provider, or individual respondent',
+            },
+            {
+              variableName: 'respondentContact',
+              officialSection: 'Part 2',
+              sectionLabel: 'Respondent Contact Information',
+              instructions: 'Service address for tribunal documents',
+            },
+          ],
+        },
+        {
+          id: 'application-details',
+          title: 'Application Details and Remedy Requested',
+          fields: [
+            {
+              variableName: 'discriminationGrounds',
+              officialSection: 'Part 3',
+              sectionLabel: 'Code Grounds',
+              instructions: 'Identify grounds such as disability, race, sex, creed, etc.',
+            },
+            {
+              variableName: 'incidentTimeline',
+              officialSection: 'Part 4',
+              sectionLabel: 'What Happened and When',
+              instructions: 'Chronological facts with specific dates and events',
+            },
+            {
+              variableName: 'remedyRequested',
+              officialSection: 'Part 5',
+              sectionLabel: 'Remedy Requested',
+              instructions: 'State monetary and non-monetary remedies requested from HRTO',
+            },
+          ],
+          notes: [
+            'Use factual chronology and avoid unsupported conclusions.',
+            'Attach relevant documents or reference them clearly by date.',
+          ],
+        },
+      ],
+      filingInstructions: [
+        'Download HRTO Form 1 from Tribunals Ontario and complete all required fields.',
+        'Submit within one year of the discrimination incident (unless extension granted).',
+        'File through the Tribunals Ontario Portal or by approved filing methods.',
+        'Keep copies of all filed materials and confirmation of submission.',
+      ],
+      warnings: [
+        'HRTO deadlines are strict; late applications may be dismissed.',
+        'Identify the correct legal respondents before filing.',
+        'Do not include sensitive third-party personal information unless necessary.',
+      ],
+    });
+
+    // Employment Standards claim - Ministry of Labour
+    this.mappings.set('esa-claim-form', {
+      formId: 'esa-claim-form',
+      formName: 'Employment Standards Claim Form',
+      officialUrl: 'https://www.ontario.ca/document/your-guide-employment-standards-act-0/filing-claim',
+      authority: 'Ontario Ministry of Labour, Immigration, Training and Skills Development',
+      jurisdiction: 'Ontario',
+      lastVerified: '2026-03-31',
+      sections: [
+        {
+          id: 'employee-information',
+          title: 'Employee Information',
+          fields: [
+            {
+              variableName: 'employeeName',
+              officialSection: 'Section 1',
+              sectionLabel: 'Employee Name',
+              instructions: 'Full legal name of claimant',
+            },
+            {
+              variableName: 'employeeContact',
+              officialSection: 'Section 1',
+              sectionLabel: 'Employee Contact Information',
+              instructions: 'Current mailing address, phone, and email',
+            },
+          ],
+        },
+        {
+          id: 'employer-information',
+          title: 'Employer Information',
+          fields: [
+            {
+              variableName: 'employerName',
+              officialSection: 'Section 2',
+              sectionLabel: 'Employer Legal Name',
+              instructions: 'Use payroll records, ROE, or contract to verify legal name',
+            },
+            {
+              variableName: 'employerAddress',
+              officialSection: 'Section 2',
+              sectionLabel: 'Employer Address',
+              instructions: 'Head office or business address where the employer can be reached',
+            },
+          ],
+        },
+        {
+          id: 'claim-details',
+          title: 'Claim Details',
+          fields: [
+            {
+              variableName: 'claimType',
+              officialSection: 'Section 3',
+              sectionLabel: 'Claim Type',
+              instructions: 'Unpaid wages, termination pay, vacation pay, overtime, etc.',
+            },
+            {
+              variableName: 'claimPeriod',
+              officialSection: 'Section 3',
+              sectionLabel: 'Time Period Covered',
+              instructions: 'Start and end dates for wages or ESA violations',
+            },
+            {
+              variableName: 'amountOwed',
+              officialSection: 'Section 4',
+              sectionLabel: 'Amount Claimed',
+              instructions: 'Estimated amount owed based on records and ESA entitlements',
+            },
+          ],
+        },
+      ],
+      filingInstructions: [
+        'Gather key records (pay stubs, schedules, contract, termination letter) before filing.',
+        'Complete the online Employment Standards claim form with accurate employer details.',
+        'Submit the claim and keep your confirmation number for follow-up.',
+      ],
+      warnings: [
+        'Filing an ESA claim may limit parallel civil claims for the same wages in some situations.',
+        'Claims should generally be filed promptly after the issue arises.',
+      ],
+    });
+
+    // Family Law Rules - Form 8 (Application)
+    this.mappings.set('family-form-8-application', {
+      formId: 'family-form-8-application',
+      formName: 'Family Law Rules Form 8 - Application (General)',
+      officialUrl: 'https://ontariocourtforms.on.ca/en/family-law-rules-forms/',
+      authority: 'Ontario Court of Justice / Superior Court of Justice (Family)',
+      jurisdiction: 'Ontario',
+      lastVerified: '2026-03-31',
+      sections: [
+        {
+          id: 'court-and-parties',
+          title: 'Court and Parties',
+          fields: [
+            {
+              variableName: 'courtLocation',
+              officialSection: 'Part 1',
+              sectionLabel: 'Court Location',
+              instructions: 'Identify the correct family court location',
+            },
+            {
+              variableName: 'applicantName',
+              officialSection: 'Part 1',
+              sectionLabel: 'Applicant Name',
+              instructions: 'Name exactly as used in family law materials',
+            },
+            {
+              variableName: 'respondentName',
+              officialSection: 'Part 1',
+              sectionLabel: 'Respondent Name',
+              instructions: 'Full legal name of responding party',
+            },
+          ],
+        },
+        {
+          id: 'claims-requested',
+          title: 'Claims Requested',
+          fields: [
+            {
+              variableName: 'familyClaimsRequested',
+              officialSection: 'Part 2',
+              sectionLabel: 'Orders Requested',
+              instructions: 'Custody/decision-making, parenting time, support, property, etc.',
+            },
+            {
+              variableName: 'childrenInformation',
+              officialSection: 'Part 3',
+              sectionLabel: 'Children Information',
+              instructions: 'Names, birthdates, and current care arrangements for children',
+            },
+            {
+              variableName: 'existingOrders',
+              officialSection: 'Part 4',
+              sectionLabel: 'Existing Court Orders/Agreements',
+              instructions: 'List prior orders or agreements relevant to this application',
+            },
+          ],
+        },
+      ],
+      filingInstructions: [
+        'Confirm whether you are filing in Ontario Court of Justice or Superior Court of Justice (Family).',
+        'Complete Form 8 and any required companion forms (e.g., financial statement, parenting affidavit).',
+        'File and serve according to Family Law Rules timelines and proof-of-service requirements.',
+      ],
+      warnings: [
+        'Family matters often require multiple companion forms; incomplete packages can be rejected.',
+        'Ensure service is completed properly and documented before attendance dates.',
+      ],
+    });
   }
 }

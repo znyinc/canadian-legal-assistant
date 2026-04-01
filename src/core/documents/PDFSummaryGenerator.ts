@@ -255,6 +255,9 @@ export class PDFSummaryGenerator {
       'ltb-form-t1',
       'ltb-form-l1',
       'victim-impact-statement',
+      'hrto-form-1',
+      'esa-claim-form',
+      'family-form-8-application',
     ];
   }
 

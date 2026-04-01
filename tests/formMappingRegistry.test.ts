@@ -306,4 +306,36 @@ describe('FormMappingRegistry', () => {
       expect(scForms[0].formId).toBe('form-7a-small-claims');
     });
   });
+
+  describe('Ontario Government Forms Integration', () => {
+    it('should retrieve HRTO Form 1 mapping', () => {
+      const registry = new FormMappingRegistry();
+      const mapping = registry.getMapping('hrto-form-1');
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.authority).toBe('Human Rights Tribunal of Ontario');
+      expect(mapping?.officialUrl).toContain('tribunalsontario.ca/hrto');
+      expect(mapping?.sections.length).toBeGreaterThan(0);
+    });
+
+    it('should retrieve ESA claim form mapping', () => {
+      const registry = new FormMappingRegistry();
+      const mapping = registry.getMapping('esa-claim-form');
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.authority).toContain('Ministry of Labour');
+      expect(mapping?.officialUrl).toContain('ontario.ca');
+      expect(mapping?.warnings?.length).toBeGreaterThan(0);
+    });
+
+    it('should retrieve Family Form 8 mapping', () => {
+      const registry = new FormMappingRegistry();
+      const mapping = registry.getMapping('family-form-8-application');
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.formName).toContain('Form 8');
+      expect(mapping?.authority).toContain('Family');
+      expect(mapping?.filingInstructions.length).toBeGreaterThan(0);
+    });
+  });
 });
