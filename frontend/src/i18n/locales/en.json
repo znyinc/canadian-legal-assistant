@@ -1,0 +1,24 @@
+{
+  "app": {
+    "title": "Canadian Legal Assistant",
+    "nav": {
+      "matters": "Matters",
+      "newMatter": "New Matter",
+      "caseLaw": "Case Law",
+      "settings": "Settings"
+    },
+    "disclaimer": {
+      "title": "Legal Information Only:",
+      "body": "This system provides legal information, not legal advice. Consider consulting a licensed lawyer for complex matters."
+    }
+  },
+  "footer": {
+    "disclaimer": "This is legal information, not legal advice. Consult a lawyer for your specific situation.",
+    "learnMore": "Learn more"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  }
+}

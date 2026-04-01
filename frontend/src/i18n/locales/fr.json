@@ -1,0 +1,24 @@
+{
+  "app": {
+    "title": "Assistant juridique canadien",
+    "nav": {
+      "matters": "Dossiers",
+      "newMatter": "Nouveau dossier",
+      "caseLaw": "Jurisprudence",
+      "settings": "Paramètres"
+    },
+    "disclaimer": {
+      "title": "Information juridique seulement :",
+      "body": "Ce système fournit de l'information juridique, et non des conseils juridiques. Pour les situations complexes, consultez un avocat autorisé."
+    }
+  },
+  "footer": {
+    "disclaimer": "Ceci est de l'information juridique, et non un avis juridique. Consultez un avocat pour votre situation précise.",
+    "learnMore": "En savoir plus"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  }
+}
