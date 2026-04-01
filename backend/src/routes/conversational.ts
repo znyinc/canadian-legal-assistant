@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { IntakeAgent } from '../../../src/core/agents/IntakeAgent';
 import { GuidanceAgent } from '../../../src/core/agents/GuidanceAgent';
 import { MatterClassifier } from '../../../src/core/triage/MatterClassifier';
 import { LimitationPeriodsEngine } from '../../../src/core/limitation/LimitationPeriodsEngine';
@@ -10,18 +9,99 @@ import { AuditLogger } from '../../../src/core/audit/AuditLogger';
 const router = Router();
 
 // Initialize agents and services
-const intakeAgent = new IntakeAgent();
 const classifier = new MatterClassifier();
 const limitationEngine = new LimitationPeriodsEngine();
 const costCalculator = new CostCalculator();
 const actionPlanGenerator = new ActionPlanGenerator();
 const guidanceAgent = new GuidanceAgent(
-  classifier,
+  actionPlanGenerator,
   limitationEngine,
-  costCalculator,
-  actionPlanGenerator
+  costCalculator
 );
 const auditLogger = new AuditLogger();
+
+type IntakeResult = {
+  classification: {
+    domain: string;
+    jurisdiction: string;
+    urgency: string;
+    confidence: number;
+    pillarMatches?: unknown;
+  };
+  confidence: number;
+  followUpQuestions: string[];
+  isComplete: boolean;
+  reviewState: 'needs-clarification' | 'ready-for-import';
+  importReadiness: boolean;
+};
+
+function buildFollowUpQuestionsFromClassification(domain: string): string[] {
+  const generic = [
+    'When did this start?',
+    'Who are the other parties involved?',
+    'Do you have any documents or messages related to this?',
+  ];
+
+  if (domain === 'employment') {
+    return [
+      'Were you terminated, laid off, or did you resign?',
+      'How long did you work there?',
+      ...generic,
+    ];
+  }
+
+  if (domain === 'landlordTenant') {
+    return [
+      'Is this about rent, repairs, or an eviction notice?',
+      'Do you have your lease and any written notices?',
+      ...generic,
+    ];
+  }
+
+  if (domain === 'criminal') {
+    return [
+      'Are you a witness, victim, or accused person?',
+      'Do you have an occurrence number or police contact details?',
+      ...generic,
+    ];
+  }
+
+  return generic;
+}
+
+function buildIntakeResult(userInput: string, conversationHistory: Array<{ type?: string; content?: string }>): IntakeResult {
+  const previousResponses = (conversationHistory ?? [])
+    .filter((m: { type?: string }) => m.type === 'user')
+    .map((m: { content?: string }) => m.content ?? '');
+
+  const fullText = [...previousResponses, userInput].filter(Boolean).join('\n\n');
+  const classification = classifier.classifyWithConfidence({
+    description: fullText,
+    source: 'conversational-intake',
+  });
+
+  const confidence = classification.confidence?.overall ?? 0;
+  const isComplete = confidence >= 75;
+  const reviewState = isComplete ? 'ready-for-import' : 'needs-clarification';
+  const followUpQuestions = isComplete
+    ? []
+    : buildFollowUpQuestionsFromClassification(classification.domain);
+
+  return {
+    classification: {
+      domain: classification.domain,
+      jurisdiction: classification.jurisdiction,
+      urgency: classification.urgency,
+      confidence,
+      pillarMatches: (classification as unknown as { pillarMatches?: unknown }).pillarMatches,
+    },
+    confidence,
+    followUpQuestions,
+    isComplete,
+    reviewState,
+    importReadiness: isComplete,
+  };
+}
 
 /**
  * POST /api/intake/process
@@ -29,51 +109,89 @@ const auditLogger = new AuditLogger();
  */
 router.post('/intake/process', async (req: Request, res: Response) => {
   try {
-    const { userInput, conversationHistory, uploadedFileNames } = req.body;
-
-    // Reconstruct conversation context
-    const previousResponses = conversationHistory
-      .filter((m: any) => m.type === 'user')
-      .map((m: any) => m.content);
-
-    // Classify matter based on accumulated input
-    const fullText = [...previousResponses, userInput].join('\n\n');
-    const classification = classifier.classifyWithConfidence({
-      description: fullText,
-      source: 'conversational-intake',
-    });
-
-    // Generate follow-up questions if confidence is low
-    let followUpQuestions: string[] = [];
-    if (classification.overallConfidence < 75) {
-      followUpQuestions = intakeAgent.generateFollowUpQuestions(
-        classification as any,
-        previousResponses
-      );
-    }
+    const { userInput, conversationHistory } = req.body;
+    const intakeResult = buildIntakeResult(userInput ?? '', conversationHistory ?? []);
 
     // Log intake progression
     await auditLogger.log('intake-event', 'system', {
-      stage: classification.overallConfidence >= 75 ? 'complete' : 'in-progress',
-      confidence: classification.overallConfidence,
-      domain: classification.domain,
-      inputLength: userInput.length,
+      stage: intakeResult.isComplete ? 'complete' : 'in-progress',
+      confidence: intakeResult.confidence,
+      domain: intakeResult.classification.domain,
+      inputLength: (userInput ?? '').length,
+      reviewState: intakeResult.reviewState,
+      importReadiness: intakeResult.importReadiness,
     });
 
-    res.json({
-      classification: {
-        domain: classification.domain,
-        jurisdiction: classification.jurisdiction,
-        urgency: classification.urgency,
-        confidence: classification.overallConfidence,
-        pillarMatches: (classification as any).pillarMatches,
-      },
-      followUpQuestions,
-      isComplete: classification.overallConfidence >= 75,
-    });
+    res.json(intakeResult);
   } catch (error) {
     console.error('Error processing intake:', error);
     res.status(500).json({ error: 'Failed to process intake' });
+  }
+});
+
+/**
+ * POST /api/conversational/intake/stream
+ * Streams assistant response chunks while preserving import and review state.
+ */
+router.post('/intake/stream', async (req: Request, res: Response) => {
+  try {
+    const { userInput, conversationHistory } = req.body;
+    const intakeResult = buildIntakeResult(userInput ?? '', conversationHistory ?? []);
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const sendEvent = (event: string, data: unknown) => {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    sendEvent('meta', {
+      classification: intakeResult.classification,
+      confidence: intakeResult.confidence,
+      reviewState: intakeResult.reviewState,
+      importReadiness: intakeResult.importReadiness,
+    });
+
+    const assistantText = intakeResult.isComplete
+      ? `Great. I understand your situation: you're dealing with a ${intakeResult.classification.domain} matter in ${intakeResult.classification.jurisdiction}. I'll gather what you've shared and show you the options available.`
+      : 'Got it. Just a few quick clarifications to make sure I understand correctly.';
+
+    const chunks = assistantText.match(/.{1,30}/g) ?? [assistantText];
+    for (const chunk of chunks) {
+      sendEvent('delta', { chunk });
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    sendEvent('final', {
+      message: assistantText,
+      ...intakeResult,
+    });
+    sendEvent('done', { ok: true });
+
+    await auditLogger.log('intake-event', 'system', {
+      stage: intakeResult.isComplete ? 'complete' : 'in-progress',
+      confidence: intakeResult.confidence,
+      domain: intakeResult.classification.domain,
+      inputLength: (userInput ?? '').length,
+      reviewState: intakeResult.reviewState,
+      importReadiness: intakeResult.importReadiness,
+      streamed: true,
+    });
+
+    res.end();
+  } catch (error) {
+    console.error('Error streaming intake:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to stream intake' });
+      return;
+    }
+
+    res.write('event: error\n');
+    res.write(`data: ${JSON.stringify({ error: 'Failed to stream intake' })}\n\n`);
+    res.end();
   }
 });
 
@@ -142,7 +260,7 @@ router.post('/guidance/generate', async (req: Request, res: Response) => {
         // Guide step - step-by-step path
         guidance: {
           title: 'Your path forward',
-          text: 'Here's how we move forward, step by step:',
+          text: "Here's how we move forward, step by step:",
           steps: (guidance.settlementPathways || [])
             .map((pathway: any) => ({
               title: pathway.name,

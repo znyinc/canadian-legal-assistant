@@ -36,7 +36,7 @@ export const ConversationalGuidancePage: React.FC<{
     setStage('loading');
     try {
       // Call backend to get guidance using GuidanceAgent
-      const response = await fetch('/api/guidance/generate', {
+      const response = await fetch('/api/conversational/guidance/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
