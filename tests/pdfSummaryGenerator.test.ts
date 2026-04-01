@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PDFSummaryGenerator } from '../src/core/documents/PDFSummaryGenerator';
+import { FormMappingRegistry } from '../src/core/templates/FormMappingRegistry';
 
 describe('PDFSummaryGenerator', () => {
   describe('Summary Generation', () => {
@@ -332,6 +333,13 @@ describe('PDFSummaryGenerator', () => {
       expect(generator.hasFormMapping('ltb-form-t1')).toBe(true);
       expect(generator.hasFormMapping('hrto-form-1')).toBe(true);
       expect(generator.hasFormMapping('non-existent-form')).toBe(false);
+    });
+
+    it('should stay in sync with FormMappingRegistry IDs', () => {
+      const generator = new PDFSummaryGenerator();
+      const registry = new FormMappingRegistry();
+
+      expect(generator.getAvailableForms().sort()).toEqual(registry.getAllFormIds().sort());
     });
   });
 

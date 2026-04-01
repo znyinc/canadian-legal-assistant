@@ -248,17 +248,7 @@ export class PDFSummaryGenerator {
    * Get all available form IDs
    */
   getAvailableForms(): string[] {
-    // This would ideally query the registry for all form IDs
-    // For now, return the ones we've implemented
-    return [
-      'form-7a-small-claims',
-      'ltb-form-t1',
-      'ltb-form-l1',
-      'victim-impact-statement',
-      'hrto-form-1',
-      'esa-claim-form',
-      'family-form-8-application',
-    ];
+    return this.registry.getAllFormIds();
   }
 
   /**

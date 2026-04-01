@@ -70,6 +70,24 @@ export interface OfficialFormMapping {
   lastVerified?: string;
 }
 
+export interface FormVersionValidation {
+  formId: string;
+  formName: string;
+  lastVerified?: string;
+  daysSinceLastVerified: number | null;
+  isStale: boolean;
+  trustedSource: boolean;
+  reviewNotes: string[];
+}
+
+const FORM_VERSION_STALE_DAYS = 180;
+const TRUSTED_FORM_HOSTS = [
+  'ontariocourtforms.on.ca',
+  'tribunalsontario.ca',
+  'forms.mgcs.gov.on.ca',
+  'ontario.ca',
+];
+
 export class FormMappingRegistry {
   private mappings: Map<string, OfficialFormMapping>;
 
@@ -100,6 +118,66 @@ export class FormMappingRegistry {
     return Array.from(this.mappings.values()).find(mapping =>
       mapping.formName.toLowerCase() === target
     );
+  }
+
+  /**
+   * Get all known form IDs.
+   */
+  getAllFormIds(): string[] {
+    return Array.from(this.mappings.keys());
+  }
+
+  /**
+   * Validate freshness and source trust for one mapped form.
+   */
+  validateFormVersion(formId: string, asOfDate: Date = new Date()): FormVersionValidation | undefined {
+    const mapping = this.mappings.get(formId);
+    if (!mapping) {
+      return undefined;
+    }
+
+    const reviewNotes: string[] = [];
+    const daysSinceLastVerified = this.getDaysSinceVerification(mapping.lastVerified, asOfDate);
+    const isStale = daysSinceLastVerified !== null && daysSinceLastVerified > FORM_VERSION_STALE_DAYS;
+    const trustedSource = this.isTrustedOfficialUrl(mapping.officialUrl);
+
+    if (!mapping.lastVerified) {
+      reviewNotes.push('No lastVerified date recorded.');
+    }
+
+    if (isStale) {
+      reviewNotes.push(
+        `Last verification is older than ${FORM_VERSION_STALE_DAYS} days. Confirm official form version and filing instructions.`
+      );
+    }
+
+    if (!trustedSource) {
+      reviewNotes.push('Official form URL is not from a trusted Ontario forms source.');
+    }
+
+    if (mapping.jurisdiction !== 'Ontario') {
+      reviewNotes.push('Mapping jurisdiction differs from Ontario-first policy.');
+    }
+
+    return {
+      formId: mapping.formId,
+      formName: mapping.formName,
+      lastVerified: mapping.lastVerified,
+      daysSinceLastVerified,
+      isStale,
+      trustedSource,
+      reviewNotes,
+    };
+  }
+
+  /**
+   * Return all forms that need a maintenance review now.
+   */
+  getFormsNeedingReview(asOfDate: Date = new Date()): FormVersionValidation[] {
+    return this.getAllFormIds()
+      .map(formId => this.validateFormVersion(formId, asOfDate))
+      .filter((status): status is FormVersionValidation => status !== undefined)
+      .filter(status => status.isStale || !status.trustedSource || status.reviewNotes.length > 0);
   }
 
   /**
@@ -216,6 +294,29 @@ export class FormMappingRegistry {
     if (typeof value === 'number') return value.toString();
     if (Array.isArray(value)) return value.join(', ');
     return JSON.stringify(value);
+  }
+
+  private getDaysSinceVerification(lastVerified: string | undefined, asOfDate: Date): number | null {
+    if (!lastVerified) {
+      return null;
+    }
+
+    const verifiedDate = new Date(lastVerified);
+    if (Number.isNaN(verifiedDate.getTime())) {
+      return null;
+    }
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.floor((asOfDate.getTime() - verifiedDate.getTime()) / msPerDay);
+  }
+
+  private isTrustedOfficialUrl(url: string): boolean {
+    try {
+      const host = new URL(url).hostname.toLowerCase();
+      return TRUSTED_FORM_HOSTS.some(trustedHost => host === trustedHost || host.endsWith(`.${trustedHost}`));
+    } catch {
+      return false;
+    }
   }
 
   /**

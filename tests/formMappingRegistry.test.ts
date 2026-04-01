@@ -338,4 +338,34 @@ describe('FormMappingRegistry', () => {
       expect(mapping?.filingInstructions.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Form Version Checking and Validation', () => {
+    it('should return a version validation status for a mapped form', () => {
+      const registry = new FormMappingRegistry();
+      const status = registry.validateFormVersion('hrto-form-1', new Date('2026-03-31'));
+
+      expect(status).toBeDefined();
+      expect(status?.formId).toBe('hrto-form-1');
+      expect(status?.trustedSource).toBe(true);
+      expect(status?.daysSinceLastVerified).toBe(0);
+      expect(status?.isStale).toBe(false);
+    });
+
+    it('should flag stale mappings based on lastVerified date', () => {
+      const registry = new FormMappingRegistry();
+      const status = registry.validateFormVersion('form-7a-small-claims', new Date('2026-12-31'));
+
+      expect(status).toBeDefined();
+      expect(status?.isStale).toBe(true);
+      expect(status?.reviewNotes.some(note => note.includes('older than 180 days'))).toBe(true);
+    });
+
+    it('should return review set for forms needing maintenance', () => {
+      const registry = new FormMappingRegistry();
+      const reviewItems = registry.getFormsNeedingReview(new Date('2026-12-31'));
+
+      expect(reviewItems.length).toBeGreaterThan(0);
+      expect(reviewItems.some(item => item.formId === 'form-7a-small-claims')).toBe(true);
+    });
+  });
 });
