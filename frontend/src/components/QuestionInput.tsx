@@ -22,6 +22,7 @@ interface QuestionInputProps {
 
 export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, onChange, error }) => {
   const [touched, setTouched] = useState(false);
+  const inputId = `question-${question.id}`;
 
   const handleBlur = () => setTouched(true);
 
@@ -32,7 +33,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
     case 'text':
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-900">
             {safeText(question.label)}
             {question.required && <span className="text-red-600 ml-1">*</span>}
           </label>
@@ -40,14 +41,14 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
             <p className="text-xs text-gray-600">{safeText(question.helpText)}</p>
           )}
           <input
+            id={inputId}
             type="text"
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             onBlur={handleBlur}
             placeholder={question.placeholder}
             className={`${commonClasses} ${errorClasses}`}
-            aria-required={question.required}
-            aria-invalid={!!error && touched}
+            required={question.required === true}
           />
           {error && touched && (
             <p className="text-sm text-red-600">{safeText(error)}</p>
@@ -58,7 +59,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
     case 'textarea':
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-900">
             {safeText(question.label)}
             {question.required && <span className="text-red-600 ml-1">*</span>}
           </label>
@@ -66,14 +67,14 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
             <p className="text-xs text-gray-600">{safeText(question.helpText)}</p>
           )}
           <textarea
+            id={inputId}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             onBlur={handleBlur}
             placeholder={question.placeholder}
             rows={4}
             className={`${commonClasses} ${errorClasses}`}
-            aria-required={question.required}
-            aria-invalid={!!error && touched}
+            required={question.required === true}
           />
           {error && touched && (
             <p className="text-sm text-red-600">{safeText(error)}</p>
@@ -84,7 +85,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
     case 'date':
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-900">
             {safeText(question.label)}
             {question.required && <span className="text-red-600 ml-1">*</span>}
           </label>
@@ -92,13 +93,13 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
             <p className="text-xs text-gray-600">{safeText(question.helpText)}</p>
           )}
           <input
+            id={inputId}
             type="date"
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             onBlur={handleBlur}
             className={`${commonClasses} ${errorClasses}`}
-            aria-required={question.required}
-            aria-invalid={!!error && touched}
+            required={question.required === true}
           />
           {error && touched && (
             <p className="text-sm text-red-600">{safeText(error)}</p>
@@ -109,7 +110,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
     case 'currency':
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-900">
             {safeText(question.label)}
             {question.required && <span className="text-red-600 ml-1">*</span>}
           </label>
@@ -119,6 +120,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-gray-600">$</span>
             <input
+              id={inputId}
               type="number"
               value={value || ''}
               onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
@@ -127,8 +129,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
               className={`${commonClasses} ${errorClasses} pl-8`}
               min="0"
               step="0.01"
-              aria-required={question.required}
-              aria-invalid={!!error && touched}
+              required={question.required === true}
             />
           </div>
           {error && touched && (
@@ -140,7 +141,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
     case 'select':
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-900">
             {safeText(question.label)}
             {question.required && <span className="text-red-600 ml-1">*</span>}
           </label>
@@ -148,6 +149,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
             <p className="text-xs text-gray-600">{safeText(question.helpText)}</p>
           )}
           <select
+            id={inputId}
             value={value || ''}
             onChange={(e) => {
               const selectedOption = question.options?.find((opt: { value: any; label: string }) => opt.value === e.target.value);
@@ -155,8 +157,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
             }}
             onBlur={handleBlur}
             className={`${commonClasses} ${errorClasses}`}
-            aria-required={question.required}
-            aria-invalid={!!error && touched}
+            required={question.required === true}
           >
             <option value="">-- Select an option --</option>
             {question.options?.map((opt: { value: any; label: string }) => (
@@ -184,7 +185,8 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
           )}
           <div className="space-y-2 border border-gray-300 rounded-lg p-3">
             {question.options?.map((opt: { value: any; label: string }) => (
-              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">\n                <input
+              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                <input
                   type="checkbox"
                   checked={selectedValues.includes(opt.value)}
                   onChange={(e) => {
@@ -226,7 +228,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
                 onChange={(e) => onChange(e.target.value)}
                 onBlur={handleBlur}
                 className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                aria-required={question.required}
+                required={question.required === true}
               />
               <span className="text-sm text-gray-800">Yes</span>
             </label>
@@ -239,7 +241,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({ question, value, o
                 onChange={(e) => onChange(e.target.value)}
                 onBlur={handleBlur}
                 className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                aria-required={question.required}
+                required={question.required === true}
               />
               <span className="text-sm text-gray-800">No</span>
             </label>

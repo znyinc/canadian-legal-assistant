@@ -29,15 +29,28 @@ interface Alternative {
   description: string;
   primary?: boolean;
   category?: string;
+  semanticScore?: number;
+  semanticSource?: 'litellm-embedding';
+}
+
+interface SemanticSearchState {
+  enabled: boolean;
+  status: 'disabled' | 'ok' | 'unavailable' | 'error';
+  source?: string;
+  model?: string;
+  message?: string;
+  resultsCount?: number;
 }
 
 export function CaseLawPage() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchUrl, setSearchUrl] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<CaseResult[]>([]);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  const [semanticSearch, setSemanticSearch] = useState<SemanticSearchState | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
   // Auto-search if query parameter is present
@@ -60,9 +73,12 @@ export function CaseLawPage() {
     setHasSearched(true);
     setFailure(null);
     setAlternatives([]);
+    setSemanticSearch(null);
+    setSearchUrl('');
 
     try {
       const data = await api.searchCaselaw(query);
+      setSearchUrl(typeof data.searchUrl === 'string' ? data.searchUrl : '');
 
       // Sanitize results before storing/displaying to prevent DOM-based XSS
       const sanitizedResults = (data.results || []).map((r: any) => ({
@@ -82,8 +98,11 @@ export function CaseLawPage() {
           name: safeText(a.name),
           description: safeText(a.description),
           url: safeURL(a.url, undefined) || '',
+          semanticScore: typeof a.semanticScore === 'number' ? a.semanticScore : undefined,
+          semanticSource: a.semanticSource === 'litellm-embedding' ? a.semanticSource : undefined,
         }));
         setAlternatives(sanitizedAlts);
+        setSemanticSearch(data.semanticSearch || null);
       }
     } catch (err) {
       setFailure({
@@ -93,6 +112,7 @@ export function CaseLawPage() {
         suggestion: 'Try searching directly on CanLII or consult the alternative resources below.',
       });
       setResults([]);
+      setSearchUrl('');
     } finally {
       setIsSearching(false);
     }
@@ -103,6 +123,15 @@ export function CaseLawPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     await performSearch(searchQuery);
+  };
+
+  const copyCanliiLink = (link: string) => {
+    const safeLink = safeURL(link, ['canlii.org']);
+    if (!safeLink) {
+      return;
+    }
+    navigator.clipboard.writeText(safeLink);
+    alert('CanLII link copied to clipboard');
   };
 
   return (
@@ -133,9 +162,20 @@ export function CaseLawPage() {
           </button>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          <strong>Note:</strong> The CanLII API does not support free-text search. 
-          Resources below are organized by <strong>Canada's court hierarchy</strong> from Supreme Court to provincial courts.
+          <strong>Note:</strong> The public CanLII API does not support free-text search. This page returns the CanLII website search link plus current official court and tribunal pages. When configured, LiteLLM embeddings rank the research resources by meaning.
         </p>
+        {hasSearched && searchUrl && (
+          <div className="mt-4">
+            <a
+              href={safeURL(searchUrl, ['canlii.org']) || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              Open CanLII search for "{safeText(searchQuery)}"
+            </a>
+          </div>
+        )}
       </form>
 
       {/* Retrieval Failure Message */}
@@ -168,14 +208,13 @@ export function CaseLawPage() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-semibold text-blue-600 hover:text-blue-700">
-                    <a
-                      href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
+                    <button
+                      type="button"
+                      onClick={() => copyCanliiLink(result.canliiLink)}
+                      className="underline text-left"
                     >
                       {safeText(result.caseName)}
-                    </a>
+                    </button>
                   </h3>
                   <span className="text-sm bg-gray-100 px-3 py-1 rounded-full text-gray-700">
                     {safeText(String(result.year))}
@@ -197,14 +236,13 @@ export function CaseLawPage() {
                   </code>
                   {result.citationWithURL && (
                     <p className="text-xs text-gray-500 mt-2">
-                      <a
-                        href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => copyCanliiLink(result.canliiLink)}
                         className="text-blue-600 hover:text-blue-700"
                       >
-                        View on CanLII ↗
-                      </a>
+                        Copy CanLII Link
+                      </button>
                     </p>
                   )}
                 </div>
@@ -219,14 +257,13 @@ export function CaseLawPage() {
                   >
                     Copy Citation
                   </button>
-                  <a
-                    href={safeURL(result.canliiLink, ['canlii.org']) || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => copyCanliiLink(result.canliiLink)}
                     className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition-colors text-sm"
                   >
-                    Read Full Case →
-                  </a>
+                    Copy Full Case Link
+                  </button>
                 </div>
               </div>
             ))}
@@ -249,6 +286,28 @@ export function CaseLawPage() {
       {hasSearched && alternatives.length > 0 && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Case Law Resources</h2>
+
+          {semanticSearch?.status === 'ok' && (semanticSearch.resultsCount || 0) > 0 && (
+            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-green-800">
+                LiteLLM semantic ranking is active. The top resource cards are ordered by embedding similarity for this query.
+              </p>
+              {semanticSearch.model && (
+                <p className="text-xs text-green-700 mt-1">Embedding model: {safeText(semanticSearch.model)}</p>
+              )}
+            </div>
+          )}
+
+          {semanticSearch && ['error', 'unavailable'].includes(semanticSearch.status) && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                Semantic ranking is unavailable, so the standard official resource list is shown.
+              </p>
+              {semanticSearch.message && (
+                <p className="text-xs text-yellow-700 mt-1">{safeText(semanticSearch.message)}</p>
+              )}
+            </div>
+          )}
           
           <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800 mb-2">
@@ -316,6 +375,11 @@ export function CaseLawPage() {
                           {safeText(alt.name)}
                         </h4>
                         <p className="text-sm text-gray-600 mb-2">{safeText(alt.description)}</p>
+                        {typeof alt.semanticScore === 'number' && (
+                          <p className="text-xs text-green-700 mb-2">
+                            Semantic match: {Math.round(alt.semanticScore * 100)}%
+                          </p>
+                        )}
                         <span className="text-blue-600 text-sm font-medium">
                           {category === 'Primary Database' ? 'Search Now →' : 'Browse →'}
                         </span>

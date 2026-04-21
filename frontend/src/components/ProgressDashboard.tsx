@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, AlertTriangle, TrendingUp, Users, Lock, Settings } from 'lucide-react';
+import { Calendar, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export interface DashboardMetric {
   label: string;
@@ -55,14 +55,6 @@ const getUrgencyColor = (urgency: 'critical' | 'high' | 'moderate' | 'low') => {
   }
 };
 
-const getMetricIcon = (label: string) => {
-  if (label.includes('Deadline')) return <Calendar className="w-5 h-5" />;
-  if (label.includes('Risk')) return <AlertTriangle className="w-5 h-5" />;
-  if (label.includes('Progress')) return <TrendingUp className="w-5 h-5" />;
-  if (label.includes('Participant')) return <Users className="w-5 h-5" />;
-  return <Lock className="w-5 h-5" />;
-};
-
 /**
  * ProgressDashboard Component
  * Real-time tracking of multiple kit executions with deadline management
@@ -78,6 +70,33 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   showCoordination = true,
 }) => {
   const [expandedKit, setExpandedKit] = useState<string | null>(null);
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
+  const toWidthClass = (value: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(value / 5) * 5));
+    return widthByFive[clamped];
+  };
 
   // Calculate overall statistics
   const totalKits = activeKits.length;
@@ -131,8 +150,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           </div>
           <div className="w-full bg-blue-300 rounded-full h-2">
             <div
-              className="bg-white h-2 rounded-full transition-all duration-300"
-              style={{ width: `${totalKits > 0 ? Math.round((completedKits / totalKits) * 100) : 0}%` }}
+              className={`bg-white h-2 rounded-full transition-all duration-300 ${toWidthClass(totalKits > 0 ? Math.round((completedKits / totalKits) * 100) : 0)}`}
             />
           </div>
         </div>
@@ -182,8 +200,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                                 : kit.progress >= 50
                                   ? 'bg-blue-600'
                                   : 'bg-orange-600'
-                            }`}
-                            style={{ width: `${kit.progress}%` }}
+                            } ${toWidthClass(kit.progress)}`}
                           />
                         </div>
                         <span className="text-sm font-semibold text-gray-700 w-12 text-right">

@@ -1,5 +1,5 @@
 # AI Coding Instructions
-<!-- Auto-generated 2026-03-31 � DO NOT EDIT -->
+<!-- Auto-generated 2026-04-21 � DO NOT EDIT -->
 
 # Core Principles — LEGAL (canadian-legal-assistant)
 
@@ -106,7 +106,7 @@ canadian-legal-assistant/
 | Testing (unit) | Vitest | Root vitest.config.ts + vitest.config.ts |
 | Testing (E2E) | Playwright | playwright.config.ts at root |
 | CI | GitHub Actions | ci.yml |
-| Security scan | Snyk | Runs on every PR |
+| Security scan | Optional/background | Run on request or separately configured CI |
 | Package manager | npm | package-lock.json present |
 
 ## LLM / AI Layer (Current)
@@ -150,7 +150,7 @@ Planned: replace with ModelRouter supporting Claude, Gemini, Llama adapters.
 - **XSS mitigation** — DOMPurify + safeText() helper on all user-supplied content rendered in React
 - **Rate limiting** — per-IP on upload routes; concurrent read cap on evidence processing
 - **Disable X-Powered-By** in Express — already applied in server.ts
-- **Snyk scan must pass** before any merge to main
+- Security scanning is optional and may be run on request
 
 ## Source Access Rules
 
@@ -191,7 +191,7 @@ Planned: replace with ModelRouter supporting Claude, Gemini, Llama adapters.
 - Backend must compile with 0 TypeScript errors before any commit
 - Frontend: Vite + React; tsconfig.json separate
 - Test runner: Vitest (unit), Playwright (E2E at e2e)
-- CI: GitHub Actions in ci.yml (unit -> backend -> frontend -> E2E -> Snyk -> quality gate)
+- CI: GitHub Actions in ci.yml (unit -> backend -> frontend -> E2E -> quality gate)
 
 
 ---
@@ -216,7 +216,7 @@ Planned: replace with ModelRouter supporting Claude, Gemini, Llama adapters.
 - Unit tests: 558/627 passing (69 failing — all in agent/kit layer from Task 26.7 interface drift)
 - E2E tests: 5/5 passing
 - Backend build: 0 TypeScript errors
-- Security: Snyk clean
+- Security: Background scanner available (non-blocking)
 
 ## Open Tasks (Priority Order)
 

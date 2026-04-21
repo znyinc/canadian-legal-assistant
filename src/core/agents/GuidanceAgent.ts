@@ -328,40 +328,38 @@ export class GuidanceAgent {
 
     if (classification.domain === 'criminal') {
       recommendations.push({
-        id: 'rec-victim-support',
-        title: 'Access Victim Support Services',
+        id: 'rec-role-clarification',
+        title: 'Clarify Your Role In The Criminal Process',
         description:
-          'Victims and witnesses can access free support services',
+          'Confirm whether you are responding to charges, reporting an incident, or managing overlap with a civil dispute before choosing next steps.',
         applicability: 90,
         timeframe: 'Immediately available',
         resources: [
           {
-            type: 'organization',
-            title: 'Victim/Witness Assistance Program (V/WAP)',
-            phone: '416-314-2447',
-            description: 'Free support for victims and witnesses'
+            type: 'document',
+            title: 'Role Clarification Checklist',
+            description: 'Identify your role before selecting court actions, support requests, or legal representation steps.'
           },
           {
             type: 'organization',
-            title: 'Victim Services Ontario',
-            url: 'https://www.ontario.ca/page/victim-services',
-            description: 'Provincial victim support services'
+            title: 'Duty Counsel And Legal Aid Information',
+            description: 'Use this if you are responding to charges and need immediate process guidance.'
           }
         ]
       });
 
       recommendations.push({
-        id: 'rec-crown-communication',
-        title: 'Stay in Contact with Crown Attorney',
+        id: 'rec-criminal-documentation',
+        title: 'Preserve Records And Timeline',
         description:
-          'Crown Attorney will handle the prosecution - maintain contact about case status',
+          'Keep a dated timeline, key messages, and official case references in one place so your next step stays evidence-based.',
         applicability: 85,
         timeframe: 'Throughout proceedings',
         resources: [
           {
             type: 'document',
-            title: 'What to Expect in Criminal Court',
-            description: 'Overview of criminal process'
+            title: 'Criminal Process Information Guide',
+            description: 'Overview of court process, disclosure stages, and role-dependent support pathways.'
           }
         ]
       });
@@ -467,22 +465,30 @@ export class GuidanceAgent {
         estimatedTimeframe: '6-12 months'
       });
     } else if (classification.domain === 'criminal') {
-      recommendedPathway = 'Crown-Led Prosecution';
+      recommendedPathway = 'Role-Confirmed Criminal Information Path';
 
       alternativePathways.push({
-        pathway: 'Peace Bond (810 Order)',
-        pros: ['Avoids conviction', 'Faster resolution'],
-        cons: ['Conditions imposed', 'Conditions cost'],
-        estimatedCost: 500,
+        pathway: 'If Responding To Charges: Counsel-Led Defence Preparation',
+        pros: ['Protects procedural rights', 'Clarifies release and disclosure obligations'],
+        cons: ['Legal service costs may apply', 'Requires quick organization of facts and records'],
+        estimatedCost: 2500,
         estimatedTimeframe: '1-3 months'
       });
 
       alternativePathways.push({
-        pathway: 'Trial',
-        pros: ['Full legal process', 'Public hearing'],
-        cons: ['Uncertainty', 'Time-consuming', 'May escalate'],
-        estimatedCost: 5000,
-        estimatedTimeframe: '6-24 months'
+        pathway: 'If Reporting Party: Support Services And Police Follow-Up',
+        pros: ['Safety-focused support', 'Helps preserve evidence and case continuity'],
+        cons: ['Does not guarantee prosecution outcomes', 'May involve delays in updates'],
+        estimatedCost: 0,
+        estimatedTimeframe: 'Ongoing'
+      });
+
+      alternativePathways.push({
+        pathway: 'If Civil Overlap Exists: Parallel Civil Deadline Protection',
+        pros: ['Prevents missed civil deadlines', 'Separates criminal process from compensation planning'],
+        cons: ['Requires careful file separation', 'Can increase process complexity'],
+        estimatedCost: 1500,
+        estimatedTimeframe: '2-6 months'
       });
     }
 
@@ -568,9 +574,9 @@ export class GuidanceAgent {
     }
 
     if (classification.domain === 'criminal') {
-      factors.push('Crown Attorney controls prosecution');
-      factors.push('You are witness, not party to case');
-      factors.push('Victim/Witness services available free');
+      factors.push('Role confirmation is required before selecting a criminal pathway');
+      factors.push('Charge-response, reporting-party support, and civil-overlap timelines need separate handling');
+      factors.push('Legal information should not assume one role without clear facts');
     }
 
     // Financial factors
@@ -606,8 +612,8 @@ export class GuidanceAgent {
         'Many civil negligence cases settle after formal demand letter.',
       'Internal Complaint & Ombudsman':
         'Insurance disputes are best addressed through internal complaint first, then ombudsman if needed.',
-      'Crown-Led Prosecution':
-        'In criminal matters, the Crown Attorney handles prosecution on behalf of the state.'
+      'Role-Confirmed Criminal Information Path':
+        'Criminal matters require role confirmation first so the next step fits whether you are responding to charges, reporting an incident, or managing overlap with civil timelines.'
     };
 
     return (

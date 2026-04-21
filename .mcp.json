@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "slack": {
+      "type": "http",
+      "url": "https://slack.mcp.anthropic.com/mcp",
+      "_comment": "Remove if not using Slack"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://github.mcp.anthropic.com/mcp",
+      "_comment": "Remove if not using GitHub MCP"
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "_comment": "Local filesystem access — safe for most projects"
+    }
+  },
+  "_instructions": "Check each server before commit. Remove unused servers to keep context lean. MCP configs are shared with the team via git."
+}

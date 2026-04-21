@@ -3,16 +3,10 @@
     "target": "ES2022",
     "module": "ES2022",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "../",
-    "baseUrl": "../",
-    "paths": {
-      "@core/*": ["src/core/*"],
-      "@api/*": ["src/api/*"],
-      "@data/*": ["src/data/*"],
-      "@backend/*": ["backend/src/*"]
-    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

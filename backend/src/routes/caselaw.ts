@@ -1,136 +1,325 @@
 import { Router, Request, Response } from 'express';
-import { CanLiiClient } from '../../../src/core/caselaw/CanLiiClient.js';
 import { CitationFormatter } from '../../../src/core/caselaw/CitationFormatter.js';
 import { RetrievalGuard } from '../../../src/core/caselaw/RetrievalGuard.js';
-import { SourceAccessController } from '../../../src/core/access/SourceAccessController.js';
 import { config } from '../config.js';
+import { SemanticLegalSearchService, SemanticSearchHit } from '../services/semanticLegalSearch.js';
+
+type SearchAlternative = {
+  name: string;
+  url: string;
+  description: string;
+  primary?: boolean;
+  category?: string;
+  semanticScore?: number;
+  semanticSource?: 'litellm-embedding';
+};
+
+type CourtGuidance = {
+  name: string;
+  url: string;
+  guidance: Array<{ title: string; url: string }>;
+};
 
 const router = Router();
-
-// Initialize CanLII client with proper access control
-const accessController = new SourceAccessController();
-accessController.setPolicy({
-  service: 'CanLII',
-  allowedMethods: ['official-api'],
-});
-
-const canliiClient = new CanLiiClient(accessController, {
-  apiKey: config.canliiApiKey,
-});
-
 const citationFormatter = new CitationFormatter();
 const retrievalGuard = new RetrievalGuard();
 
-// GET /api/caselaw/search - Search CanLII
-router.get('/search', async (req: Request, res: Response) => {
-  const { query, caseType = 'all' } = req.query;
+const CANLII_SEARCH_HELP_URL = 'https://www.canlii.org/en/info/search.html';
 
-  if (!query || typeof query !== 'string') {
-    res.status(400).json({ error: 'Query parameter required' });
-    return;
-  }
+function buildCanliiSearchUrl(query: string): string {
+  return `https://www.canlii.org/en/#search/type=decision&text=${encodeURIComponent(query)}`;
+}
 
-  // The CanLII REST API does NOT support free-text search
-  // Provide comprehensive links following Canada's court hierarchy
-  
-  const canliiSearchUrl = `https://www.canlii.org/en/#search/text=${encodeURIComponent(query)}`;
+function courtHint(name: string, url: string, description: string, category: string): SearchAlternative {
+  return {
+    name,
+    url,
+    description,
+    primary: true,
+    category,
+  };
+}
+
+function dedupeAlternatives(alternatives: SearchAlternative[]): SearchAlternative[] {
+  const seen = new Set<string>();
+  return alternatives.filter((item) => {
+    const key = `${item.name}|${item.url}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildCourtHints(query: string, caseType?: string): SearchAlternative[] {
   const normalizedQuery = query.toUpperCase();
+  const normalizedCaseType = caseType?.toLowerCase() ?? 'all';
+  const hints: SearchAlternative[] = [];
 
-  // Court-specific shortcuts for common neutral citations (e.g., "2025 ONCJ 646")
-  const courtHints = [];
-  if (normalizedQuery.includes('ONCJ')) {
-    courtHints.push({
-      name: 'Ontario Court of Justice',
-      url: 'https://www.ontariocourts.ca/ocj/decisions/',
-      description: 'Official OCJ decisions — sort by date or use Ctrl+F for the citation',
-      primary: true,
-      category: 'Provincial Courts',
-    });
+  const registerByKey = (key: string, hint: SearchAlternative) => {
+    if (normalizedCaseType === key) {
+      hints.push(hint);
+    }
+  };
+
+  registerByKey(
+    'scc',
+    courtHint(
+      'Supreme Court of Canada',
+      'https://www.scc-csc.ca/judgments-jugements/',
+      "Official judgments, leave applications, and Case in Brief summaries from Canada's top court",
+      'Supreme Court'
+    )
+  );
+  registerByKey(
+    'onca',
+    courtHint(
+      'Ontario Court of Appeal',
+      'https://www.ontariocourts.ca/coa/about-the-court/decision-database/',
+      'Official Ontario Court of Appeal decision database with full Boolean search',
+      'Provincial Appeal Courts'
+    )
+  );
+  registerByKey(
+    'onsc',
+    courtHint(
+      'Ontario Superior Court of Justice',
+      'https://www.ontariocourts.ca/scj/about-the-court-2/decisions-of-the-court/',
+      'Official Superior Court decisions page and Divisional Court decisions',
+      'Superior Courts'
+    )
+  );
+  registerByKey(
+    'oncj',
+    courtHint(
+      'Ontario Court of Justice',
+      'https://www.ontariocourts.ca/ocj/decisions/',
+      'Official Ontario Court of Justice decisions page',
+      'Provincial Courts'
+    )
+  );
+  registerByKey(
+    'fca',
+    courtHint(
+      'Federal Court of Appeal',
+      'https://www.fca-caf.ca/en/pages/decisions',
+      'Official Federal Court of Appeal decisions page and plain-language summaries',
+      'Federal Courts'
+    )
+  );
+  registerByKey(
+    'fc',
+    courtHint(
+      'Federal Court',
+      'https://www.fct-cf.ca/en/pages/court-files-and-decisions',
+      'Official Federal Court court files, hearing lists, and decisions hub',
+      'Federal Courts'
+    )
+  );
+  registerByKey(
+    'tcc',
+    courtHint(
+      'Tax Court of Canada',
+      'https://apps.tcc-cci.gc.ca/appeals/jsp/appeal/disclaimer_e.html',
+      'Official Tax Court of Canada online filing and appeal entry point',
+      'Federal Courts'
+    )
+  );
+  registerByKey(
+    'ltb',
+    courtHint(
+      'Landlord and Tenant Board',
+      'https://tribunalsontario.ca/ltb/law-rules-and-decisions/',
+      'Official LTB law, rules, guidelines, and decisions page',
+      'Ontario Resources'
+    )
+  );
+  registerByKey(
+    'hrto',
+    courtHint(
+      'Human Rights Tribunal of Ontario',
+      'https://tribunalsontario.ca/hrto/legislation-and-regulation/',
+      'Official HRTO laws, rules, practice directions, and decisions page',
+      'Ontario Resources'
+    )
+  );
+
+  if (/\bSCC\b/.test(normalizedQuery) || normalizedQuery.includes('SUPREME COURT')) {
+    hints.push(
+      courtHint(
+        'Supreme Court of Canada',
+        'https://www.scc-csc.ca/judgments-jugements/',
+        "Official judgments, leave applications, and Case in Brief summaries from Canada's top court",
+        'Supreme Court'
+      )
+    );
   }
-  if (normalizedQuery.includes('ONSC')) {
-    courtHints.push({
-      name: 'Ontario Superior Court of Justice',
-      url: 'https://www.ontariocourts.ca/scj/decisions/',
-      description: 'Official ONSC decisions — sort by date or search by case name/citation',
-      primary: true,
-      category: 'Superior Courts',
-    });
+  if (/\bONCA\b/.test(normalizedQuery) || normalizedQuery.includes('COURT OF APPEAL')) {
+    hints.push(
+      courtHint(
+        'Ontario Court of Appeal',
+        'https://www.ontariocourts.ca/coa/about-the-court/decision-database/',
+        'Official Ontario Court of Appeal decision database with full Boolean search',
+        'Provincial Appeal Courts'
+      )
+    );
   }
-  if (normalizedQuery.includes('ONCA')) {
-    courtHints.push({
-      name: 'Ontario Court of Appeal',
-      url: 'https://www.ontariocourts.ca/decisions-all/?court=on-ca',
-      description: 'Official ONCA decisions — search by citation or case name',
-      primary: true,
-      category: 'Provincial Appeal Courts',
-    });
+  if (/\bONSC\b/.test(normalizedQuery) || normalizedQuery.includes('SUPERIOR COURT')) {
+    hints.push(
+      courtHint(
+        'Ontario Superior Court of Justice',
+        'https://www.ontariocourts.ca/scj/about-the-court-2/decisions-of-the-court/',
+        'Official Superior Court decisions page and Divisional Court decisions',
+        'Superior Courts'
+      )
+    );
+  }
+  if (/\bONCJ\b/.test(normalizedQuery) || normalizedQuery.includes('COURT OF JUSTICE')) {
+    hints.push(
+      courtHint(
+        'Ontario Court of Justice',
+        'https://www.ontariocourts.ca/ocj/decisions/',
+        'Official Ontario Court of Justice decisions page',
+        'Provincial Courts'
+      )
+    );
+  }
+  if (/\bFCA\b/.test(normalizedQuery) || normalizedQuery.includes('FEDERAL COURT OF APPEAL')) {
+    hints.push(
+      courtHint(
+        'Federal Court of Appeal',
+        'https://www.fca-caf.ca/en/pages/decisions',
+        'Official Federal Court of Appeal decisions page and plain-language summaries',
+        'Federal Courts'
+      )
+    );
+  }
+  if (normalizedQuery.includes('FEDERAL COURT')) {
+    hints.push(
+      courtHint(
+        'Federal Court',
+        'https://www.fct-cf.ca/en/pages/court-files-and-decisions',
+        'Official Federal Court court files, hearing lists, and decisions hub',
+        'Federal Courts'
+      )
+    );
+  }
+  if (/\bTCC\b/.test(normalizedQuery) || normalizedQuery.includes('TAX COURT')) {
+    hints.push(
+      courtHint(
+        'Tax Court of Canada',
+        'https://apps.tcc-cci.gc.ca/appeals/jsp/appeal/disclaimer_e.html',
+        'Official Tax Court of Canada online filing and appeal entry point',
+        'Federal Courts'
+      )
+    );
+  }
+  if (normalizedQuery.includes('LANDLORD') || normalizedQuery.includes('TENANT') || normalizedQuery.includes('LTB')) {
+    hints.push(
+      courtHint(
+        'Landlord and Tenant Board',
+        'https://tribunalsontario.ca/ltb/law-rules-and-decisions/',
+        'Official LTB law, rules, guidelines, and decisions page',
+        'Ontario Resources'
+      )
+    );
+  }
+  if (normalizedQuery.includes('HUMAN RIGHTS') || normalizedQuery.includes('HRTO')) {
+    hints.push(
+      courtHint(
+        'Human Rights Tribunal of Ontario',
+        'https://tribunalsontario.ca/hrto/legislation-and-regulation/',
+        'Official HRTO laws, rules, practice directions, and decisions page',
+        'Ontario Resources'
+      )
+    );
   }
 
-  const alternatives = [
-    // PRIMARY: CanLII - Free nationwide database
+  return dedupeAlternatives(hints);
+}
+
+function buildSearchAlternatives(query: string, caseType?: string): SearchAlternative[] {
+  const canliiSearchUrl = buildCanliiSearchUrl(query);
+  const courtHints = buildCourtHints(query, caseType);
+
+  const alternatives: SearchAlternative[] = [
     {
-      name: 'CanLII (Canadian Legal Information Institute)',
+      name: 'CanLII search results',
       url: canliiSearchUrl,
-      description: `Free primary database for all Canadian case law - search for: "${query}"`,
+      description: `Open the CanLII search page for "${query}"`,
       primary: true,
       category: 'Primary Database',
     },
-    // SUPREME COURT OF CANADA - Apex court
+    {
+      name: 'CanLII search help',
+      url: CANLII_SEARCH_HELP_URL,
+      description: 'Review CanLII search syntax, filters, and query tips',
+      category: 'Primary Database',
+    },
+    ...courtHints,
     {
       name: 'Supreme Court of Canada',
-      url: 'https://www.scc-csc.ca/case-dossier/index-eng.aspx',
-      description: 'Canada\'s highest court - final court of appeal',
+      url: 'https://www.scc-csc.ca/judgments-jugements/',
+      description: 'Judgments, leave applications, and Case in Brief summaries',
       primary: true,
       category: 'Supreme Court',
     },
-    // ONTARIO COURTS OF APPEAL - Intermediate appellate level
     {
       name: 'Ontario Court of Appeal',
-      url: 'https://www.ontariocourts.ca/decisions-all/?court=on-ca',
-      description: 'Ontario\'s highest provincial court - appeals from Superior Court',
+      url: 'https://www.ontariocourts.ca/coa/about-the-court/decision-database/',
+      description: 'Official Ontario Court of Appeal decision database',
       primary: true,
       category: 'Provincial Appeal Courts',
     },
-    // ONTARIO SUPERIOR COURTS - Trial level for serious matters
     {
       name: 'Ontario Superior Court of Justice',
-      url: 'https://www.ontariocourts.ca/scj/decisions/',
-      description: 'Serious civil/criminal cases and appeals from lower courts',
+      url: 'https://www.ontariocourts.ca/scj/about-the-court-2/decisions-of-the-court/',
+      description: 'Official Ontario Superior Court decisions page',
       primary: true,
       category: 'Superior Courts',
     },
-    // ONTARIO PROVINCIAL COURTS - Base level
     {
       name: 'Ontario Court of Justice',
       url: 'https://www.ontariocourts.ca/ocj/decisions/',
-      description: 'Most criminal, family, youth, and provincial offences cases',
+      description: 'Official Ontario Court of Justice decisions page',
       primary: true,
       category: 'Provincial Courts',
     },
-    // FEDERAL COURTS - Specialized federal jurisdiction
     {
       name: 'Federal Court of Canada',
-      url: 'https://www.fct-cf.ca/en/court-files-and-decisions/court-files',
-      description: 'Immigration, intellectual property, maritime law, federal tribunals',
+      url: 'https://www.fct-cf.ca/en/pages/court-files-and-decisions',
+      description: 'Court files, hearing lists, and decisions hub',
       category: 'Federal Courts',
     },
     {
       name: 'Federal Court of Appeal',
-      url: 'https://www.fca-caf.ca/fca-caf/index-eng.html',
-      description: 'Appeals from Federal Court and some federal tribunals',
+      url: 'https://www.fca-caf.ca/en/pages/decisions',
+      description: 'Official Federal Court of Appeal decisions and summaries',
       category: 'Federal Courts',
     },
     {
       name: 'Tax Court of Canada',
-      url: 'https://www.tcc-cci.gc.ca/en/pages/default.aspx',
-      description: 'Tax disputes with federal government',
+      url: 'https://apps.tcc-cci.gc.ca/appeals/jsp/appeal/disclaimer_e.html',
+      description: 'Official Tax Court online filing and appeal entry point',
       category: 'Federal Courts',
     },
-    // ONTARIO RESOURCES
     {
-      name: 'Ontario Courts Public Portal',
-      url: 'https://www.ontariocourts.ca/ocj/find-my-case/',
-      description: 'Search Toronto-area cases and court proceedings',
+      name: 'Landlord and Tenant Board',
+      url: 'https://tribunalsontario.ca/ltb/law-rules-and-decisions/',
+      description: 'LTB law, rules, guidelines, and decisions',
+      category: 'Ontario Resources',
+    },
+    {
+      name: 'Human Rights Tribunal of Ontario',
+      url: 'https://tribunalsontario.ca/hrto/legislation-and-regulation/',
+      description: 'HRTO laws, rules, practice directions, and decisions',
+      category: 'Ontario Resources',
+    },
+    {
+      name: 'Small Claims Court',
+      url: 'https://www.ontariocourts.ca/scj/areas-of-law/small-claims-court/',
+      description: 'Ontario Superior Court small claims guidance and process',
       category: 'Ontario Resources',
     },
     {
@@ -139,21 +328,138 @@ router.get('/search', async (req: Request, res: Response) => {
       description: 'Ontario legislation and regulations',
       category: 'Ontario Resources',
     },
-    ...courtHints,
   ];
+
+  return dedupeAlternatives(alternatives);
+}
+
+function buildSemanticSearchService(): SemanticLegalSearchService {
+  return new SemanticLegalSearchService({
+    enabled: config.semanticSearchEnabled,
+    baseUrl: config.semanticSearchBaseUrl,
+    apiKey: config.semanticSearchApiKey,
+    embeddingModel: config.semanticSearchEmbeddingModel,
+    minScore: Number.isFinite(config.semanticSearchMinScore) ? config.semanticSearchMinScore : 0.25,
+  });
+}
+
+function applySemanticRanking(
+  alternatives: SearchAlternative[],
+  hits: SemanticSearchHit[],
+): SearchAlternative[] {
+  if (hits.length === 0) {
+    return alternatives;
+  }
+
+  const hitByUrl = new Map(hits.map((hit) => [hit.url, hit]));
+
+  return alternatives
+    .map((alternative) => {
+      const hit = hitByUrl.get(alternative.url);
+      if (!hit) {
+        return alternative;
+      }
+
+      return {
+        ...alternative,
+        semanticScore: hit.semanticScore,
+        semanticSource: hit.semanticSource,
+      };
+    })
+    .sort((left, right) => {
+      if (left.name === 'CanLII search results') return -1;
+      if (right.name === 'CanLII search results') return 1;
+
+      const leftScore = left.semanticScore ?? -1;
+      const rightScore = right.semanticScore ?? -1;
+      if (leftScore !== rightScore) {
+        return rightScore - leftScore;
+      }
+
+      if (left.primary !== right.primary) {
+        return left.primary ? -1 : 1;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
+
+const courtGuidanceMap: Record<string, CourtGuidance> = {
+  ltb: {
+    name: 'Landlord and Tenant Board',
+    url: 'https://tribunalsontario.ca/ltb/',
+    guidance: [
+      { title: 'Application and hearing process', url: 'https://tribunalsontario.ca/ltb/application-and-hearing-process/' },
+      { title: 'Forms, filing and fees', url: 'https://tribunalsontario.ca/ltb/filing-and-fees/' },
+      { title: 'Law, rules and decisions', url: 'https://tribunalsontario.ca/ltb/law-rules-and-decisions/' },
+    ],
+  },
+  hrto: {
+    name: 'Human Rights Tribunal of Ontario',
+    url: 'https://tribunalsontario.ca/hrto/',
+    guidance: [
+      { title: 'Application and hearing process', url: 'https://tribunalsontario.ca/application/' },
+      { title: 'Forms and filing', url: 'https://tribunalsontario.ca/hrto/form-instructions/?agree=1' },
+      { title: 'Laws, rules and decisions', url: 'https://tribunalsontario.ca/hrto/legislation-and-regulation/' },
+    ],
+  },
+  smallclaims: {
+    name: 'Small Claims Court',
+    url: 'https://www.ontariocourts.ca/scj/areas-of-law/small-claims-court/',
+    guidance: [
+      { title: 'Guide to the Small Claims Court Process', url: 'https://www.ontariocourts.ca/scj/areas-of-law/small-claims-court/guide-to-small-claims-court-process/' },
+      { title: 'Filing for Small Claims Court', url: 'https://www.ontariocourts.ca/scj/filing-procedures/filing/filing-for-small-claims/' },
+      { title: 'Rules of the Small Claims Court', url: 'https://www.ontariocourts.ca/scj/filing-procedures/rules/small-claims/' },
+    ],
+  },
+  superior: {
+    name: 'Superior Court of Justice',
+    url: 'https://www.ontariocourts.ca/scj/',
+    guidance: [
+      { title: 'Decisions of the Court', url: 'https://www.ontariocourts.ca/scj/about-the-court-2/decisions-of-the-court/' },
+      { title: 'Civil filing procedures', url: 'https://www.ontariocourts.ca/scj/filing-procedures/' },
+      { title: 'Small Claims Court', url: 'https://www.ontariocourts.ca/scj/areas-of-law/small-claims-court/' },
+    ],
+  },
+};
+
+// GET /api/caselaw/search - Launch CanLII and official court resources for a query
+router.get('/search', async (req: Request, res: Response) => {
+  const { query, caseType = 'all' } = req.query;
+
+  if (!query || typeof query !== 'string') {
+    res.status(400).json({ error: 'Query parameter required' });
+    return;
+  }
+
+  const searchUrl = buildCanliiSearchUrl(query);
+  const baseAlternatives = buildSearchAlternatives(query, typeof caseType === 'string' ? caseType : undefined);
+  const semanticSearch = await buildSemanticSearchService().rank(query, baseAlternatives);
+  const alternatives = applySemanticRanking(baseAlternatives, semanticSearch.hits);
 
   res.json({
     query,
+    searchUrl,
     resultsCount: 0,
     results: [],
     notice: 'Manual Search Required',
-    message: 'The CanLII REST API does not support free-text search or neutral citation lookups. Use the resources below, organized by court hierarchy, to search for Canadian case law.',
+    message:
+      'The public CanLII API does not provide free-text case-law search. This endpoint returns the CanLII website search link and the current official court/tribunal pages for manual research.',
     failure: {
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       source: 'CanLII API',
-      reason: 'Free-text search is not supported by the CanLII REST API.',
-      suggestion: 'Use the official court site or CanLII links below to search by case name or citation.',
+      reason: 'The public CanLII API does not support free-text search.',
+      suggestion: 'Open the CanLII search link or use the official court and tribunal pages below.',
     },
+    semanticSearch: {
+      enabled: semanticSearch.enabled,
+      status: semanticSearch.status,
+      source: semanticSearch.source,
+      model: semanticSearch.model,
+      message: semanticSearch.message,
+      resultsCount: semanticSearch.hits.length,
+    },
+    semanticMatches: semanticSearch.hits,
     alternatives,
   });
 });
@@ -168,7 +474,6 @@ router.get('/statute', async (req: Request, res: Response) => {
   }
 
   try {
-    // Use the actual CitationFormatter.formatStatute method
     const citation = citationFormatter.formatStatute({
       jurisdiction: 'Ontario',
       title: title as string,
@@ -195,6 +500,7 @@ router.get('/statute', async (req: Request, res: Response) => {
     });
   }
 });
+
 // GET /api/caselaw/court-guidance - Get court/tribunal guidance
 router.get('/court-guidance', async (req: Request, res: Response) => {
   const { court } = req.query;
@@ -204,55 +510,16 @@ router.get('/court-guidance', async (req: Request, res: Response) => {
     return;
   }
 
-  // Return guidance links for common Ontario courts/tribunals
-  const guidance: Record<string, any> = {
-    ltb: {
-      name: 'Landlord and Tenant Board',
-      url: 'https://www.ltb.gov.on.ca/',
-      guidance: [
-        { title: 'How to File an Application', url: 'https://www.ltb.gov.on.ca/pages/drc.html' },
-        { title: 'Hearing Process', url: 'https://www.ltb.gov.on.ca/pages/about_hearings.html' },
-        { title: 'Forms and Documents', url: 'https://www.ltb.gov.on.ca/pages/forms.html' },
-      ],
-    },
-    hrto: {
-      name: 'Human Rights Tribunal of Ontario',
-      url: 'https://www.hrto.ca/',
-      guidance: [
-        { title: 'How to File an Application', url: 'https://www.hrto.ca/apply' },
-        { title: 'Application Forms', url: 'https://www.hrto.ca/forms-and-processes' },
-        { title: 'Practice Directions', url: 'https://www.hrto.ca/practice-directions' },
-      ],
-    },
-    smallclaims: {
-      name: 'Small Claims Court',
-      url: 'https://www.ontario.ca/laws/statute/90c43',
-      guidance: [
-        { title: 'How to Sue', url: 'https://www.ontario.ca/page/how-sue-small-claims-court' },
-        { title: 'Court Locations', url: 'https://www.ontario.ca/page/find-small-claims-court' },
-        { title: 'Rules of the Court', url: 'https://www.ontario.ca/page/small-claims-court' },
-      ],
-    },
-    superior: {
-      name: 'Superior Court of Justice',
-      url: 'https://www.ontario.ca/laws/statute/90c43',
-      guidance: [
-        { title: 'Civil Procedure Rules', url: 'https://www.ontario.ca/laws/regulation/070200' },
-        { title: 'Court Locations', url: 'https://www.ontario.ca/page/locate-ontario-court' },
-        { title: 'Filing Requirements', url: 'https://www.ontario.ca/page/civil-courts' },
-      ],
-    },
-  };
-
-  const courtLower = court.toLowerCase();
-  if (guidance[courtLower]) {
-    res.json(guidance[courtLower]);
-  } else {
-    res.status(404).json({
-      error: `No guidance available for court: ${court}`,
-      availableCourts: Object.keys(guidance),
-    });
+  const guidance = courtGuidanceMap[court.toLowerCase()];
+  if (guidance) {
+    res.json(guidance);
+    return;
   }
+
+  res.status(404).json({
+    error: `No guidance available for court: ${court}`,
+    availableCourts: Object.keys(courtGuidanceMap),
+  });
 });
 
 export default router;

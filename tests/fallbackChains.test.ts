@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { fallbackChains, providerSpecs } from '../backend/src/core/router/RouterConfig';
+import { fallbackChains, laneChains, providerSpecs, routerPolicy, selectRoutePlan } from '../backend/src/core/router/RouterConfig';
 import { TaskType, ModelProvider, ModelTier } from '../backend/src/core/router/ModelRoute';
 import { OpenAIAdapter } from '../backend/src/core/router/adapters/OpenAIAdapter';
 import { ClaudeAdapter } from '../backend/src/core/router/adapters/ClaudeAdapter';
 import { GeminiAdapter } from '../backend/src/core/router/adapters/GeminiAdapter';
 import { OllamaAdapter } from '../backend/src/core/router/adapters/OllamaAdapter';
+import { LiteLLMAdapter } from '../backend/src/core/router/adapters/LiteLLMAdapter';
 import { EmbeddingAdapter } from '../backend/src/core/router/adapters/EmbeddingAdapter';
 
 describe('RouterConfig – fallback chains', () => {
@@ -39,8 +40,8 @@ describe('RouterConfig – fallback chains', () => {
     }
   });
 
-  it('PLAIN_LANGUAGE and DOCUMENT_DRAFT chains use SMART tier for first entry', () => {
-    expect(fallbackChains[TaskType.PLAIN_LANGUAGE][0].tier).toBe(ModelTier.SMART);
+  it('PLAIN_LANGUAGE defaults to FAST while DOCUMENT_DRAFT starts with SMART tier', () => {
+    expect(fallbackChains[TaskType.PLAIN_LANGUAGE][0].tier).toBe(ModelTier.FAST);
     expect(fallbackChains[TaskType.DOCUMENT_DRAFT][0].tier).toBe(ModelTier.SMART);
   });
 
@@ -60,10 +61,69 @@ describe('RouterConfig – fallback chains', () => {
       expect(unique.size, `duplicate provider in chain for ${taskType}`).toBe(providers.length);
     }
   });
+
+  it('defines lane chains for fast, deep, and local routing', () => {
+    expect(laneChains['fast-extract'][0]).toEqual({ provider: ModelProvider.LITELLM, tier: ModelTier.FAST });
+    expect(laneChains['deep-reason'][0]).toEqual({ provider: ModelProvider.LITELLM, tier: ModelTier.SMART });
+    expect(laneChains['fallback-local'][0]).toEqual({ provider: ModelProvider.OLLAMA, tier: ModelTier.FAST });
+  });
+});
+
+describe('RouterConfig – lane selection', () => {
+  it('defaults plain-language requests to fast-extract', () => {
+    const plan = selectRoutePlan({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [],
+    });
+
+    expect(plan.lane).toBe('fast-extract');
+    expect(plan.chain).toEqual(laneChains['fast-extract']);
+  });
+
+  it('escalates low-confidence plain-language requests to deep-reason', () => {
+    const plan = selectRoutePlan({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [],
+      routeContext: { confidence: routerPolicy.lowConfidenceThreshold - 1 },
+    });
+
+    expect(plan.lane).toBe('deep-reason');
+  });
+
+  it('escalates ambiguous plain-language requests to deep-reason', () => {
+    const plan = selectRoutePlan({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [],
+      routeContext: { ambiguity: routerPolicy.highAmbiguityThreshold + 0.1 },
+    });
+
+    expect(plan.lane).toBe('deep-reason');
+  });
+
+  it('escalates complex plain-language requests to deep-reason', () => {
+    const plan = selectRoutePlan({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [],
+      routeContext: { complexityScore: routerPolicy.highComplexityThreshold + 0.1 },
+    });
+
+    expect(plan.lane).toBe('deep-reason');
+  });
+
+  it('uses local-only lane when privacy requires local routing', () => {
+    const plan = selectRoutePlan({
+      taskType: TaskType.CLASSIFICATION,
+      messages: [],
+      routeContext: { privacyMode: 'local-only' },
+    });
+
+    expect(plan.lane).toBe('fallback-local');
+    expect(plan.chain).toEqual(laneChains['fallback-local']);
+  });
 });
 
 describe('RouterConfig – provider specs', () => {
-  it('defines specs for all four ModelProvider values', () => {
+  it('defines specs for all ModelProvider values', () => {
     const allProviders = Object.values(ModelProvider);
     for (const p of allProviders) {
       expect(providerSpecs[p], `missing spec for ${p}`).toBeDefined();
@@ -110,6 +170,11 @@ describe('Adapter instantiation', () => {
     expect(() => new OllamaAdapter()).not.toThrow();
   });
 
+  it('LiteLLMAdapter instantiates without throwing', () => {
+    expect(() => new LiteLLMAdapter('', false)).not.toThrow();
+    expect(() => new LiteLLMAdapter('litellm-key', true)).not.toThrow();
+  });
+
   it('EmbeddingAdapter instantiates without throwing', () => {
     expect(() => new EmbeddingAdapter('')).not.toThrow();
     expect(() => new EmbeddingAdapter('sk-test')).not.toThrow();
@@ -119,17 +184,21 @@ describe('Adapter instantiation', () => {
     const openai = new OpenAIAdapter('');
     const claude = new ClaudeAdapter('');
     const gemini = new GeminiAdapter('');
+    const litellm = new LiteLLMAdapter('', false);
     expect(await openai.isAvailable()).toBe(false);
     expect(await claude.isAvailable()).toBe(false);
     expect(await gemini.isAvailable()).toBe(false);
+    expect(await litellm.isAvailable()).toBe(false);
   });
 
   it('adapters report available when key is provided', async () => {
     const openai = new OpenAIAdapter('sk-test');
     const claude = new ClaudeAdapter('sk-test');
     const gemini = new GeminiAdapter('sk-test');
+    const litellm = new LiteLLMAdapter('litellm-test', true);
     expect(await openai.isAvailable()).toBe(true);
     expect(await claude.isAvailable()).toBe(true);
     expect(await gemini.isAvailable()).toBe(true);
+    expect(await litellm.isAvailable()).toBe(true);
   });
 });

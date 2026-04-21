@@ -194,6 +194,139 @@
 
 ## Recent Work (Dec 31, 2025)
 
+## Task 37.1: Conversational Intake to Persistent Matter Workspace (Completed 2026-04-03)
+- **Context:** Product-gap analysis showed the strongest platform capability mismatch was at the front door: `/matters/new` ended in detached conversational guidance rather than creating a durable matter workspace.
+- **Decisions:**
+  - Reuse the existing matters API and matter detail workspace instead of building a second conversational record model.
+  - Preserve conversational metadata through the existing `metadata` payload on matter creation.
+  - Keep evidence handoff best-effort: create the matter first, then attach uploaded files without blocking navigation on partial upload failure.
+- **Actions:**
+  - Updated [frontend/src/pages/ConversationalGuidancePage.tsx](frontend/src/pages/ConversationalGuidancePage.tsx) to:
+    - Create a matter via `api.createMatter()` immediately after conversational intake completes.
+    - Normalize conversational domain values before sending them to the existing matter schema.
+    - Persist intake metadata (`intakeMode`, `jurisdiction`, `urgency`, original domain hint).
+    - Upload intake evidence files to the new matter when present.
+    - Redirect to `/matters/:id` after creation instead of rendering detached guidance narrative.
+  - Updated planning artifacts:
+    - [requirements.md](.kiro/specs/canadian-legal-assistant/requirements.md) with persistent matter workspace requirement.
+    - [design.md](.kiro/specs/canadian-legal-assistant/design.md) with product surface alignment extension.
+    - [tasks.md](.kiro/specs/canadian-legal-assistant/tasks.md) with Task 37 and completion state for 37.1.
+- **Outputs:**
+  - Conversational New Matter now hands off into the persistent workspace model.
+  - Product roadmap formalized for workflow exposure, evidence strategy surfacing, trust signals, and bilingual scope.
+- **Status:** ✅ Task 37.1 complete; Task 37.2 next
+
+## Task 37.2: Guided Workflow Exposure in Matter Workspace (Completed 2026-04-03)
+- **Context:** The workflow engine and page already existed, but users could not reach it from the main matter experience, which hid one of the repo's strongest capabilities.
+- **Decisions:**
+  - Reuse the existing `WorkflowPage` rather than build a new guided-plan surface.
+  - Expose it as a nested matter route so the guided plan remains tied to the persistent matter workspace.
+  - Rename visible labels from internal "workflow" language to user-facing "step-by-step plan" language.
+- **Actions:**
+  - Updated [frontend/src/pages/MatterDetailPage.tsx](frontend/src/pages/MatterDetailPage.tsx) to:
+    - Add a `Step-by-Step Plan` tab beside Overview, Evidence, and Documents.
+    - Add a workflow entry callout on the overview tab.
+    - Register a nested `/matters/:id/workflow` route using the existing `WorkflowPage`.
+  - Updated [frontend/src/pages/WorkflowPage.tsx](frontend/src/pages/WorkflowPage.tsx) to:
+    - Rename loading, start, refresh, and heading copy to "step-by-step plan" language.
+    - Keep the underlying workflow behavior unchanged while improving user-facing framing.
+- **Outputs:**
+  - Guided workflow is now reachable from the matter workspace.
+  - Product positioning better matches the repo's real guided-case capabilities.
+- **Status:** ✅ Task 37.2 complete; Task 37.3 next
+
+## Task 37.3: Evidence Strategy Surfacing (Completed 2026-04-03)
+- **Context:** The evidence page already supported upload and basic chronology, but it still behaved like a storage bucket instead of helping users understand what evidence was missing or which records would strengthen the case next.
+- **Decisions:**
+  - Reuse the existing timeline gap and missing-evidence logic from `TimelineGenerator` instead of inventing a second strategy layer.
+  - Fix the evidence route contract so upload-time alerts and reload-time analysis match, rather than only showing richer signals transiently during upload.
+  - Add domain-aware guidance directly to the evidence page so users see what records matter most for their matter type.
+- **Actions:**
+  - Updated [backend/src/routes/evidence.ts](backend/src/routes/evidence.ts) to:
+    - Return `alerts` and `redactedPreview` from evidence uploads.
+    - Rebuild timeline responses from stored evidence index data using `TimelineGenerator`.
+    - Include chronology gaps, missing-evidence alerts, and evidence-type stats in `GET /api/evidence/:id/timeline` responses.
+  - Updated [frontend/src/services/api.ts](frontend/src/services/api.ts) to:
+    - Add typed timeline, gap, and missing-evidence response interfaces.
+    - Align evidence upload and timeline fetch contracts with the richer backend payload.
+  - Updated [frontend/src/pages/EvidencePage.tsx](frontend/src/pages/EvidencePage.tsx) to:
+    - Add an `Evidence Strategy` summary panel with file counts, dated-event counts, chronology gaps, and missing-signal counts.
+    - Show domain-aware evidence guidance based on the current matter classification.
+    - Surface missing-evidence alerts and chronology gaps after reload, not just during upload.
+    - Improve evidence cards with extracted metadata, date visibility, and a semantic upload progress element.
+- **Outputs:**
+  - Evidence now behaves like a strategy surface rather than only a file list.
+  - Missing screenshots, missing original emails, and long chronology gaps stay visible after refresh.
+  - Users get matter-specific prompts about what evidence to add next.
+- **Status:** ✅ Task 37.3 complete; Task 37.4 next
+
+## Task 37.4: Trust And Governance Surfacing (Completed 2026-04-03)
+- **Context:** Auditability and portability controls existed, but they were buried in Settings and not visible in the core user journey where trust signals most influence user confidence.
+- **Decisions:**
+  - Surface governance signals directly in `HomePage` and `MatterDetailPage` rather than relying on users to discover Settings.
+  - Reframe Settings around trust, audit, and data controls instead of generic settings language.
+  - Fix accessibility and security diagnostics discovered while touching governance surfaces.
+- **Actions:**
+  - Updated [frontend/src/pages/HomePage.tsx](frontend/src/pages/HomePage.tsx) to:
+    - Add a `Trust and governance` summary card with audit/export/integrity messaging.
+    - Add a direct path to `/settings` governance controls.
+    - Add accessible labeling for selection checkboxes in bulk delete mode.
+  - Updated [frontend/src/pages/MatterDetailPage.tsx](frontend/src/pages/MatterDetailPage.tsx) to:
+    - Add an overview trust card describing evidence hash tracking and audit logging.
+    - Add a direct action link to audit/export controls in Settings.
+  - Updated [frontend/src/pages/SettingsPage.tsx](frontend/src/pages/SettingsPage.tsx) to:
+    - Reframe page heading and explanatory copy around trust, auditability, and data portability.
+    - Update export copy to emphasize transfer/review retention use cases.
+    - Add accessible names to select controls flagged by diagnostics.
+    - Replace stale DOM insertion/export detail rendering patterns with safer helper usage.
+- **Outputs:**
+  - Trust and governance are now visible in core navigation surfaces, not hidden as a secondary settings feature.
+  - Settings language better reflects auditability, portability, and legal-hold safeguards.
+  - Existing accessibility and sanitizer diagnostics in touched pages were resolved.
+- **Status:** ✅ Task 37.4 complete; Task 37.5 next
+
+## Task 37.5: Bilingual Scope And Parity Clarification (Completed 2026-04-03)
+- **Context:** The app had a language toggle and localized shell navigation, but product messaging did not clearly indicate that French support was still partial beyond core shell strings.
+- **Decisions:**
+  - Use transparent product messaging to mark French support as partial until full page-level parity is implemented.
+  - Surface this status where users select language and where trust/governance controls are explained.
+  - Keep the current i18n structure and add targeted copy updates rather than over-scoping into full translation rollout.
+- **Actions:**
+  - Updated [frontend/src/components/LanguageToggle.tsx](frontend/src/components/LanguageToggle.tsx) to:
+    - Add a persistent note under language selection indicating partial French support.
+  - Updated [frontend/src/i18n/locales/en.json](frontend/src/i18n/locales/en.json) and [frontend/src/i18n/locales/fr.json](frontend/src/i18n/locales/fr.json) to:
+    - Add localized `language.partialNotice` copy.
+  - Updated [frontend/src/pages/SettingsPage.tsx](frontend/src/pages/SettingsPage.tsx) to:
+    - Add `Language parity status` messaging in governance snapshot content.
+- **Outputs:**
+  - Language scope is now explicit in product UI rather than implied.
+  - English/French copy now matches actual translation depth and prevents parity overstatement.
+  - Frontend build and diagnostics remained clean after localization updates.
+- **Status:** ✅ Task 37.5 complete; Product Surface Alignment task set (Task 37) complete
+
+## Task 38: Canonical Flow Consolidation Plan (Created 2026-04-05, Review Pending)
+- **Context:** Post-Task-37 review found that the repo now contains several valid but competing interaction models: conversational intake, first-run narrative guidance, action-first overview, workflow engine, nuance extraction, and kit surfaces. The main product gap is no longer feature depth; it is the absence of one dominant intake-to-action user spine.
+- **Decisions:**
+  - Treat the problem as product composition, not visual polish.
+  - Preserve the persistent matter workspace model introduced in Task 37.1.
+  - Use the step-by-step plan as the execution backbone rather than maintaining kits and workflow as parallel primary modes.
+  - Revisit `OverviewTab` and `GuidanceNarrative` as preferred building blocks for the canonical experience.
+- **Actions:**
+  - Created [docs/CANONICAL_FLOW_CONSOLIDATION_PLAN.md](docs/CANONICAL_FLOW_CONSOLIDATION_PLAN.md) as the review artifact for the next product-surface phase.
+  - Updated [.kiro/specs/canadian-legal-assistant/tasks.md](.kiro/specs/canadian-legal-assistant/tasks.md) with Task 38 and seven implementation phases:
+    - 38.1 surface ownership and canonical route map
+    - 38.2 overview replacement
+    - 38.3 guided first-run handoff restoration
+    - 38.4 nuance folding into intake
+    - 38.5 kit re-homing under workflow
+    - 38.6 progression-first navigation tightening
+    - 38.7 review instrumentation
+- **Outputs:**
+  - Repo now contains a concrete consolidation plan for review instead of another isolated conversational conclusion.
+  - Product direction is explicitly narrowed to one canonical flow: conversational intake → guided handoff → action-first workspace → step-by-step plan → evidence/doc execution → governance supports.
+  - The keep/integrate/retire decisions are documented before implementation begins.
+- **Status:** ⏳ Review pending; implementation should not begin until Task 38 plan is approved or revised
+
 ### Variable Extraction Bug Fix ✅
 **Issue:** Document placeholders showing `$202` instead of `$100,000` (regex matching date digits)
 

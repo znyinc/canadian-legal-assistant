@@ -22,6 +22,30 @@ const getProgressColor = (percent: number) => {
 export function JourneyProgressBar({ percentComplete, currentStage, steps }: JourneyProgressBarProps) {
   const [expanded, setExpanded] = useState(false);
   const progressColor = getProgressColor(percentComplete);
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
+  const widthClass = widthByFive[Math.max(0, Math.min(100, Math.round(percentComplete / 5) * 5))];
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow duration-300">
@@ -47,8 +71,7 @@ export function JourneyProgressBar({ percentComplete, currentStage, steps }: Jou
             </div>
             <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden relative">
               <div
-                className={`h-full ${progressColor} transition-all duration-700 ease-out rounded-full relative`}
-                style={{ width: `${percentComplete}%` }}
+                className={`h-full ${progressColor} transition-all duration-700 ease-out rounded-full relative ${widthClass}`}
               >
                 {/* Animated shimmer effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer" />

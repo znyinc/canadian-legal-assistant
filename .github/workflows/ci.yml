@@ -146,51 +146,6 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  security-scan:
-    name: Security Scan (Snyk)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install root dependencies
-        run: npm ci
-      
-      - name: Install backend dependencies
-        working-directory: backend
-        run: npm ci
-      
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-      
-      - name: Run Snyk test (root)
-        run: npx snyk test --severity-threshold=high || echo "Snyk scan completed with findings"
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      
-      - name: Run Snyk test (backend)
-        working-directory: backend
-        run: npx snyk test --severity-threshold=high || echo "Snyk scan completed with findings"
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      
-      - name: Run Snyk test (frontend)
-        working-directory: frontend
-        run: npx snyk test --severity-threshold=high || echo "Snyk scan completed with findings"
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest

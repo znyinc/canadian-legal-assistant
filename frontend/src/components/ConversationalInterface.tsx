@@ -20,6 +20,7 @@ export interface ConversationalInterfaceProps {
   onContextUpdate?: (context: any) => void;
   maxMessages?: number;
   placeholder?: string;
+  className?: string;
 }
 
 /**
@@ -34,12 +35,13 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
   onContextUpdate,
   maxMessages = 50,
   placeholder = 'Type your response here...',
+  className,
 }) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [context, setContext] = useState<any>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize with prompt
   useEffect(() => {
@@ -56,7 +58,20 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
 
   // Auto-scroll to latest message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    if (typeof container.scrollTo === 'function') {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
+      return;
+    }
+
+    container.scrollTop = container.scrollHeight;
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -132,11 +147,10 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
   };
 
   // Calculate conversation progress
-  const messageCount = messages.length;
   const userMessageCount = messages.filter((m) => m.role === 'user').length;
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[600px] bg-white rounded-lg shadow-lg border border-gray-200">
+    <div className={`w-full flex flex-col rounded-2xl border border-gray-200 bg-white shadow-lg ${className ?? 'h-[70vh] min-h-[620px]'}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center justify-between">
@@ -151,7 +165,7 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p>Start the conversation to begin...</p>
@@ -192,7 +206,6 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
             </div>
           ))
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Loading Indicator */}
@@ -200,8 +213,8 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
         <div className="px-4 py-2 text-center text-sm text-gray-500">
           <div className="inline-flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:100ms]" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:200ms]" />
           </div>
         </div>
       )}
@@ -222,6 +235,8 @@ export const ConversationalInterface: React.FC<ConversationalInterfaceProps> = (
             onClick={handleSendMessage}
             disabled={!input.trim() || isLoading}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            aria-label="Send message"
+            title="Send message"
           >
             <Send className="w-5 h-5" />
           </button>

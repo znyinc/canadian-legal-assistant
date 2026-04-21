@@ -2,6 +2,12 @@
 setlocal
 
 set SCRIPT_DIR=%~dp0
-powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%shutdown.ps1" %*
+set PS_CMD=pwsh
+where %PS_CMD% >nul 2>nul
+if errorlevel 1 set PS_CMD=powershell
+
+%PS_CMD% -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%shutdown.ps1" %*
+set EXIT_CODE=%ERRORLEVEL%
 
 endlocal
+exit /b %EXIT_CODE%

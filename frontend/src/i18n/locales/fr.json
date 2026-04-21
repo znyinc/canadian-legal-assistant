@@ -19,6 +19,7 @@
   "language": {
     "label": "Langue",
     "en": "English",
-    "fr": "Français"
+    "fr": "Français",
+    "partialNotice": "Le support en français est actuellement partiel et centré sur la navigation principale."
   }
 }

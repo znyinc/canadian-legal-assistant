@@ -4,8 +4,17 @@ import path from 'path';
 import { createWriteStream } from 'fs';
 import archiver from 'archiver';
 import { prisma } from '../prisma.js';
+import { CourtFormsCatalog } from '../services/courtFormsCatalog.js';
 
 const router = Router();
+const courtFormsCatalog = new CourtFormsCatalog();
+
+function toPositiveNumber(value: unknown): number | null {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
 
 // GET /api/export - Export all data as ZIP
 router.get('/', async (req: Request, res: Response) => {
@@ -171,6 +180,41 @@ ${packageData.drafts?.map((d: any, i: number) => `${i + 1}. ${d.title}`).join('\
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
+});
+
+// GET /api/export/forms/catalog - Get current local court-forms catalog snapshot
+router.get('/forms/catalog', (req: Request, res: Response) => {
+  const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
+  const snapshot = courtFormsCatalog.getSnapshot(forceRefresh);
+
+  const snapshotPath = path.resolve(snapshot.rootPath, 'catalog.snapshot.json');
+  fs.writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2), 'utf8');
+
+  res.json({
+    ...snapshot,
+    snapshotPath,
+  });
+});
+
+// GET /api/export/forms/health?thresholdDays=30&refresh=1
+// If stale is true, caller can treat it as a failure trigger and run update sync.
+router.get('/forms/health', (req: Request, res: Response) => {
+  const thresholdDays = toPositiveNumber(req.query.thresholdDays) ?? 30;
+  const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
+  const snapshot = courtFormsCatalog.getSnapshot(forceRefresh);
+  const staleInfo = courtFormsCatalog.isStale(thresholdDays, false);
+
+  const statusCode = staleInfo.stale ? 412 : 200;
+  res.status(statusCode).json({
+    thresholdDays,
+    stale: staleInfo.stale,
+    newestFileAgeDays: staleInfo.newestFileAgeDays,
+    refreshedAt: snapshot.refreshedAt,
+    totalFiles: snapshot.totalFiles,
+    trigger: staleInfo.stale
+      ? `stale-threshold-exceeded:${thresholdDays}d`
+      : 'healthy',
+  });
 });
 
 export default router;

@@ -1,8 +1,8 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { Navigate, Routes, Route, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HomePage from './pages/HomePage';
-import ConversationalGuidancePage from './pages/ConversationalGuidancePage';
 import MatterDetailPage from './pages/MatterDetailPage';
+import NuanceChatPage from './pages/NuanceChatPage';
 import { CaseLawPage } from './pages/CaseLawPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LanguageToggle } from './components/LanguageToggle';
@@ -21,7 +21,7 @@ export default function App() {
                 {t('app.title')}
               </Link>
               <div className="ml-10 flex items-center space-x-4">
-                <Link to="/" className="text-gray-700 hover:text-gray-900">
+                <Link to="/matters" className="text-gray-700 hover:text-gray-900">
                   {t('app.nav.matters')}
                 </Link>
                 <Link to="/matters/new" className="text-gray-700 hover:text-gray-900">
@@ -54,8 +54,11 @@ export default function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/matters/new" element={<ConversationalGuidancePage onBack={() => window.history.back()} />} />
+          <Route path="/" element={<Navigate to="/matters/new" replace />} />
+          <Route path="/matters" element={<HomePage />} />
+          <Route path="/matters/new" element={<NuanceChatPage />} />
+          <Route path="/matters/new/review" element={<Navigate to="/matters/new" replace />} />
+          <Route path="/matters/new/chat" element={<NuanceChatPage />} />
           <Route path="/matters/:id/*" element={<MatterDetailPage />} />
           <Route path="/caselaw" element={<CaseLawPage />} />
           <Route path="/settings" element={<SettingsPage />} />

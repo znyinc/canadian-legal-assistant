@@ -14,7 +14,7 @@ export class CriminalDomainModule extends BaseDomainModule {
   protected tags = [
     'Assault offences',
     'Uttering threats',
-    'Criminal charges',
+    'Criminal process information',
   ];
 
   constructor() {
@@ -130,8 +130,9 @@ export class CriminalDomainModule extends BaseDomainModule {
     };
 
     // Determine which documents are needed based on case context
-    const isVictim = notes.includes('victim') || notes.includes('complainant');
+    const isVictim = notes.includes('victim') || notes.includes('complainant') || notes.includes('reported');
     const isAccused = notes.includes('accused') || notes.includes('defendant') || notes.includes('charged');
+    const roleUnclear = !isVictim && !isAccused;
     
     // Release conditions checklist (ONLY if user is accused/defendant)
     if (isAccused && templates['criminal/release_conditions_checklist']) {
@@ -162,28 +163,45 @@ export class CriminalDomainModule extends BaseDomainModule {
       drafts.push(mkDraft('Police and Crown Process Guide (Information)', [{ heading: 'Process', content: guide }]));
     }
 
-    // Victim Services Ontario guidance (always include for victims)
-    if (templates['criminal/victim_services_guide']) {
+    // Victim Services Ontario guidance (only include when reporting-party signals exist)
+    if (isVictim && templates['criminal/victim_services_guide']) {
       const victimGuide = templateLib.renderTemplate('criminal/victim_services_guide', {});
       drafts.push(mkDraft('Victim Services Ontario — Support Resources', [{ heading: 'Support', content: victimGuide }]));
     }
 
-    // Criminal evidence checklist (always include)
+    // Criminal evidence checklist (role-aware title)
     if (templates['criminal/evidence_checklist']) {
       const evidenceChecklist = templateLib.renderTemplate('criminal/evidence_checklist', {});
-      drafts.push(mkDraft('Evidence Checklist for Criminal Complainant', [{ heading: 'Evidence', content: evidenceChecklist }]));
+      const evidenceTitle = isAccused
+        ? 'Evidence Checklist for Responding to Criminal Allegations'
+        : isVictim
+          ? 'Evidence Checklist for Criminal Reporting Party'
+          : 'Evidence Checklist for Criminal Matter Clarification';
+      drafts.push(mkDraft(evidenceTitle, [{ heading: 'Evidence', content: evidenceChecklist }]));
     }
 
-    // Complainant role explained (always include)
-    if (templates['criminal/complainant_role_explained']) {
+    // Complainant role explained (only include when reporting-party signals exist)
+    if (isVictim && templates['criminal/complainant_role_explained']) {
       const roleGuide = templateLib.renderTemplate('criminal/complainant_role_explained', {});
       drafts.push(mkDraft('Your Role as Complainant — What to Expect', [{ heading: 'Your Role', content: roleGuide }]));
     }
 
-    // Criminal case next steps checklist (10-step comprehensive guide)
-    if (templates['criminal/next_steps_checklist']) {
+    // Criminal case next steps checklist (only include when reporting-party signals exist)
+    if (isVictim && templates['criminal/next_steps_checklist']) {
       const checklist = templateLib.renderTemplate('criminal/next_steps_checklist', {});
       drafts.push(mkDraft('Criminal Case — 10-Step Next Steps Checklist', [{ heading: 'What to Do Next', content: checklist }]));
+    }
+
+    if (roleUnclear) {
+      drafts.push(
+        mkDraft('Role Clarification Note (Information)', [
+          {
+            heading: 'Clarification Needed',
+            content:
+              'Before using role-specific criminal documents, confirm whether you are responding to charges, reporting an incident, or managing overlap with a civil process. This product provides legal information only and does not assume one role without clear facts.'
+          }
+        ])
+      );
     }
 
     return drafts;

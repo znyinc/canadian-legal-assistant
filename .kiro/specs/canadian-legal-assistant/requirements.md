@@ -413,6 +413,45 @@ The system maintains strict boundaries to avoid unauthorized practice of law whi
 7. WHERE defamation disputes are complex, THE System SHALL provide routing to defamation specialists and media law counsel
 8. WHEN AI confidence is low, THE System SHALL clearly indicate uncertainty and recommend professional consultation
 
+### Requirement 27
+
+**User Story:** As a person starting with the conversational "New Matter" flow, I want my intake to create a persistent matter workspace, so that I can continue from guidance into evidence, documents, workflow, and audit-ready records without re-entering my situation.
+
+#### Acceptance Criteria
+
+1. WHEN a user completes conversational intake, THE System SHALL create a persistent matter record instead of ending in a standalone guidance-only state
+2. WHEN a matter is created from conversational intake, THE System SHALL preserve the intake narrative, inferred domain, jurisdiction, urgency, and structured intake metadata for later review
+3. WHEN uploaded evidence is provided during conversational intake, THE System SHALL attach supported files to the created matter or clearly report any upload failure without losing the created matter
+4. WHEN matter creation succeeds, THE System SHALL redirect the user into the created matter workspace so that overview, evidence, documents, and future workflow steps are available immediately
+5. WHEN conversational intake cannot be converted into a matter, THE System SHALL present a clear recovery path rather than silently dropping the user back into the conversation
+6. WHEN the matter workspace is shown after intake, THE System SHALL surface the existing action-first overview rather than forcing the user through a second classification journey
+7. WHERE deeper workflow, audit, and export capabilities already exist, THE System SHALL expose them from the persistent matter experience as follow-on steps instead of hiding them behind unrelated navigation
+
+### Requirement 28
+
+**User Story:** As a user describing conduct that may have criminal implications, I want the system to distinguish my procedural role before generating criminal guidance, so that I am not miscast as the accused, a complainant, or a Crown witness.
+
+#### Acceptance Criteria
+
+1. WHEN criminal facts or keywords are detected, THE System SHALL distinguish between accused, reporting or complainant, victim-support, and civil-first scenarios with possible criminal allegations before generating role-specific language.
+2. WHEN the user's criminal posture is unclear, THE System SHALL ask a targeted clarification question instead of defaulting to charged-person or complainant framing.
+3. WHEN the user is not the accused, THE System SHALL NOT state that they are dealing with criminal charges unless that posture is explicit in the facts.
+4. WHEN criminal process is only a possible parallel pathway, THE System SHALL present it as an optional information-only branch alongside civil, regulatory, or evidentiary actions.
+5. WHEN peace bond, victim services, occurrence-number guidance, restitution, or complainant-role content is shown, THE System SHALL gate it behind supporting factual signals.
+6. WHERE criminal threshold is uncertain, THE System SHALL explain uncertainty in factual, non-accusatory language and recommend professional review where stakes are high.
+
+### Requirement 29
+
+**User Story:** As a user who is not yet self-representing, I want the system to surface the step-by-step plan only when it fits my posture, so that I am not pushed into a litigation workflow before I need it.
+
+#### Acceptance Criteria
+
+1. WHEN the user has not indicated self-representation, active filing, or workflow readiness, THE System SHALL NOT promote the step-by-step plan as the primary next action.
+2. WHEN the first-run matter overview is shown after intake, THE System SHALL prioritize immediate actions, evidence preservation, forum options, and deadlines ahead of self-representation workflow tools.
+3. WHEN the step-by-step plan is promoted, THE System SHALL explain why that workflow is relevant to the user's current posture.
+4. WHEN the user explicitly requests guided procedure help or indicates self-representation readiness, THE System MAY promote the step-by-step plan as the primary next action.
+5. WHERE workflow is not yet appropriate, THE System SHALL offer lighter-weight next actions such as evidence strategy, document review, or clarification prompts.
+
 ### Requirement 10
 
 **User Story:** As a user interacting with the system, I want an intuitive and accessible web interface, so that I can easily navigate through matter intake, evidence upload, and document generation processes.

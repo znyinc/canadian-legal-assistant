@@ -1,0 +1,1800 @@
+legal_research_workflow:
+  version: "2.0"
+  last_updated: "2026-03-29"
+  changelog:
+    - "v2.0: Added Phases 8.5 (Discovery), 8.7 (Expert Evidence), 9.5 (Offers to Settle),"
+    - "  10.5 (Pre-Trial Conference), 12.5 (Costs Submissions). Added Decision Gates."
+    - "  Enhanced Phases 7-13 with missing steps. Added Appendices (Glossary, Fee Schedule,"
+    - "  Template Index, Jurisdiction Variants)."
+
+  # ============================================================================
+  # CRITICAL DISCLAIMER — READ FIRST
+  # ============================================================================
+  self_representation_risk_notice:
+    severity: "EXTREME"
+    core_principle: |
+      Self-representation in court (pro se / pro bono) is legally and personally risky.
+      Courts do not lower standards for self-represented litigants. You will be held
+      to the same procedural rules, evidentiary standards, and substantive law as 
+      a lawyer. Strategic mistakes are not forgiven. Procedural errors can result in
+      dismissal, default judgment, or waiver of defenses.
+
+    what_i_can_do:
+      - "Help you understand court rules (procedural roadmap)"
+      - "Organize evidence and documents for clarity"
+      - "Draft documents (affidavits, motions, briefs) for YOUR review"
+      - "Identify procedural traps and deadlines"
+      - "Prepare you to present your case logically"
+      - "Help you understand your opponent's likely arguments"
+      - "Organize cross-examination strategy (identify inconsistencies)"
+      - "Prepare for appeals"
+      - "Map ADR options before committing to litigation"
+      - "Track cost exposure and settlement economics throughout"
+
+    what_i_cannot_do:
+      - "Provide legal advice (what you should do legally)"
+      - "Predict what a judge will decide"
+      - "Make strategic decisions for you"
+      - "Represent you in court or sign documents as your counsel"
+      - "Guarantee you'll win"
+      - "Protect you from procedural mistakes"
+      - "Override rules of court or get you extensions"
+      - "Waive privilege on your behalf"
+      - "Substitute for a licensed legal professional"
+
+    escalation_red_flags:
+      - "Criminal charges or criminal exposure"
+      - "Child custody or family law (highly specialized procedural rules)"
+      - "Intellectual property disputes"
+      - "Complex commercial contracts with multi-party disputes"
+      - "Regulatory proceedings (administrative law is different)"
+      - "Anything involving injunctions, restraining orders, or urgent relief"
+      - "Opponent has a lawyer and you don't (massive procedural disadvantage)"
+      - "Limitation periods are tight (days/weeks, not months)"
+      - "Financial exposure exceeds $50,000 or your ability to recover"
+      - "Expert evidence is central to the case (medical malpractice, professional negligence)"
+      - "Multiple jurisdictions or cross-border elements"
+      - "Class action or representative proceeding"
+
+    honest_assessment: |
+      If ANY of the red flags above apply to you, self-representation is likely
+      to end badly. A lawyer costs money upfront; losing a case costs far more.
+      Consider: legal aid, duty counsel, unbundled legal services (lawyer handles
+      parts), or law school clinics. Self-representation should only be attempted
+      for straightforward disputes with modest stakes and clear facts.
+
+  # ============================================================================
+  # DECISION GATES — Go/No-Go Checkpoints
+  # ============================================================================
+  decision_gates:
+    description: |
+      Litigation is not linear. These gates force a structured reassessment at
+      critical junctures to prevent sunk-cost-driven escalation. At each gate,
+      you must honestly answer: Should I continue, settle, or hire a lawyer?
+
+    gate_1_jurisdiction_and_adr:
+      trigger: "After Phase 7 (Court Rules & Jurisdiction)"
+      questions:
+        - "Is this the right court? (Small Claims vs. Superior Court vs. Federal)"
+        - "Should I pursue ADR first? (Mediation, arbitration, ombudsman, regulatory complaint)"
+        - "Has the limitation period expired or is it imminent?"
+        - "Do I understand the procedural rules well enough to proceed?"
+        - "What is my realistic cost exposure if I lose (opponent's legal fees + disbursements)?"
+      outcomes:
+        proceed: "Court is correct, ADR exhausted or inapplicable, limitation intact, rules understood"
+        pause: "Consider ADR, consider transferring courts, get legal advice on limitation"
+        stop: "Limitation expired, wrong jurisdiction, ADR clause in contract mandates arbitration"
+
+    gate_2_evidence_sufficiency:
+      trigger: "After Phase 8 (Evidence Organization)"
+      questions:
+        - "Do I have evidence to prove every element of my claim or defense?"
+        - "Are there critical evidence gaps I cannot fill?"
+        - "Does privilege review reveal I must withhold key documents?"
+        - "Would adverse inferences from missing evidence sink my case?"
+        - "Is the evidence clear enough to persuade a judge, or is it ambiguous?"
+      outcomes:
+        proceed: "Evidence supports all material facts, gaps are minor"
+        pause: "Evidence gaps exist but may be filled through discovery"
+        stop: "Critical evidence missing, case cannot be proven, settle now"
+
+    gate_3_post_discovery:
+      trigger: "After Phase 8.5 (Discovery & Disclosure)"
+      questions:
+        - "What did discovery reveal? Is the case stronger or weaker?"
+        - "Did opponent produce damaging evidence I didn't expect?"
+        - "Are my discovery answers (admissions) defensible at trial?"
+        - "Did I fulfill all undertakings?"
+        - "What is the updated cost-benefit analysis?"
+      outcomes:
+        proceed: "Discovery confirmed or strengthened the case"
+        pause: "Discovery revealed weaknesses — reassess settlement"
+        stop: "Discovery devastated the case — settle immediately"
+
+    gate_4_pre_trial:
+      trigger: "After Phase 10.5 (Pre-Trial Conference)"
+      questions:
+        - "What did the pre-trial judge signal about the merits?"
+        - "Did the judge push settlement? What terms were discussed?"
+        - "Has opponent made a Rule 49 offer I should consider?"
+        - "What is my estimated cost exposure if I lose at trial?"
+        - "Am I emotionally and practically ready for trial (days/weeks in court)?"
+      outcomes:
+        proceed: "Judge's signals are neutral/positive, trial preparation is solid"
+        pause: "Judge signaled concerns — seriously consider settlement"
+        stop: "Judge clearly skeptical, opponent's offer is reasonable, settle"
+
+    gate_5_post_judgment:
+      trigger: "After Phase 12 (Post-Judgment)"
+      questions:
+        - "Did the judge make a legal error (misapplied law) or palpable factual error?"
+        - "Is the appeal likely to succeed (>30% probability)?"
+        - "What is the cost of appeal (transcript, filing fees, potential cost award)?"
+        - "Can I afford to lose the appeal and pay additional costs?"
+        - "Is the judgment enforceable against me in the meantime (do I need a stay)?"
+      outcomes:
+        proceed: "Clear legal error, appeal has realistic prospect of success"
+        pause: "Possible grounds but uncertain — get appellate lawyer's opinion"
+        stop: "No clear error, judgment is reasonable, accept and move on"
+
+  # ============================================================================
+  # PHASE 7 — Court Rules & Jurisdiction (Enhanced)
+  # ============================================================================
+  phase_7_court_rules_and_jurisdiction_master:
+    name: "Procedural Rulebook & Court-Specific Requirements"
+    description: "Map the exact court you're in and its procedural requirements"
+    steps:
+      - step: "limitation_period_verification"
+        priority: "STEP ZERO — Do this before anything else"
+        action: "Verify that the limitation period has not expired"
+        claude_role: |
+          Analyze:
+          - Ontario Limitations Act, 2002: 2-year basic limitation, 15-year ultimate limitation
+          - Discoverability analysis: when did you know (or ought to have known) about the claim?
+          - Special limitation periods (some statutes override the general 2-year rule)
+          - Tolling provisions (disability, minority, acknowledgment of debt)
+          - Federal limitation periods (if Federal Court jurisdiction)
+          
+          If limitation has expired: STOP. Case is statute-barred.
+          If limitation is imminent: file immediately, even if not fully prepared.
+        output: "Limitation period analysis memo (proceed / imminent / expired)"
+
+      - step: "adr_mapping"
+        priority: "Before committing to litigation"
+        action: "Map all alternative dispute resolution options"
+        claude_role: |
+          Identify:
+          - Mandatory mediation (Rule 24.1 — Toronto, Ottawa, Windsor County)
+          - Private mediation (voluntary, often faster and cheaper)
+          - Arbitration clauses in contract (may be mandatory — court will stay action)
+          - Ombudsman or regulatory complaint channels (industry-specific)
+          - Small claims mediation (built into Small Claims process)
+          - Online dispute resolution (Ontario CRT equivalent, if applicable)
+          - Consumer protection complaint bodies
+          
+          Assess: Is litigation the right path, or should ADR be tried first?
+        output: "ADR options analysis + recommendation"
+
+      - step: "court_selection_matrix"
+        action: "Determine the correct court and procedural track"
+        claude_role: |
+          Decision matrix:
+          - Small Claims Court: up to $35,000 (Ontario), simplified procedure, no discovery
+          - Superior Court — Simplified Procedure (Rule 76): up to $200,000, limited discovery
+          - Superior Court — Ordinary Procedure: over $200,000 or complex cases
+          - Divisional Court: appeals from administrative tribunals, judicial review
+          - Federal Court: federal statutes (IP, immigration, federal Crown liability)
+          - Tax Court of Canada: income tax disputes
+          - Administrative Tribunals: landlord-tenant (LTB), human rights (HRTO), labour
+          
+          Confirm: monetary jurisdiction, subject matter jurisdiction, venue (geographic)
+        output: "Court selection analysis + procedural track confirmation"
+
+      - step: "identify_correct_court"
+        action: "You tell me which court (Superior Court, Small Claims, Court of Justice, Federal Court, etc.)"
+        claude_role: "Confirm jurisdiction, dollar threshold, venue, and which rules of court apply"
+        output: "Court jurisdiction profile (which rules, which judge level, what forms required)"
+
+      - step: "rules_of_court_inventory"
+        action: "I pull the applicable rules of court (Ontario Rules of Civil Procedure, or equivalent)"
+        claude_role: "Create a searchable index of relevant rules with plain-language summaries"
+        output: "Rules quick-reference guide (sections tagged by procedural stage)"
+
+      - step: "procedural_stage_roadmap"
+        action: "Based on your case stage, map out every required step"
+        claude_role: "Timeline of: pleadings → discovery → motion practice → pre-trial → trial/resolution"
+        output: "Procedural roadmap with deadlines and required documents at each stage"
+
+      - step: "filing_requirements_checklist"
+        action: "For each document you'll file, I create a pre-filing checklist"
+        claude_role: |
+          Checklist includes:
+          - Correct court form (or certificate that form doesn't exist)
+          - Proper header format, case name, court file number
+          - Signature requirements and notarization
+          - Number of copies required
+          - Filing fee amount
+          - Service requirements (how to serve opponent)
+          - Proof of service requirements
+          - Deadline for filing
+        output: "Filing checklist for each document type"
+
+      - step: "service_and_notice_rules"
+        action: "I map out how to serve documents on your opponent and prove it"
+        claude_role: |
+          Create service package:
+          - Permitted methods (personal service, mail, email, courier, substituted service)
+          - What proof is required for each method
+          - Timeline (service must happen X days before hearing/trial)
+          - Certificate of service template (you must file this)
+          - What happens if service goes wrong (motion to set aside, etc.)
+        output: "Service requirements matrix with templates"
+
+      - step: "virtual_hybrid_hearing_rules"
+        action: "Determine whether hearings will be in-person, virtual, or hybrid"
+        claude_role: |
+          Map:
+          - Court's current practice for motions, pre-trials, and trials (post-COVID rules)
+          - Technology requirements (Zoom for Courts, MS Teams, CaseLines)
+          - Exhibit sharing protocols for virtual hearings
+          - Recording rules and prohibitions
+          - How to request in-person hearing if virtual is default (or vice versa)
+          - Technical backup plan (what if connection drops mid-hearing)
+        output: "Virtual/hybrid hearing requirements + technology checklist"
+
+  # ============================================================================
+  # PHASE 8 — Evidence Organization & Strategy (Enhanced)
+  # ============================================================================
+  phase_8_evidence_organization_and_strategy:
+    name: "Evidence Inventory, Organization & Presentation Strategy"
+    description: "Turn your documents into admissible, persuasive evidence"
+    steps:
+      - step: "evidence_audit"
+        action: "You provide all potential evidence (documents, emails, photos, recordings, witness statements)"
+        claude_role: "Classify by type: documentary (admissible as-is), testimonial (needs witness), physical (provenance?)"
+        output: "Evidence inventory with admissibility assessment for each item"
+
+      - step: "privilege_review"
+        priority: "Before disclosing anything to opponent"
+        action: "Identify privileged documents before any disclosure or production"
+        claude_role: |
+          Review for:
+          - Solicitor-client privilege: communications with a lawyer for legal advice
+          - Litigation privilege: documents created for dominant purpose of litigation
+          - Settlement privilege (without prejudice): settlement communications
+          - Inadvertent disclosure risk: once produced, privilege is likely waived
+          - Privilege log requirements: what to list and how to describe without waiving
+          
+          Flag every document that may be privileged. When in doubt, withhold and seek advice.
+        output: "Privilege log + privileged documents separated from producible documents"
+
+      - step: "digital_evidence_authentication"
+        action: "Authenticate electronic evidence (emails, texts, social media, metadata)"
+        claude_role: |
+          For each digital evidence item:
+          - Email: full headers (not just body), sender verification, chain integrity
+          - Text messages: platform export (not just screenshots), timestamps, phone number verification
+          - Social media: URL, screenshot with date, platform data export if available
+          - Metadata preservation: file creation dates, modification history, EXIF data for photos
+          - Authentication method: witness who can say 'I sent/received this' or business records exception
+          - Tampering concerns: has the document been altered? How to prove it hasn't?
+          
+          Courts are increasingly skeptical of unverified digital evidence.
+        output: "Digital evidence authentication log + preservation records"
+
+      - step: "chain_of_custody_documentation"
+        action: "For documents/evidence, I trace origin, custody, and handling"
+        claude_role: |
+          Create: who created it, when, how you obtained it, how it's been stored,
+          any changes/copies made. This matters for authenticity challenges.
+        output: "Chain of custody log per evidence item"
+
+      - step: "hearsay_and_admissibility_analysis"
+        action: "I review each piece of evidence for hearsay problems"
+        claude_role: |
+          Flag:
+          - Statements by people who won't testify (hearsay risk)
+          - Exceptions (business records, statements against interest, res gestae, etc.)
+          - Whether you need that person to testify live
+          - Affidavit evidence vs. live testimony tradeoffs
+          - Expert opinion evidence requirements (see Phase 8.7)
+        output: "Admissibility assessment per evidence item + witness list"
+
+      - step: "adverse_inference_analysis"
+        action: "Identify evidence that should exist but doesn't"
+        claude_role: |
+          Assess:
+          - Deleted texts, emails, or documents (spoliation risk)
+          - Missing records that a party would normally keep
+          - Unexplained gaps in documentation
+          - Court's power to draw adverse inferences (negative conclusion from missing evidence)
+          - Your obligation to explain why evidence is unavailable
+          - Opponent's missing evidence you can exploit
+        output: "Adverse inference risk map (your exposure + opponent's exposure)"
+
+      - step: "financial_and_statistical_evidence"
+        action: "If the case involves damages quantification or financial evidence"
+        claude_role: |
+          Organize:
+          - Summary charts (Rule 35.04) for complex financial data
+          - Agreed books of documents for financial records
+          - Damages calculation methodology (how you arrive at the number)
+          - Supporting documents for each line item of damages
+          - Mitigation evidence (steps you took to reduce your loss)
+          - Pre-judgment interest calculation (Courts of Justice Act, s.128-130)
+        output: "Damages quantification package + summary charts"
+
+      - step: "evidence_chronology"
+        action: "I create a visual timeline of key events and evidence"
+        claude_role: "Timeline shows: date → event → supporting evidence → document reference"
+        output: "Visual chronology (can be shown to judge)"
+
+      - step: "narrative_thread_building"
+        action: "I help you organize evidence into a story (not just a pile of docs)"
+        claude_role: |
+          Work through:
+          - What is the judge reading? (Opening statement)
+          - What evidence proves each point?
+          - What is the opponent's likely counter-narrative?
+          - What evidence rebuts it?
+          - What is the judge's decision path? (What does she need to believe to rule for you?)
+        output: "Narrative arc document + evidence-to-point mapping"
+
+      - step: "exhibit_organization"
+        action: "I organize all evidence into a master exhibit list"
+        claude_role: |
+          Create:
+          - Exhibit labels (A, B, C, or numbered)
+          - Exhibit brief description
+          - Where exhibit appears in trial materials
+          - Page number in the trial record/motion record
+          - Permissible reference (e.g., 'Exhibit A, page 2')
+        output: "Master exhibit list + organized exhibit bundle"
+
+  # ============================================================================
+  # PHASE 8.5 — Discovery & Disclosure (NEW)
+  # ============================================================================
+  phase_8_5_discovery_and_disclosure:
+    name: "Discovery & Disclosure Process"
+    description: |
+      Discovery is where self-represented litigants are most vulnerable.
+      Your answers under oath are binding admissions at trial. Your document
+      production obligations are strict. Failure to comply = sanctions, costs,
+      or adverse inferences. This phase is critical.
+    steps:
+      - step: "litigation_hold_and_preservation"
+        priority: "Immediately upon contemplating litigation"
+        action: "Implement a litigation hold on all potentially relevant documents and data"
+        claude_role: |
+          Create:
+          - Preservation notice (to yourself and anyone who holds your documents)
+          - Scope of preservation (emails, texts, social media, cloud storage, backups)
+          - Suspend auto-delete policies (email retention, text auto-delete, cloud sync)
+          - Document the hold (date implemented, scope, who was notified)
+          
+          Spoliation (destroying relevant evidence) can result in:
+          - Adverse inferences (court assumes destroyed evidence was unfavorable)
+          - Costs sanctions
+          - Striking of pleadings (extreme cases)
+          - Criminal contempt (rare but possible)
+        output: "Litigation hold notice + preservation log"
+
+      - step: "affidavit_of_documents"
+        action: "Prepare and serve the Affidavit of Documents (Rule 30.03)"
+        claude_role: |
+          The Affidavit of Documents has three schedules:
+          - Schedule A: Documents in your possession that you will produce
+          - Schedule B: Documents in your possession that you claim privilege over
+          - Schedule C: Documents no longer in your possession (lost, destroyed, given away)
+          
+          Requirements:
+          - Must be sworn (commissioner of oaths)
+          - Must list EVERY relevant document — not just favorable ones
+          - Failure to disclose = document may be excluded at trial
+          - Continuing obligation: if new documents are found, must supplement
+          
+          Draft the Affidavit of Documents with proper scheduling.
+        output: "Draft Affidavit of Documents (Schedule A, B, C) + privilege log"
+
+      - step: "document_production"
+        action: "Produce documents to the opponent and review their production"
+        claude_role: |
+          Your production:
+          - Organize documents by Schedule A categories
+          - Number every page sequentially
+          - Provide copies (not originals)
+          - Note any redactions and basis for redaction
+          
+          Opponent's production — review for:
+          - Completeness (are there obvious gaps?)
+          - Documents referenced but not produced
+          - Privilege claims that seem overbroad
+          - Motion to compel production (Rule 30.06) if production is inadequate
+        output: "Document production package + opponent production review memo"
+
+      - step: "examination_for_discovery_preparation"
+        priority: "HIGHEST — most dangerous stage for self-reps"
+        action: "Prepare for examination for discovery (being questioned under oath)"
+        claude_role: |
+          Critical rules:
+          - You are under oath; answers are admissions that can be read in at trial
+          - Broader scope than trial (any question relevant to any matter in issue)
+          - Limited objections: only privilege and relevance (not hearsay, not leading)
+          - You MUST answer unless your objection is sustained
+          - 'I don't recall' is acceptable IF TRUE — lying under oath is perjury
+          - 'I'll take that under advisement' = undertaking to answer later
+          
+          Preparation:
+          - Anticipated question bank (every question opponent will likely ask)
+          - Answer strategy (concise, truthful, don't volunteer, don't speculate)
+          - Documents you'll be shown (review your own productions + opponent's)
+          - Red-line topics (areas where your case is weakest — prepare carefully)
+          - Practice session with me (I play opponent's counsel)
+          
+          Critical rule: NEVER guess. NEVER speculate. NEVER volunteer.
+          If you don't know, say so. If you need to check a document, ask to see it.
+        output: "Discovery preparation package + practice Q&A + answer strategy guide"
+
+      - step: "conducting_examination_of_opponent"
+        action: "If you are examining the opponent at discovery"
+        claude_role: |
+          Develop:
+          - Question plan organized by topic (not random)
+          - Key admissions you need (list them — these become trial evidence)
+          - Documents to put to the witness (force them to confirm or deny)
+          - Follow-up strategy (if they evade, how to pin them down)
+          - Undertakings to request (documents or information they need to provide later)
+          
+          Remember: discovery is for gathering information, not arguing your case.
+          Don't tip your hand. Don't argue. Just collect admissions.
+        output: "Examination plan + question outline + target admissions list"
+
+      - step: "undertakings_management"
+        action: "Track and fulfill undertakings from discovery"
+        claude_role: |
+          After discovery:
+          - List every undertaking you gave (promise to provide information/documents)
+          - Deadline for fulfillment (usually agreed or court-ordered)
+          - Fulfill each undertaking with written responses
+          - Track opponent's undertakings and follow up
+          - If opponent fails to fulfill: motion to compel (Rule 30.06) + costs
+          - If you fail to fulfill: expect motion to compel + costs against you
+        output: "Undertakings tracker (yours and opponent's) + fulfillment responses"
+
+      - step: "proportionality_and_discovery_scope"
+        action: "Apply proportionality principle to manage discovery scope"
+        claude_role: |
+          Rule 29.1 (Ontario) — proportionality factors:
+          - Amount in dispute
+          - Importance of the issues
+          - Complexity of the case
+          - Whether the effort is proportionate to the result
+          
+          Use proportionality to:
+          - Resist overly broad discovery demands from opponent
+          - Limit your own discovery obligations to what's reasonable
+          - Argue against expensive document production requests
+          - Motion to limit discovery scope (if opponent is fishing)
+        output: "Proportionality analysis + arguments for limiting discovery if needed"
+
+  # ============================================================================
+  # PHASE 8.7 — Expert Evidence (NEW)
+  # ============================================================================
+  phase_8_7_expert_evidence:
+    name: "Expert Evidence Planning & Management"
+    description: |
+      If your case requires expert opinion (medical causation, engineering,
+      valuation, accounting, professional standard of care), this phase is
+      essential. Expert evidence has strict procedural requirements and
+      significant cost implications.
+    steps:
+      - step: "expert_necessity_assessment"
+        action: "Determine whether expert evidence is required"
+        claude_role: |
+          Expert evidence is needed when:
+          - Causation requires scientific/medical explanation
+          - Damages quantification requires specialized knowledge
+          - Professional standard of care must be established (malpractice)
+          - Technical issues beyond a judge's common knowledge
+          - Valuation of property, business, or assets
+          - Forensic analysis (digital, financial, scientific)
+          
+          Expert evidence is NOT needed for:
+          - Facts within common knowledge
+          - Credibility determinations (judge decides this)
+          - Legal conclusions (that's the judge's job)
+          
+          Cost reality: experts charge $300-$1000+/hour. Reports cost $5,000-$50,000+.
+          Budget this before committing.
+        output: "Expert evidence necessity memo + cost estimate"
+
+      - step: "expert_selection_and_engagement"
+        action: "Find and retain an appropriate expert"
+        claude_role: |
+          Selection criteria:
+          - Qualifications (Mohan criteria: qualified by training, education, experience)
+          - Independence (expert's duty is to the court, not to you)
+          - Track record (has this expert testified before? How was their evidence received?)
+          - Cost and availability
+          - Willingness to testify (some experts only write reports)
+          
+          Engagement:
+          - Retainer agreement
+          - Scope of opinion (be specific about what you're asking)
+          - Materials provided to expert (must be disclosed to opponent)
+          - Timeline for report delivery
+        output: "Expert selection criteria + engagement checklist"
+
+      - step: "expert_report_requirements"
+        action: "Ensure expert report meets procedural requirements"
+        claude_role: |
+          Rule 53.03 requirements (Ontario Superior Court):
+          - Serve report on all parties at least 90 days before trial
+          - Reply report: 60 days before trial
+          - Report must include: qualifications, instructions received, facts assumed,
+            research conducted, opinion and reasons, acknowledgment of duty to court
+          - Expert's duty: to provide opinion evidence that is fair, objective, and
+            non-partisan (Form 53A acknowledgment)
+          
+          If report doesn't comply: may be excluded at trial.
+        output: "Expert report compliance checklist + timeline"
+
+      - step: "joint_expert_consideration"
+        action: "Consider whether a joint expert appointment is appropriate"
+        claude_role: |
+          Joint expert advantages for self-reps:
+          - Cost shared between parties
+          - Court often prefers joint experts (seen as more objective)
+          - Eliminates battle of experts
+          
+          Joint expert risks:
+          - Less control over the opinion
+          - If joint expert's opinion is unfavorable, harder to challenge
+          
+          When to propose: lower-stakes cases, valuation disputes, simple medical causation
+        output: "Joint expert feasibility analysis"
+
+      - step: "challenging_opponent_expert"
+        action: "Prepare to challenge the opponent's expert evidence"
+        claude_role: |
+          Challenge on:
+          - Qualifications (Mohan/Daubert): is this person actually qualified?
+          - Methodology: is the approach accepted in the field?
+          - Independence: is the expert a hired gun? (extensive work for one side)
+          - Facts assumed: did the expert assume facts not in evidence?
+          - Reliability: has the technique been tested? Error rate? Peer review?
+          - Scope: did the expert opine on matters outside their expertise?
+          
+          Cross-examination of experts is specialized — prepare specific questions
+          targeting the weakest aspects of their report.
+        output: "Opponent expert challenge strategy + cross-examination questions"
+
+  # ============================================================================
+  # PHASE 9 — Document Drafting (Enhanced)
+  # ============================================================================
+  phase_9_document_drafting_for_self_rep:
+    name: "Draft Court Documents (for YOUR Review & Filing)"
+    description: "I draft documents; you review, understand, and file them"
+
+    critical_note: |
+      I can draft documents IN YOUR VOICE. You must:
+      1. Read every word carefully
+      2. Ensure factual accuracy (I cannot know your full situation)
+      3. Understand what you're asking the court to do
+      4. Verify compliance with court rules
+      5. Take full responsibility for what you file
+
+      You are signing these documents. You are attesting to their truth.
+      I am not your lawyer; you are responsible for legal sufficiency.
+
+    steps:
+      - step: "pleadings_drafting"
+        action: "Initial claim/statement of claim or defense"
+        claude_role: |
+          Draft:
+          - Statement of Facts (clear, concise narrative with citations to evidence)
+          - Relief Sought (what you want the court to order)
+          - Legal Basis (why you're entitled to that relief, citing statutes/case law)
+          - Proper formatting and tone (formal, not emotional)
+
+          You review, correct, and file.
+        output: "Draft pleading in court-ready format + explanatory memo"
+
+      - step: "amended_pleadings"
+        action: "Amend pleadings when case evolves or deficiencies are discovered"
+        claude_role: |
+          When to amend (Rule 26):
+          - Discovery reveals new facts or causes of action
+          - Original pleading is deficient (missing material facts)
+          - New legal arguments arise
+          
+          Process:
+          - Right to amend once without leave (before close of pleadings, Rule 26.02)
+          - After that: motion for leave to amend (must show amendment is not prejudicial)
+          - Costs of amendment (you'll likely pay the other side's costs of the amendment)
+          - Draft amended pleading showing changes (underline additions, strikethrough deletions)
+          
+          Timing matters: late amendments are harder to get and more costly.
+        output: "Draft amended pleading + motion for leave (if required)"
+
+      - step: "affidavit_drafting"
+        action: "Affidavits (sworn testimony submitted in writing)"
+        claude_role: |
+          Draft:
+          - First-person statement of facts (must be admissible)
+          - No legal conclusions (e.g., don't say 'they breached the contract'; say 'they did X on date Y')
+          - Organize chronologically
+          - Attach exhibits properly (each exhibit marked and referenced in body)
+          - Swearing/affirming language (varies by province)
+
+          You review, swear before a commissioner, and file.
+        output: "Draft affidavit + commissioning checklist"
+
+      - step: "motion_materials_drafting"
+        action: "Motions (interim requests: payment of security, stay, summary judgment, etc.)"
+        claude_role: |
+          Draft:
+          - Notice of Motion (formal request)
+          - Motion Record (affidavit(s) + exhibits)
+          - Factum (legal brief: facts + law + argument)
+          - Proper formatting and pagination
+
+          You review and file according to court schedule.
+        output: "Complete motion package in court-ready format"
+
+      - step: "trial_brief_drafting"
+        action: "Written opening/closing arguments for trial"
+        claude_role: |
+          Draft:
+          - Opening brief (if allowed): outline of facts, evidence, and legal argument
+          - Closing brief (post-trial): restatement of evidence, law, and why judge should rule for you
+          - Formatted for readability (headings, short paragraphs)
+          - Citations to trial record and exhibits
+
+          You review and present to judge.
+        output: "Trial brief(s) in persuasive format"
+
+      - step: "consent_order_and_settlement_drafting"
+        action: "Draft settlement documents if case resolves by agreement"
+        claude_role: |
+          Draft:
+          - Minutes of settlement (binding settlement agreement)
+          - Consent order (court order reflecting agreement, signed by both parties)
+          - Full and final release (mutual or one-way, depending on terms)
+          - Payment terms, timelines, and enforcement provisions
+          - Confidentiality clause (if applicable)
+          - What happens if a party breaches the settlement
+          
+          Poorly drafted settlements create more litigation. Be precise.
+        output: "Settlement document package (minutes + consent order + release)"
+
+      - step: "correspondence_drafting"
+        action: "Official letters, settlement proposals, procedural notices"
+        claude_role: |
+          Draft:
+          - Professional tone (no threats, no emotion)
+          - Clear statement of position/request
+          - Deadline for response (if applicable)
+          - Preservation of evidence/legal positions
+
+          You review and send on your letterhead.
+        output: "Professional correspondence template"
+
+      - step: "costs_outline_and_bill_of_costs"
+        action: "Prepare cost submissions for use after judgment"
+        claude_role: |
+          Draft:
+          - Bill of costs (itemized disbursements: filing fees, photocopying, expert fees, travel)
+          - Costs outline (for substantial indemnity or partial indemnity assessment)
+          - Self-represented litigant costs: cannot claim legal fees, but CAN claim:
+            - Disbursements (out-of-pocket expenses)
+            - Modest per-diem for preparation time (some courts allow)
+            - Expert fees, transcript costs
+          - Cost consequences memo: how Rule 49 offers affect costs
+          
+          Prepare this early so it's ready when judgment comes down.
+        output: "Bill of costs template + costs submission package"
+
+  # ============================================================================
+  # PHASE 9.5 — Offers to Settle & Mandatory Mediation (NEW)
+  # ============================================================================
+  phase_9_5_offers_to_settle_and_mediation:
+    name: "Offers to Settle (Rule 49) & Mandatory Mediation"
+    description: |
+      Rule 49 offers to settle are one of the most powerful cost levers in 
+      Ontario litigation. Mandatory mediation (Rule 24.1) applies in Toronto,
+      Ottawa, and Windsor. Missing either can be catastrophic for costs.
+
+    steps:
+      - step: "rule_49_offer_strategy"
+        action: "Develop a strategic offer-to-settle plan"
+        claude_role: |
+          Rule 49 mechanics:
+          - Written offer that complies with Rule 49.02 (specific format)
+          - Offer remains open for acceptance unless withdrawn
+          - Cost consequences:
+            - If plaintiff's offer is not accepted and plaintiff obtains judgment 
+              as favorable or more: substantial indemnity costs from date of offer
+            - If defendant's offer is not accepted and plaintiff obtains judgment
+              less favorable: plaintiff pays defendant's costs from date of offer
+          
+          Strategic timing:
+          - Early offer: strong signal of reasonableness, maximizes cost leverage
+          - Post-discovery offer: based on better information
+          - Pre-trial offer: last chance before trial costs escalate
+          
+          Critical: offer must be precise, in writing, and comply with Rule 49 format.
+          Defective offers don't trigger cost consequences.
+        output: "Rule 49 offer strategy memo + draft offer in compliant format"
+
+      - step: "responding_to_opponent_offer"
+        action: "Evaluate and respond to opponent's Rule 49 offer"
+        claude_role: |
+          Analysis:
+          - Is the offer reasonable relative to your best-case scenario?
+          - What are the cost consequences if you reject and don't beat it?
+          - Calculate: judgment I expect minus costs I'll pay if I lose on costs
+          - Is the risk of rejection worth it?
+          - Can you make a counter-offer?
+          - Deadline for acceptance (offers can be withdrawn)
+        output: "Offer evaluation memo + recommended response"
+
+      - step: "mandatory_mediation_preparation"
+        action: "Prepare for mandatory mediation (Rule 24.1)"
+        claude_role: |
+          Mandatory mediation requirements (Toronto, Ottawa, Windsor):
+          - Must mediate within 180 days of filing first defense (Rule 24.1.09)
+          - Parties select mediator from roster or agree on private mediator
+          - Mediation session: typically 3-4 hours
+          - Statement of Issues: each party files a brief statement (Rule 24.1.14)
+          
+          Preparation:
+          - Draft mediation brief (concise: facts, issues, position, settlement range)
+          - Identify your BATNA (Best Alternative To Negotiated Agreement)
+          - Set your walk-away number (minimum acceptable settlement)
+          - Understand mediator's role (facilitator, not decision-maker)
+          - Bring authority to settle (you can agree to terms on the spot)
+          - Be prepared to hear the other side's perspective without reacting
+          
+          Mediation is often the best opportunity to resolve the case.
+          Approach it seriously, not as a box-checking exercise.
+        output: "Mediation preparation package + brief + settlement range analysis"
+
+      - step: "settlement_economics_analysis"
+        action: "Calculate the economics of settlement vs. trial at current stage"
+        claude_role: |
+          Build a decision matrix:
+          - Best-case judgment (if you win everything)
+          - Worst-case judgment (if you lose everything, including costs)
+          - Expected judgment (probability-weighted outcome)
+          - Cost to get to trial (disbursements, expert fees, transcript, lost time)
+          - Cost exposure if you lose (opponent's legal fees + disbursements)
+          - Settlement value = Expected judgment minus litigation costs minus risk
+          
+          Update this analysis at every decision gate.
+        output: "Settlement economics model + decision matrix"
+
+  # ============================================================================
+  # PHASE 10 — Examination & Cross-Examination Prep (Enhanced)
+  # ============================================================================
+  phase_10_examination_and_cross_examination_prep:
+    name: "Prepare for Examination (Yours and Opponent's)"
+    description: "Get ready to testify and to cross-examine the other side"
+    steps:
+      - step: "testimony_preparation"
+        action: "You will testify at trial or examination. I help you prepare."
+        claude_role: |
+          Create:
+          - Question bank (likely questions you'll be asked, both friendly and hostile)
+          - Answer strategy (clear, concise, truthful; don't volunteer)
+          - Evidence review (what documents support your testimony)
+          - Demeanor coaching (NOT how to lie; how to be credible and clear)
+
+          Practice Q&A with me, refine your testimony.
+        output: "Testimony prep package + Q&A guide"
+
+      - step: "cross_examination_vulnerability_audit"
+        action: "I identify weak points in your case that opponent will attack"
+        claude_role: |
+          Find:
+          - Gaps in your evidence (did you not prove something?)
+          - Inconsistencies in your own testimony
+          - Documents that help the other side
+          - Credibility issues (delays, memory gaps, contradictions)
+          - What you absolutely must not concede
+
+          Prepare answers to tough questions.
+        output: "Vulnerability map + answer strategies"
+
+      - step: "opponent_cross_examination_strategy"
+        action: "If you're cross-examining the other party or their witnesses"
+        claude_role: |
+          Develop:
+          - Key facts you need to establish (list them)
+          - Questions that establish each fact (leading questions are allowed in cross)
+          - Impeachment opportunities (documents that contradict their testimony)
+          - Question order (build to key points logically)
+          - How to respond if they give a bad answer (ask follow-up or move on?)
+
+          Organize questions by theme, not scatter.
+        output: "Cross-examination plan + question outline by theme"
+
+      - step: "re_examination_strategy"
+        action: "Plan re-examination (redirect) after cross-examination of your witnesses"
+        claude_role: |
+          After opponent cross-examines your witness (or you):
+          - Identify points that need rehabilitation (where cross damaged credibility)
+          - Plan non-leading questions to clarify or correct misimpressions
+          - Cannot introduce new topics — only address matters raised in cross
+          - Keep it brief — extended re-examination looks like damage control
+        output: "Re-examination plan per witness"
+
+      - step: "objections_cheat_sheet"
+        action: "Create a quick-reference guide for common evidentiary objections"
+        claude_role: |
+          Common objections and when to use them:
+          - Hearsay: out-of-court statement offered for truth of its contents
+          - Leading question: on direct examination (not allowed; allowed on cross)
+          - Relevance: evidence doesn't relate to a matter in issue
+          - Privilege: solicitor-client or litigation privilege
+          - Asked and answered: same question already asked
+          - Argumentative: counsel is arguing with the witness
+          - Best evidence rule: original document required, not a copy (with exceptions)
+          - Opinion evidence: lay witness giving opinion (limited to observations)
+          - Speculation: witness being asked to guess
+          
+          How to object:
+          - Stand up: 'Your Honour, I object on the basis of [ground]'
+          - Brief explanation if asked
+          - If overruled: note your objection for the record
+          
+          How to respond to opponent's objections:
+          - Wait for judge to ask you to respond
+          - Explain why the evidence is admissible (cite exception or rule)
+        output: "Objections quick-reference card (print and bring to trial)"
+
+      - step: "witness_examination_prep"
+        action: "If YOU have witnesses, help them prepare"
+        claude_role: |
+          Create per witness:
+          - What facts does this witness prove?
+          - Practice Q&A
+          - What NOT to volunteer
+          - How to handle cross-examination
+          - Evidence they'll reference
+        output: "Witness prep packages"
+
+  # ============================================================================
+  # PHASE 10.5 — Pre-Trial Conference (NEW)
+  # ============================================================================
+  phase_10_5_pre_trial_conference:
+    name: "Pre-Trial Conference Preparation"
+    description: |
+      Ontario Superior Court requires a pre-trial conference before trial.
+      This is often the last realistic opportunity to settle. The pre-trial
+      judge may express preliminary views that signal how trial might go.
+
+    steps:
+      - step: "pre_trial_brief_drafting"
+        action: "Prepare and serve the pre-trial conference brief"
+        claude_role: |
+          Requirements:
+          - Brief must be filed and served at least 5 days before pre-trial (local practice varies)
+          - Content: concise summary of facts, issues, evidence, witnesses, trial time estimate
+          - Settlement position (what you would accept to resolve)
+          - Outstanding procedural issues (motions, undertakings, scheduling)
+          
+          Draft:
+          - Keep it concise (judges read many pre-trial briefs)
+          - Lead with your strongest points
+          - Be realistic about trial time (judges hate underestimates)
+          - Settlement position should be reasonable (not your trial ask)
+        output: "Pre-trial conference brief in court-ready format"
+
+      - step: "pre_trial_settlement_authority"
+        action: "Determine your settlement authority before the conference"
+        claude_role: |
+          Prepare:
+          - Your ideal outcome (what you'd get if you win at trial)
+          - Your realistic outcome (probability-weighted, minus costs)
+          - Your walk-away number (below this, you go to trial)
+          - Non-monetary terms you'd accept (apology, future conduct, payment plan)
+          - Cost exposure update (what does trial cost from here? what if you lose?)
+          
+          The pre-trial judge will push settlement. Be prepared with numbers.
+        output: "Settlement authority memo + negotiation range"
+
+      - step: "pre_trial_conference_conduct"
+        action: "Prepare for what happens at the pre-trial conference"
+        claude_role: |
+          What to expect:
+          - Judge will review both parties' briefs
+          - Judge may express preliminary views on the merits (this is invaluable intelligence)
+          - Judge will push settlement (strongly)
+          - Judge will identify issues for trial and estimate trial time
+          - Judge may make procedural orders (witness order, exhibit deadlines)
+          - Judge may schedule a further pre-trial or set trial date
+          
+          What to do:
+          - Listen carefully to judge's comments (these signal how trial might go)
+          - Take notes on everything the judge says
+          - Be prepared to negotiate (bring settlement authority)
+          - Don't argue the merits aggressively (this isn't trial)
+          - Ask about any procedural uncertainties
+          
+          The pre-trial judge is usually NOT the trial judge (but their views are informative).
+        output: "Pre-trial conference preparation checklist + notes template"
+
+      - step: "case_conference_requirements"
+        action: "If case conference is required (certain proceedings)"
+        claude_role: |
+          Some proceedings require case conferences before pre-trial:
+          - Family law proceedings (mandatory case conferences)
+          - Complex commercial proceedings (case management conferences)
+          - Long trial matters (trial management conferences)
+          
+          Identify whether a case conference applies and prepare accordingly.
+        output: "Case conference requirements memo (if applicable)"
+
+  # ============================================================================
+  # PHASE 11 — Trial/Hearing Organization (Enhanced)
+  # ============================================================================
+  phase_11_trial_or_hearing_organization:
+    name: "Organize Materials for Trial/Hearing Day"
+    description: "Everything organized so you can focus on presenting your case"
+    steps:
+      - step: "trial_materials_index"
+        action: "I create a master index of every document you'll reference"
+        claude_role: |
+          Index includes:
+          - Exhibit list (A through Z, or numbered)
+          - Page number in trial binder
+          - Quick reference (e.g., 'Exhibit C = email showing breach')
+          - Citation format (how to refer to it in court)
+
+          You print and bind, organized by exhibit.
+        output: "Trial binder organization guide + exhibit index"
+
+      - step: "book_of_authorities"
+        action: "Prepare and serve the book of authorities (case law and statutes)"
+        claude_role: |
+          Requirements:
+          - Compile all case law and statutes you'll cite at trial
+          - Organize by issue (not alphabetically)
+          - Tab each authority for easy reference
+          - Include only the relevant portions (highlight key passages)
+          - Serve on opponent in advance (local practice — typically 2-7 days before trial)
+          - Provide copies to the court (number of copies varies by court)
+          
+          Format:
+          - Table of contents listing each authority
+          - Tab dividers with case name and citation
+          - Key passages highlighted or side-barred
+        output: "Book of authorities with table of contents + service checklist"
+
+      - step: "trial_scheduling_compliance"
+        action: "Comply with all trial scheduling order requirements"
+        claude_role: |
+          Many courts issue scheduling orders with deadlines for:
+          - Witness list (names, estimated time for each witness)
+          - Exhibit list (all documents you intend to enter)
+          - Expert reports (already served per Rule 53.03)
+          - Pre-trial briefs
+          - Agreed statement of facts (if possible)
+          - Agreed book of documents (common documents both sides accept)
+          
+          Missing any deadline = potential exclusion of evidence or witnesses.
+        output: "Trial scheduling compliance checklist with deadlines"
+
+      - step: "courtroom_technology_arrangement"
+        action: "Arrange any courtroom technology needed for trial"
+        claude_role: |
+          If you need:
+          - Document display (projector, screen, document camera)
+          - Audio/video playback (recordings as evidence)
+          - Visual aids (charts, timelines, demonstrative exhibits)
+          - Virtual witness testimony (if witness is remote)
+          
+          Actions:
+          - Contact court clerk to arrange technology
+          - Test equipment before trial day
+          - Have backup plan (paper copies of everything)
+          - Know the court's rules on technology use
+        output: "Courtroom technology request + backup plan"
+
+      - step: "court_appearance_checklist"
+        action: "Practical checklist for the day of trial"
+        claude_role: |
+          Include:
+          - What to wear (formal, professional)
+          - What to bring (original affidavits, sealed exhibits, trial materials)
+          - Arrival time and courtroom location
+          - Court etiquette (how to address judge, rules about phones, etc.)
+          - Backup copies of everything
+          - Contact info for witnesses
+          - Order of witnesses/evidence
+        output: "Day-of checklist"
+
+      - step: "argument_outline"
+        action: "I create a speaker's outline for your opening/closing"
+        claude_role: |
+          Outline:
+          - Key theme (one-liner: what's this case about?)
+          - Roadmap (what you'll prove, in order)
+          - Evidence points (fact → supporting evidence → exhibit)
+          - Legal argument (statute/case law → application to your facts)
+          - Conclusion (what you're asking judge to order)
+
+          Use as notes during trial. Stay on message.
+        output: "Speaking outline (for you to use at trial)"
+
+      - step: "judge_research"
+        action: "I research the assigned judge's rulings and tendencies"
+        claude_role: |
+          Find:
+          - Recent decisions by this judge (on similar issues)
+          - What does she care about? (procedure, substance, efficiency?)
+          - How does she rule on evidence questions?
+          - Any published decisions showing her legal reasoning?
+          - Anything public about her bench approach?
+
+          Adjust your presentation to match her style.
+        output: "Judge profile memo"
+
+  # ============================================================================
+  # PHASE 12 — Post-Judgment & Appeal (Enhanced)
+  # ============================================================================
+  phase_12_post_judgment_and_appeal_readiness:
+    name: "After the Judgment: Options & Appeal Preparation"
+    description: "You lost (or won but want to appeal). What now?"
+    steps:
+      - step: "judgment_analysis"
+        action: "Judge renders decision. I read and interpret it."
+        claude_role: |
+          Analyze:
+          - What did judge decide and why (reasons for judgment)?
+          - Did judge make factual findings or legal conclusions?
+          - What did judge NOT address (gaps)?
+          - Were there procedural errors by the court?
+          - Are there grounds for appeal?
+        output: "Judgment analysis memo + appeal feasibility assessment"
+
+      - step: "appeal_grounds_identification"
+        action: "If you want to appeal, what are your grounds?"
+        claude_role: |
+          Identify:
+          - Legal errors (judge misapplied law)
+          - Procedural errors (judge violated rules of court)
+          - Palpable error (judge got facts completely wrong)
+          - Unreasonableness (decision makes no sense on the facts)
+
+          Which grounds apply? Is appeal likely to succeed?
+        output: "Appeal grounds memo with success probability assessment"
+
+      - step: "appeal_deadline_tracking"
+        priority: "URGENT — appeal deadlines are strict and non-extendable"
+        action: "Identify and track appeal filing deadlines"
+        claude_role: |
+          Critical timelines:
+          - Ontario Court of Appeal: 30 days from date of order (not reasons)
+          - Divisional Court: 30 days from date of order
+          - Federal Court of Appeal: 30 days from date of judgment/order
+          - Small Claims appeal to Divisional Court: 30 days
+          
+          Missing the deadline = no appeal (absent extraordinary relief under
+          Rule 3.02 — extension of time, very difficult to obtain).
+          
+          File notice of appeal FIRST, even if not fully prepared.
+        output: "Appeal deadline tracker with filing dates"
+
+      - step: "stay_pending_appeal"
+        action: "Determine whether a stay of judgment is needed while appealing"
+        claude_role: |
+          If you lost and are appealing:
+          - Judgment is enforceable immediately unless stayed
+          - Automatic stay: exists for some money judgments if appeal filed (Rule 63.01)
+          - Motion for stay: required in many cases (must show serious issue, irreparable harm,
+            balance of convenience)
+          - Security for costs: court may require you to post security to appeal
+          - If opponent is enforcing: move urgently for a stay
+        output: "Stay motion analysis + draft motion (if needed)"
+
+      - step: "appellate_record_assembly"
+        action: "Build the appellate record (trial transcript, all documents)"
+        claude_role: |
+          Organize:
+          - Trial transcript (must order from court reporter — takes weeks, costs money)
+          - Exhibits from trial
+          - Interlocutory orders and motions
+          - Reasons for judgment
+          - Notice of appeal and filing deadline
+        output: "Appellate record checklist + filing deadline tracker"
+
+      - step: "appellate_brief_drafting"
+        action: "If proceeding with appeal, draft appellate brief"
+        claude_role: |
+          Draft:
+          - Statement of facts (from trial record — cannot add new facts)
+          - Legal argument (why trial judge erred)
+          - Standard of review for each issue:
+            - Questions of law: correctness (no deference to trial judge)
+            - Questions of fact: palpable and overriding error (high deference)
+            - Mixed law and fact: depends on the nature of the error
+          - Remedies sought (new trial, judgment varied, matter remitted)
+          - Proper appellate brief formatting (more formal, citation-heavy)
+          
+          Fresh evidence on appeal: strict Palmer v. The Queen test — rarely granted.
+          Don't count on introducing new evidence.
+        output: "Appellate brief in court-ready format"
+
+      - step: "vexatious_litigant_risk_awareness"
+        action: "Understand the risk of being declared a vexatious litigant"
+        claude_role: |
+          Warning:
+          - Courts of Justice Act, s.140: court can declare a person vexatious
+            if they habitually and persistently institute frivolous proceedings
+          - Consequences: must get leave (permission) to start ANY future proceeding
+          - Triggers: multiple unsuccessful appeals, repeated actions on same facts,
+            abusive motions, refusal to accept final judgments
+          
+          Self-reps are disproportionately flagged because they:
+          - Don't know when to stop
+          - File multiple motions on the same issue
+          - Appeal everything reflexively
+          
+          Know when to accept a result and move on.
+        output: "Vexatious litigant risk assessment"
+
+      - step: "enforcement_or_settlement"
+        action: "If you won, enforcing judgment. If you lost, settling."
+        claude_role: |
+          If you won:
+          - How to collect the money (garnishment, contempt proceedings?)
+          - Judgment enforcement mechanisms available in your jurisdiction
+          - Examination in aid of execution (Rule 60.18 — examine debtor's assets)
+          - Writ of seizure and sale (Rule 60.07)
+          - Garnishment (Rule 60.08 — intercept wages or bank accounts)
+
+          If you lost and want to settle:
+          - Negotiate settlement terms
+          - Ensure settlement is documented and binding
+        output: "Enforcement action plan or settlement negotiation framework"
+
+  # ============================================================================
+  # PHASE 12.5 — Costs Submissions (NEW)
+  # ============================================================================
+  phase_12_5_costs_submissions:
+    name: "Post-Judgment Costs Submissions"
+    description: |
+      After judgment, costs must be addressed. This can significantly affect
+      the financial outcome. Self-represented litigants have limited but real
+      cost entitlements.
+
+    steps:
+      - step: "costs_scales_and_entitlement"
+        action: "Determine what cost scale applies and your entitlement"
+        claude_role: |
+          Cost scales (Ontario):
+          - Partial indemnity: default scale (about 50-60% of actual legal costs)
+          - Substantial indemnity: elevated scale (about 80-90%), applies when:
+            - You beat your own Rule 49 offer
+            - Court finds bad faith, reprehensible conduct
+          - Full indemnity: rare, reserved for exceptional circumstances
+          - Costs fixed by court vs. costs assessed by assessment officer
+          
+          Self-represented litigant costs:
+          - Cannot claim legal fees (no lawyer to pay)
+          - CAN claim disbursements (filing fees, photocopying, courier, travel, expert fees)
+          - Some courts allow modest per-diem for preparation time
+          - Fong v. Chan (1999): Ontario Court of Appeal held self-reps CAN recover
+            costs for time and effort, but at a lower scale than lawyer's fees
+        output: "Costs entitlement analysis + applicable scale determination"
+
+      - step: "bill_of_costs_preparation"
+        action: "Prepare your bill of costs (if you won)"
+        claude_role: |
+          Itemize:
+          - All disbursements with receipts/invoices
+          - Filing fees (court receipts)
+          - Photocopying and document production costs
+          - Expert fees and reports
+          - Transcript costs
+          - Travel expenses (to court, mediations, examinations)
+          - Courier and service costs
+          - Commissioner of oaths fees
+          - Preparation time (if claiming — document hours spent)
+          
+          Format per court requirements. Support every item with documentation.
+        output: "Bill of costs + supporting documentation index"
+
+      - step: "responding_to_opponent_costs"
+        action: "If you lost, respond to opponent's cost submissions"
+        claude_role: |
+          Review opponent's bill for:
+          - Excessive claims (hours that seem disproportionate)
+          - Unreasonable disbursements
+          - Items that shouldn't be recoverable
+          - Whether the cost scale is appropriate
+          - Rule 49 offer impact (did their offer trigger substantial indemnity?)
+          
+          Arguments to reduce costs:
+          - Proportionality (costs disproportionate to amount in dispute)
+          - Divided success (you won on some issues)
+          - Unnecessary steps by opponent
+          - Complexity caused by opponent (not you)
+          - Your financial circumstances (limited means — court has discretion)
+        output: "Costs response submissions + arguments for reduction"
+
+  # ============================================================================
+  # PHASE 13 — Ongoing Risk Management (Enhanced)
+  # ============================================================================
+  phase_13_ongoing_risk_management:
+    name: "Protect Yourself During Self-Representation"
+    description: "Minimize damage from procedural mistakes and stay compliant"
+    steps:
+      - step: "deadline_management_system"
+        action: "I create a master deadline tracker"
+        claude_role: |
+          Track:
+          - All court-ordered deadlines (discovery, motions, trial date)
+          - Statutory limitation periods
+          - Service deadlines
+          - Filing deadlines
+          - Internal preparation deadlines (draft by date X, file by date Y)
+
+          Color-coded by urgency. Automated reminders.
+        output: "Master deadline tracker (spreadsheet + calendar sync)"
+
+      - step: "cost_exposure_tracking"
+        action: "Continuously track cumulative cost exposure"
+        claude_role: |
+          Maintain running total of:
+          - Your disbursements to date
+          - Estimated opponent legal costs to date (based on complexity and billing rates)
+          - Potential cost award if you lose (partial indemnity on opponent's estimated costs)
+          - Rule 49 offer impact on costs (if applicable)
+          - Updated settlement economics at each decision gate
+          
+          Many self-reps are shocked by cost awards. Track this continuously.
+        output: "Cost exposure dashboard (updated at each phase)"
+
+      - step: "communication_log"
+        action: "Maintain a log of all case-related communications"
+        claude_role: |
+          Log every communication:
+          - Date and time
+          - Parties involved
+          - Method (email, phone, letter, in-person, court filing)
+          - Content summary (what was said or written)
+          - Follow-up required
+          - Documents exchanged
+          
+          Purpose:
+          - Protects against 'I never received that' disputes
+          - Creates a record for costs submissions
+          - Helps reconstruct timelines
+          - Evidence of good faith and diligence
+        output: "Communication log template + maintenance protocol"
+
+      - step: "contempt_and_compliance_monitoring"
+        action: "Track compliance with all court orders"
+        claude_role: |
+          Monitor:
+          - Court-ordered deadlines (have you met them all?)
+          - Disclosure obligations (have you produced everything required?)
+          - Undertakings (have you fulfilled them all?)
+          - Interim orders (are you complying with injunctions, payment orders, etc.?)
+          - Conduct orders (if court has ordered specific conduct)
+          
+          Contempt risk:
+          - Failure to comply with court orders can result in contempt findings
+          - Contempt can be civil (comply or face sanctions) or criminal (willful disobedience)
+          - Self-reps face contempt findings more often because they don't understand obligations
+          - Document every act of compliance
+        output: "Compliance tracker + contempt risk assessment"
+
+      - step: "procedural_error_recovery"
+        action: "When you make a procedural mistake (missed deadline, wrong format), how to fix it"
+        claude_role: |
+          Assess:
+          - Seriousness of error (minor formatting vs. missing evidence)
+          - Whether you can fix it (amend, file late, seek extension)
+          - What court motion is needed
+          - What the other side will argue
+
+          Draft a response/corrective motion.
+        output: "Error recovery memo + motion draft (if needed)"
+
+      - step: "opponent_tactics_monitoring"
+        action: "I help you spot opponent's procedural tactics and respond"
+        claude_role: |
+          Identify:
+          - Ambush tactics (dumping evidence at last minute)
+          - Procedural traps (using rules of court against you)
+          - Bad-faith arguments
+          - Delay tactics (adjournment requests to increase your costs/fatigue)
+          - Correct responses (motion to strike, motion for extension, etc.)
+        output: "Tactical response framework"
+
+      - step: "mental_health_and_burnout_monitoring"
+        action: "Self-assess wellbeing at regular intervals"
+        claude_role: |
+          Checkpoints (ask yourself at each decision gate):
+          - Am I sleeping normally?
+          - Am I obsessing over the case (can't stop thinking about it)?
+          - Is this affecting my work, relationships, or health?
+          - Am I making decisions based on emotion (anger, revenge) rather than strategy?
+          - Do I still believe this case is worth pursuing at this cost?
+          - Would I advise a friend to continue in my position?
+          
+          These are signals to:
+          - Take a break and reassess
+          - Settle (even on unfavorable terms)
+          - Hire a lawyer (even for limited scope)
+          - Accept the result and move on
+          
+          Litigation is psychologically grueling. Self-representation multiplies the stress.
+          There is no shame in stopping.
+        output: "Wellbeing self-assessment checklist (recurring)"
+
+      - step: "escalation_to_lawyer_trigger"
+        action: "If things go sideways, when to stop self-representing and hire a lawyer"
+        claude_role: |
+          Red flags to escalate:
+          - Judge is clearly hostile to your case
+          - You're losing badly on procedural issues
+          - Opponent's lawyer is overwhelming you
+          - You realize you need expert legal strategy
+          - A major procedural motion is coming up
+          - You're approaching appeal
+          - Mental health is suffering
+          - Cost exposure exceeds your initial assessment
+
+          If escalation happens, hand-off to a lawyer smoothly.
+        output: "Escalation decision matrix + hand-off materials for lawyer"
+
+  # ============================================================================
+  # DELIVERABLES SUMMARY
+  # ============================================================================
+  deliverables_for_self_representation:
+    court_organization:
+      - "Limitation period analysis memo"
+      - "ADR options analysis"
+      - "Court selection matrix"
+      - "Court jurisdiction profile & rules index"
+      - "Procedural roadmap with deadlines"
+      - "Filing checklist for each document type"
+      - "Service requirements matrix & templates"
+      - "Virtual/hybrid hearing requirements"
+
+    evidence_and_discovery:
+      - "Evidence inventory & admissibility assessment"
+      - "Privilege log & privileged documents separation"
+      - "Digital evidence authentication log"
+      - "Chain of custody logs"
+      - "Adverse inference risk map"
+      - "Financial/damages quantification package"
+      - "Evidence chronology (visual timeline)"
+      - "Master exhibit list & organized trial binder"
+      - "Narrative arc document (your story)"
+      - "Litigation hold notice & preservation log"
+      - "Affidavit of Documents (Schedule A, B, C)"
+      - "Discovery preparation package (Q&A, answer strategy)"
+      - "Undertakings tracker"
+      - "Expert evidence necessity memo"
+      - "Expert report compliance checklist"
+      - "Opponent expert challenge strategy"
+
+    documents:
+      - "Drafted pleadings (statement of claim/defense)"
+      - "Drafted amended pleadings (if needed)"
+      - "Drafted affidavits (sworn statements)"
+      - "Motion materials (notice, affidavit, factum)"
+      - "Trial briefs (opening/closing arguments)"
+      - "Consent order & settlement documents"
+      - "Professional correspondence"
+      - "Bill of costs & costs submissions"
+      - "Rule 49 offer to settle (in compliant format)"
+      - "Mediation brief & settlement range analysis"
+
+    preparation:
+      - "Testimony prep package (Q&A, demeanor coaching)"
+      - "Cross-examination strategy & question outlines"
+      - "Re-examination plan per witness"
+      - "Objections quick-reference card"
+      - "Witness prep packages (if you have witnesses)"
+      - "Judge profile memo (ruling tendencies)"
+      - "Trial appearance checklist & speaking outline"
+      - "Book of authorities with table of contents"
+      - "Pre-trial conference brief & settlement authority"
+      - "Courtroom technology request & backup plan"
+
+    post_judgment:
+      - "Judgment analysis memo"
+      - "Appeal feasibility assessment"
+      - "Appeal deadline tracker"
+      - "Stay motion analysis & draft"
+      - "Appellate record checklist"
+      - "Appellate brief (if appealing)"
+      - "Vexatious litigant risk assessment"
+      - "Enforcement or settlement framework"
+      - "Bill of costs (if you won)"
+      - "Costs response submissions (if you lost)"
+
+    ongoing_management:
+      - "Master deadline tracker (automated)"
+      - "Cost exposure dashboard (updated at each phase)"
+      - "Communication log"
+      - "Compliance tracker (court orders, undertakings)"
+      - "Procedural error recovery guidance"
+      - "Opponent tactics response framework"
+      - "Mental health & wellbeing self-assessment"
+      - "Escalation decision matrix"
+      - "Decision gate go/no-go assessments"
+
+  # ============================================================================
+  # SELF-REPRESENTATION ASSESSMENT
+  # ============================================================================
+  what_self_representation_actually_means:
+    the_hard_truth: |
+      Self-representation is choosing to:
+      - Accept full responsibility for procedural mistakes
+      - Compete against opponent's lawyer (if they have one) with no legal training
+      - Make strategic decisions that a lawyer would advise on
+      - Risk losing not because facts/law are against you, but because you missed a deadline
+      - Spend hundreds of hours learning court procedure on the fly
+      - Live with the stress and uncertainty of being your own counsel
+      - Bear the financial risk of cost awards if you lose
+
+      It is NOT a cost-saving measure if you lose the case.
+
+    when_self_representation_might_work:
+      - Small claims court (simplified procedure, dollar limit)
+      - Uncontested divorce or family matters (legal aid available)
+      - Straightforward landlord/tenant disputes
+      - Clear contract disputes with simple facts
+      - Opponent also self-representing (level playing field)
+      - You have significant legal knowledge or experience
+      - Modest financial stakes (under $10-25k)
+      - Strong facts heavily in your favor
+      - Opponent likely to settle (case doesn't go to trial)
+      - No expert evidence required
+      - Single jurisdiction, single issue
+
+    when_self_representation_will_likely_fail:
+      - Any criminal matter
+      - Opponent has a lawyer and you don't
+      - Complex legal issues requiring case law research
+      - High stakes (six figures+, custody, business collapse)
+      - Tight limitation periods / urgent deadlines
+      - Procedurally complex court (Federal Court, Superior Court complex cases)
+      - You have emotional involvement (bias affecting judgment)
+      - Multiple parties or disputed facts
+      - Expert evidence is central
+      - Cross-border or multi-jurisdictional elements
+      - Regulatory or administrative proceedings
+
+  my_role_as_your_self_rep_support:
+    what_i_provide: |
+      - Research & analysis (you understand the issues)
+      - Organization & roadmapping (you know what's coming)
+      - Document drafting (you review and take responsibility)
+      - Evidence organization (you present clearly)
+      - Procedural compliance (you stay on track)
+      - Discovery preparation (you survive examination)
+      - Settlement economics (you make informed decisions)
+      - Preparation (you enter trial ready)
+      - Post-judgment options (you understand what's possible)
+      - Ongoing risk assessment (you know when to escalate)
+
+    what_you_must_provide: |
+      - Full factual disclosure (I can only work with what you tell me)
+      - Honest assessment of your case (will you win? be realistic)
+      - Time commitment (this takes hundreds of hours)
+      - Final decision authority (you decide what to do; I advise)
+      - Legal responsibility (you're signing the documents)
+      - Court compliance (you follow the rules; I can't force you to)
+      - Emotional self-regulation (don't let anger drive decisions)
+      - Financial transparency (can you afford to lose?)
+
+    decision_point: |
+      Before we proceed, you must decide:
+      Am I doing this because:
+      A) I genuinely cannot afford a lawyer, and the stakes are low?
+      B) I want to learn and be involved, with a lawyer as backup?
+      C) I'm confident I can win without a lawyer?
+      D) I'm avoiding a lawyer for other reasons (ideology, distrust)?
+
+      Each answer points to a different approach. Be honest.
+
+  # ============================================================================
+  # APPENDIX A — Glossary of Court Terminology
+  # ============================================================================
+  appendix_a_glossary:
+    name: "Glossary of Court Terminology for Self-Represented Litigants"
+    terms:
+      adjournment: "Postponement of a hearing or trial to a later date"
+      affiant: "Person who swears an affidavit"
+      affidavit: "Written statement of facts sworn under oath"
+      amicus_curiae: "Friend of the court — neutral party providing legal perspective"
+      appearance: "Formal notice that you are participating in the proceeding"
+      book_of_authorities: "Bound collection of case law and statutes you'll cite"
+      case_management: "Court supervision of complex cases to control timelines"
+      certiorari: "Order quashing a decision of a lower tribunal"
+      costs: "Legal fees and expenses a losing party may be ordered to pay"
+      cross_examination: "Questioning of a witness by the opposing party"
+      default_judgment: "Judgment entered when a party fails to respond or appear"
+      defendant: "Party being sued (in civil proceedings)"
+      deponent: "Person who gives evidence by affidavit"
+      disbursements: "Out-of-pocket expenses (filing fees, copying, experts)"
+      discovery: "Pre-trial process of exchanging evidence and information"
+      endorsement: "Judge's brief written order or direction, often on a motion"
+      ex_parte: "Proceeding where only one side is present (without notice to other side)"
+      exhibit: "Document or item entered into evidence"
+      factum: "Written legal argument filed with the court"
+      garnishment: "Court order to seize money owed to the judgment debtor"
+      hearsay: "Out-of-court statement offered to prove the truth of its contents"
+      interlocutory: "Interim or temporary — not a final decision"
+      interrogatories: "Written questions that must be answered under oath"
+      joinder: "Adding parties to a proceeding"
+      leave: "Permission from the court (e.g., leave to appeal)"
+      lien: "Legal claim on property as security for a debt"
+      limitation_period: "Deadline for filing a claim (usually 2 years in Ontario)"
+      mandamus: "Court order compelling a person or body to perform a duty"
+      motion: "Application to the court for an interim order"
+      motion_record: "Bundle of documents filed in support of a motion"
+      notice_of_motion: "Formal document initiating a motion"
+      originating_process: "The first document that starts a court proceeding"
+      peremptory: "Final, not subject to further adjournment — you MUST attend"
+      plaintiff: "Party bringing the lawsuit"
+      pleadings: "Formal documents setting out each party's case (claim, defense, reply)"
+      prejudice: "Harm or disadvantage to a party's legal position"
+      pro_se: "Self-represented (literally: for oneself)"
+      relief: "What you're asking the court to order (damages, injunction, declaration)"
+      respondent: "Party responding to an appeal or application"
+      sine_die: "Adjourned indefinitely (without a fixed return date)"
+      statement_of_claim: "Document that starts a lawsuit (sets out your case)"
+      statement_of_defense: "Defendant's response to the statement of claim"
+      stay: "Order suspending enforcement of a judgment or proceeding"
+      striking: "Removing a pleading or part of a pleading (Rule 25.11)"
+      submission: "Oral or written argument to the court (not evidence)"
+      subpoena: "Court order requiring a person to attend and testify (or produce documents)"
+      summary_judgment: "Judgment without trial (Rule 20) — no genuine issue for trial"
+      surety: "Person who guarantees another's obligation"
+      undertaking: "Promise made during examination to provide information or documents"
+      venue: "Geographic location where the case is heard"
+      viva_voce: "Live oral testimony (as opposed to affidavit evidence)"
+      voir_dire: "Trial within a trial — to determine admissibility of evidence"
+      without_prejudice: "Communications made in settlement negotiations (not admissible)"
+
+  # ============================================================================
+  # APPENDIX B — Template Library Index
+  # ============================================================================
+  appendix_b_template_library:
+    name: "Master Template Index (Cross-Referenced by Phase)"
+    templates:
+      - template: "Litigation Hold Notice"
+        phase: "8.5"
+        description: "Letter implementing preservation of documents"
+      - template: "Affidavit of Documents (Schedules A, B, C)"
+        phase: "8.5"
+        description: "Sworn document listing all relevant documents"
+      - template: "Privilege Log"
+        phase: "8 / 8.5"
+        description: "Log of documents withheld on privilege grounds"
+      - template: "Certificate of Service"
+        phase: "7"
+        description: "Proof that documents were served on opponent"
+      - template: "Statement of Claim"
+        phase: "9"
+        description: "Originating document to start a lawsuit"
+      - template: "Statement of Defense"
+        phase: "9"
+        description: "Response to a statement of claim"
+      - template: "Affidavit (General)"
+        phase: "9"
+        description: "Sworn written testimony"
+      - template: "Notice of Motion"
+        phase: "9"
+        description: "Formal request for court order"
+      - template: "Factum (Motion or Trial)"
+        phase: "9"
+        description: "Written legal argument"
+      - template: "Rule 49 Offer to Settle"
+        phase: "9.5"
+        description: "Formal settlement offer with cost consequences"
+      - template: "Mediation Brief"
+        phase: "9.5"
+        description: "Summary of case for mandatory mediation"
+      - template: "Minutes of Settlement"
+        phase: "9"
+        description: "Binding settlement agreement"
+      - template: "Consent Order"
+        phase: "9"
+        description: "Court order reflecting parties' agreement"
+      - template: "Full and Final Release"
+        phase: "9"
+        description: "Release of all claims upon settlement"
+      - template: "Pre-Trial Conference Brief"
+        phase: "10.5"
+        description: "Summary for pre-trial judge"
+      - template: "Trial Brief (Opening/Closing)"
+        phase: "9 / 11"
+        description: "Written argument for trial"
+      - template: "Book of Authorities Cover and Index"
+        phase: "11"
+        description: "Table of contents for case law bundle"
+      - template: "Exhibit List"
+        phase: "8 / 11"
+        description: "Master list of all exhibits"
+      - template: "Bill of Costs"
+        phase: "9 / 12.5"
+        description: "Itemized disbursements and costs"
+      - template: "Notice of Appeal"
+        phase: "12"
+        description: "Document initiating an appeal"
+      - template: "Appellate Factum"
+        phase: "12"
+        description: "Written argument for appeal court"
+      - template: "Communication Log"
+        phase: "13"
+        description: "Record of all case communications"
+      - template: "Deadline Tracker"
+        phase: "13"
+        description: "Master timeline of all obligations"
+      - template: "Decision Gate Assessment"
+        phase: "All"
+        description: "Go/No-Go checklist at each phase transition"
+
+  # ============================================================================
+  # APPENDIX C — Jurisdiction-Specific Variants
+  # ============================================================================
+  appendix_c_jurisdiction_variants:
+    name: "Jurisdiction-Specific Rule Variations"
+    note: |
+      This workflow assumes Ontario Superior Court of Justice as the default
+      jurisdiction. Rules vary significantly across courts and provinces.
+      The following flags key differences.
+
+    variants:
+      ontario_small_claims:
+        monetary_limit: "$35,000"
+        rules: "Small Claims Court Rules (O. Reg. 258/98)"
+        key_differences:
+          - "No formal discovery (limited to request to inspect documents)"
+          - "No examination for discovery"
+          - "Relaxed evidence rules (hearsay may be admitted with appropriate weight)"
+          - "Mandatory settlement conference (replaces pre-trial)"
+          - "Simplified motion procedure"
+          - "Deputy judges (lawyers, not full-time judges)"
+          - "Built-in mediation at settlement conference"
+
+      ontario_simplified_procedure:
+        monetary_limit: "$200,000"
+        rules: "Rule 76 (Ontario Rules of Civil Procedure)"
+        key_differences:
+          - "Limited oral discovery (2 hours per party)"
+          - "No cross-examination on affidavits without leave"
+          - "Mandatory mediation in designated counties"
+          - "Summary trial option (Rule 76.12)"
+          - "Shorter timelines for some steps"
+
+      federal_court:
+        rules: "Federal Courts Rules (SOR/98-106)"
+        key_differences:
+          - "Different form numbers and filing requirements"
+          - "Electronic filing (mandatory in many cases)"
+          - "Case management by prothonotary (not judge)"
+          - "Different cost rules and tariff"
+          - "Bilingual proceedings available"
+          - "Subject matter limited to federal statutes"
+
+      british_columbia:
+        rules: "Supreme Court Civil Rules (B.C. Reg. 168/2009)"
+        key_differences:
+          - "Notice of Civil Claim (not Statement of Claim)"
+          - "Different discovery rules and timelines"
+          - "Civil Resolution Tribunal for claims under $5,000"
+          - "Mandatory judicial case conference"
+
+      alberta:
+        rules: "Alberta Rules of Court (AR 124/2010)"
+        key_differences:
+          - "Litigation plan required for complex cases"
+          - "Dispute resolution officer process"
+          - "Different cost rules (Schedule C)"
+
+      quebec:
+        rules: "Code of Civil Procedure (CQLR, c. C-25.01)"
+        key_differences:
+          - "Civil law system (different from common law)"
+          - "Pre-trial protocol mandatory"
+          - "Different evidence rules"
+          - "French-language proceedings (default)"
+
+  # ============================================================================
+  # APPENDIX D — Fee Schedule Reference
+  # ============================================================================
+  appendix_d_fee_schedule:
+    name: "Court Fees and Disbursements Reference"
+    note: |
+      Fees change periodically. Verify current amounts before filing.
+      These are approximate Ontario Superior Court fees as reference.
+      Fee waivers available for parties who cannot afford fees.
+
+    ontario_superior_court:
+      filing_fees:
+        statement_of_claim: "$229"
+        statement_of_defense: "$173"
+        notice_of_motion: "$173"
+        notice_of_appeal: "$349"
+        trial_or_hearing: "$848"
+        requisition: "$127"
+        certificate_of_assessment: "$173"
+      notes:
+        - "Fees are set by O. Reg. 293/92 (Administration of Justice Act)"
+        - "Fee waiver available under s.4.1 for financial hardship"
+        - "Fees may increase annually — verify before filing"
+
+    ontario_small_claims:
+      filing_fees:
+        plaintiffs_claim: "$102 (infrequent claimant) / $249 (frequent claimant)"
+        defendants_claim: "$73"
+        motion: "$73"
+        trial: "$145 (infrequent) / $395 (frequent)"
+        enforcement_request: "$35-$60 range"
+      notes:
+        - "Infrequent claimant = fewer than specified number of claims per year"
+        - "Fee waiver available for financial hardship"
+
+    other_costs_to_budget:
+      transcript_costs: "$4.30 per page (ordinary) / $6.65 per page (certified)"
+      commissioner_of_oaths: "$0-$50 (varies; free at some legal aid offices)"
+      photocopying: "$0.20-$0.50 per page (court standard)"
+      process_server: "$50-$200+ per service"
+      courier: "$15-$30 per filing"
+      expert_reports: "$5,000-$50,000+ (field-dependent)"
+      mediator_fees: "$800-$3,000+ per session (private; roster mediators may be less)"
+
+  # ============================================================================
+  # HOW TO USE THIS WORKFLOW
+  # ============================================================================
+  how_to_use:
+    instructions: |
+      If you're going to self-represent:
+
+      1. Start with the Critical Disclaimer — If any red flags apply, hire a lawyer first.
+      2. Review Decision Gates — Understand where you'll reassess go/no-go.
+      3. Phase 7 — Learn the exact court rules for your jurisdiction.
+         → GATE 1: Right court? ADR first? Limitation intact?
+      4. Phase 8 — Organize your evidence so it's clear and persuasive.
+         → GATE 2: Do you have enough evidence to prove your case?
+      5. Phase 8.5 — Navigate discovery (most dangerous stage for self-reps).
+         → GATE 3: What did discovery reveal? Settle or continue?
+      6. Phase 8.7 — Plan expert evidence (if needed).
+      7. Phase 9 — I draft documents; you review, understand, and file them.
+      8. Phase 9.5 — Make or respond to offers to settle. Attend mandatory mediation.
+      9. Phase 10 — Practice testifying and develop cross-exam strategy.
+      10. Phase 10.5 — Prepare for pre-trial conference (last chance to settle).
+          → GATE 4: What did the pre-trial judge signal? Settle or continue?
+      11. Phase 11 — Organize everything for trial day.
+      12. Phase 12 — Understand your appeal options if you lose.
+          → GATE 5: Appeal or accept? Cost-benefit analysis.
+      13. Phase 12.5 — Handle costs submissions.
+      14. Phase 13 — Stay on top of deadlines, costs, compliance, and your own wellbeing.
+
+      The reality: Self-representation is the extreme scenario. Most people would be
+      better served by hiring a lawyer — even for a limited scope (unbundled services).
+      But if you're going solo, this workflow maximizes your chances by turning me into
+      your research, organization, and document-preparation assistant.
+
+    start_prompt: |
+      Want to start? Tell me:
+      (1) What court?
+      (2) What's the dispute?
+      (3) Have you already filed anything?
+      (4) Does the opponent have a lawyer?
+      (5) What is the approximate dollar value at stake?
+
+      I'll begin with limitation period analysis, then Phase 7 (rules of court),
+      and build from there.

@@ -1,12 +1,15 @@
 [CmdletBinding()]
 param(
     [int]$BackendPort = 3001,
-    [int]$FrontendPort = 5173
+    [int]$FrontendPort = 5173,
+    [int]$LiteLlmPort = 4000
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pidFile = Join-Path $root ".devserver.pids.json"
+$liteLlmConfigFile = Join-Path $root ".litellm.proxy.generated.yaml"
+$liteLlmLaunchScriptFile = Join-Path $root ".litellm.launch.generated.ps1"
 
 function Write-Status {
     param(
@@ -56,6 +59,72 @@ function Wait-ForExit {
     return $false
 }
 
+function Wait-ForPortRelease {
+    param(
+        [int]$Port,
+        [int]$TimeoutSeconds = 15
+    )
+
+    $timer = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($timer.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        if (-not (Get-PortProcess -Port $Port)) {
+            return $true
+        }
+        Start-Sleep -Milliseconds 400
+    }
+
+    return $false
+}
+
+function Close-WindowGracefully {
+    param(
+        [int]$TargetPid,
+        [string]$Name,
+        [int]$TimeoutSeconds = 10
+    )
+
+    $proc = Get-Process -Id $TargetPid -ErrorAction SilentlyContinue
+    if (-not $proc) {
+        return $true
+    }
+
+    if (-not $proc.MainWindowHandle -or $proc.MainWindowHandle -eq 0) {
+        return $false
+    }
+
+    Write-Status "INFO" "Closing $Name window gracefully (PID $TargetPid)..."
+
+    try {
+        if (-not $proc.CloseMainWindow()) {
+            return $false
+        }
+    } catch {
+        return $false
+    }
+
+    return (Wait-ForExit -TargetPid $TargetPid -TimeoutSeconds $TimeoutSeconds)
+}
+
+function Stop-ProcessTree {
+    param(
+        [int]$TargetPid,
+        [string]$Name
+    )
+
+    if (-not (Get-Process -Id $TargetPid -ErrorAction SilentlyContinue)) {
+        return $true
+    }
+
+    Write-Status "INFO" "Stopping $Name process tree (PID $TargetPid)..."
+    $taskkill = Start-Process -FilePath "taskkill.exe" -ArgumentList @('/PID', $TargetPid, '/T', '/F') -NoNewWindow -PassThru -Wait -ErrorAction SilentlyContinue
+    if ($taskkill -and $taskkill.ExitCode -eq 0) {
+        return $true
+    }
+
+    Stop-Process -Id $TargetPid -Force -ErrorAction SilentlyContinue
+    return (Wait-ForExit -TargetPid $TargetPid)
+}
+
 function Stop-ServiceProcess {
     param(
         [string]$Name,
@@ -64,19 +133,24 @@ function Stop-ServiceProcess {
         [Nullable[int]]$LaunchPid
     )
 
-    $candidatePids = @()
-    if ($KnownPid) { $candidatePids += $KnownPid }
-    if ($LaunchPid) { $candidatePids += $LaunchPid }
-
+    $portProc = Get-PortProcess -Port $Port
     $targetPid = $null
-    foreach ($candidate in $candidatePids) {
-        $proc = Get-Process -Id $candidate -ErrorAction SilentlyContinue
-        if ($proc) { $targetPid = $candidate; break }
+    if ($portProc) {
+        $targetPid = $portProc.Id
     }
 
-    if (-not $targetPid) {
-        $portProc = Get-PortProcess -Port $Port
-        if ($portProc) { $targetPid = $portProc.Id }
+    if (-not $targetPid -and $KnownPid) {
+        $knownProc = Get-Process -Id $KnownPid -ErrorAction SilentlyContinue
+        if ($knownProc) {
+            $targetPid = $KnownPid
+        }
+    }
+
+    if (-not $targetPid -and $LaunchPid) {
+        $launchProc = Get-Process -Id $LaunchPid -ErrorAction SilentlyContinue
+        if ($launchProc) {
+            $targetPid = $LaunchPid
+        }
     }
 
     if (-not $targetPid) {
@@ -84,33 +158,40 @@ function Stop-ServiceProcess {
         return $true
     }
 
-    Write-Status "INFO" "Stopping $Name (PID $targetPid) on port $Port..."
-    Stop-Process -Id $targetPid -ErrorAction SilentlyContinue
-
-    if (Wait-ForExit -TargetPid $targetPid) {
-        Write-Status "OK" "$Name stopped."
-    } else {
-        Write-Status "WARN" "$Name did not exit gracefully. Attempting force stop..."
-        Stop-Process -Id $targetPid -Force -ErrorAction SilentlyContinue
-
-        if (Wait-ForExit -TargetPid $targetPid) {
-            Write-Status "OK" "$Name force stopped."
-        } else {
-            Write-Status "WARN" "Could not confirm $Name has stopped. Check port $Port manually."
+    $launchClosedGracefully = $false
+    if ($LaunchPid -and $LaunchPid -ne $targetPid) {
+        $launchClosedGracefully = Close-WindowGracefully -TargetPid $LaunchPid -Name "$Name console"
+        if ($launchClosedGracefully) {
+            Write-Status "OK" "$Name console closed gracefully."
+            if (Wait-ForPortRelease -Port $Port -TimeoutSeconds 10) {
+                Write-Status "OK" "$Name stopped after console close."
+                return $true
+            }
         }
     }
 
-    if ($LaunchPid -and $LaunchPid -ne $targetPid) {
+    if (Stop-ProcessTree -TargetPid $targetPid -Name $Name) {
+        Write-Status "OK" "$Name stopped."
+    } else {
+        Write-Status "WARN" "Could not confirm $Name has stopped. Check port $Port manually."
+    }
+
+    if ($LaunchPid -and $LaunchPid -ne $targetPid -and -not $launchClosedGracefully) {
         $consoleProc = Get-Process -Id $LaunchPid -ErrorAction SilentlyContinue
         if ($consoleProc) {
-            Write-Status "INFO" "Closing $Name console window (PID $LaunchPid)..."
-            Stop-Process -Id $LaunchPid -ErrorAction SilentlyContinue
-            if (Wait-ForExit -TargetPid $LaunchPid) {
+            if (Close-WindowGracefully -TargetPid $LaunchPid -Name "$Name console") {
+                Write-Status "OK" "$Name console closed gracefully."
+            } elseif (Stop-ProcessTree -TargetPid $LaunchPid -Name "$Name console") {
                 Write-Status "OK" "$Name console closed."
             } else {
                 Write-Status "WARN" "Could not confirm $Name console window closed."
             }
         }
+    }
+
+    if (-not (Wait-ForPortRelease -Port $Port)) {
+        Write-Status "WARN" "Port $Port is still in use after stopping $Name."
+        return $false
     }
 
     return $true
@@ -137,12 +218,22 @@ if ($pidData.frontend) {
     else { $frontendPid = $pidData.frontend.portPid; $frontendLaunch = $pidData.frontend.launchPid }
 }
 
-$backendStopped = Stop-ServiceProcess -Name "Backend" -Port $BackendPort -KnownPid $backendPid -LaunchPid $backendLaunch
-$frontendStopped = Stop-ServiceProcess -Name "Frontend" -Port $FrontendPort -KnownPid $frontendPid -LaunchPid $frontendLaunch
+$liteLlmPid = $null
+$liteLlmLaunch = $null
+if ($pidData.litellm) {
+    if ($pidData.litellm -is [int]) { $liteLlmPid = [int]$pidData.litellm }
+    else { $liteLlmPid = $pidData.litellm.portPid; $liteLlmLaunch = $pidData.litellm.launchPid }
+}
 
-if ($backendStopped -and $frontendStopped) {
+$frontendStopped = Stop-ServiceProcess -Name "Frontend" -Port $FrontendPort -KnownPid $frontendPid -LaunchPid $frontendLaunch
+$backendStopped = Stop-ServiceProcess -Name "Backend" -Port $BackendPort -KnownPid $backendPid -LaunchPid $backendLaunch
+$liteLlmStopped = Stop-ServiceProcess -Name "LiteLLM" -Port $LiteLlmPort -KnownPid $liteLlmPid -LaunchPid $liteLlmLaunch
+
+if ($backendStopped -and $frontendStopped -and $liteLlmStopped) {
     if (Test-Path $pidFile) { Remove-Item $pidFile -Force }
-    Write-Status "OK" "Shutdown complete. Ports $BackendPort and $FrontendPort are available."
+    if (Test-Path $liteLlmConfigFile) { Remove-Item $liteLlmConfigFile -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $liteLlmLaunchScriptFile) { Remove-Item $liteLlmLaunchScriptFile -Force -ErrorAction SilentlyContinue }
+    Write-Status "OK" "Shutdown complete. Ports $LiteLlmPort, $BackendPort, and $FrontendPort are available."
 } else {
-    Write-Status "WARN" "Shutdown finished with warnings. Verify ports $BackendPort/$FrontendPort are free."
+    Write-Status "WARN" "Shutdown finished with warnings. Verify ports $LiteLlmPort/$BackendPort/$FrontendPort are free."
 }

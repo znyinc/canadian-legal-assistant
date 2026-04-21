@@ -41,6 +41,12 @@ npm run dev
 
 **4. Open browser**: http://localhost:5173
 
+### Development startup scripts
+
+- `./startup.ps1` now opens separate visible backend and frontend terminals by default.
+- Use `./startup.ps1 -HideConsole` if you want both services started in the background instead.
+- `./startup.bat` forwards to the same behavior on Windows.
+
 ## Features
 
 ### What pillars mean

@@ -12,6 +12,7 @@ export enum TaskType {
 }
 
 export enum ModelProvider {
+  LITELLM = 'litellm',
   OPENAI = 'openai',
   CLAUDE = 'claude',
   GEMINI = 'gemini',
@@ -21,6 +22,25 @@ export enum ModelProvider {
 export enum ModelTier {
   SMART = 'smart',
   FAST = 'fast',
+}
+
+export type ModelLane = 'fast-extract' | 'deep-reason' | 'fallback-local';
+
+export interface RouteContext {
+  confidence?: number;
+  ambiguity?: number;
+  complexityScore?: number;
+  urgency?: 'low' | 'medium' | 'high';
+  latencyBudgetMs?: number;
+  privacyMode?: 'standard' | 'sensitive' | 'local-only';
+}
+
+export interface RouteDecision {
+  lane: ModelLane;
+  provider: ModelProvider;
+  model: string;
+  decisionReason: string;
+  fallbackCause?: string;
 }
 
 export interface LLMMessage {
@@ -34,6 +54,8 @@ export interface LLMRequest {
   temperature?: number;
   maxTokens?: number;
   responseFormat?: { type: 'json_object' | 'text' };
+  preferredLane?: ModelLane;
+  routeContext?: RouteContext;
 }
 
 export interface LLMResponse {
@@ -43,6 +65,7 @@ export interface LLMResponse {
   promptTokens?: number;
   completionTokens?: number;
   costUsd?: number;
+  routeDecision?: RouteDecision;
 }
 
 export interface ModelAdapter {

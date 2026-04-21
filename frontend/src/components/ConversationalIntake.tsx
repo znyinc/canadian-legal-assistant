@@ -9,6 +9,35 @@ interface Message {
   confidence?: number;
 }
 
+interface StrategicBriefing {
+  assumption: string;
+  whatMattersLegally: string[];
+  issueBuckets: string[];
+  pivotalQuestion: string;
+  practicalOptions: Array<{
+    title: string;
+    whenItFits: string;
+    tradeoff: string;
+  }>;
+  nextSteps24to72h: string[];
+  uncertainty: string[];
+}
+
+interface IntakeDraft {
+  description?: string;
+  domain?: string;
+  jurisdiction?: string;
+  urgency?: string;
+  strategicBriefing?: StrategicBriefing | null;
+  transcript?: Array<{
+    type?: 'system' | 'user' | 'assistant';
+    content?: string;
+  }>;
+  source?: string;
+  likelyTrack?: string | null;
+  evidenceChecklist?: string[];
+}
+
 interface ConversationalIntakeProps {
   onComplete: (matterData: {
     description: string;
@@ -16,24 +45,50 @@ interface ConversationalIntakeProps {
     jurisdiction?: string;
     urgency?: string;
     evidenceFiles?: File[];
+    strategicBriefing?: StrategicBriefing | null;
+    transcript?: Array<{
+      type: 'system' | 'user' | 'assistant';
+      content: string;
+    }>;
+    source?: string;
+    likelyTrack?: string | null;
+    evidenceChecklist?: string[];
   }) => void;
   onCancel: () => void;
+  onOpenNuance?: (draft: IntakeDraft) => void;
+  initialDraft?: IntakeDraft;
 }
 
 export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
   onComplete,
   onCancel,
+  onOpenNuance,
+  initialDraft,
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '0',
-      type: 'system',
-      content: "I'm here to help you understand your legal situation. Tell me what's happening — take your time, just describe what you're dealing with.",
-      followUps: undefined,
-    },
-  ]);
+  const initialDescription = initialDraft?.description?.trim() || '';
 
-  const [userInput, setUserInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const baseMessages: Message[] = [
+      {
+        id: '0',
+        type: 'system',
+        content: "I'm here to help you understand your legal situation. Tell me what's happening - take your time, just describe what you're dealing with.",
+        followUps: undefined,
+      },
+    ];
+
+    if (initialDescription) {
+      baseMessages.push({
+        id: '0-import',
+        type: 'assistant',
+        content: 'I brought in a draft summary from the deeper conversation workspace. Review it, edit it, or continue when it reflects your situation.',
+      });
+    }
+
+    return baseMessages;
+  });
+
+  const [userInput, setUserInput] = useState(initialDescription);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [currentClassification, setCurrentClassification] = useState<{
@@ -45,18 +100,92 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
   const [reviewState, setReviewState] = useState<'needs-clarification' | 'ready-for-import' | undefined>(undefined);
   const [importReadiness, setImportReadiness] = useState<boolean>(false);
   const [stage, setStage] = useState<'initial' | 'followup' | 'complete'>('initial');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [strategicBriefing, setStrategicBriefing] = useState<StrategicBriefing | null>(initialDraft?.strategicBriefing || null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    if (typeof container.scrollTo === 'function') {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
+      return;
+    }
+
+    container.scrollTop = container.scrollHeight;
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  const resolveStageFromIntakeState = useCallback((payload: {
+    isComplete?: boolean;
+    reviewState?: string;
+    importReadiness?: boolean;
+  }): 'followup' | 'complete' => {
+    const readyForImport =
+      Boolean(payload.isComplete) ||
+      Boolean(payload.importReadiness) ||
+      payload.reviewState === 'ready-for-import';
+
+    return readyForImport ? 'complete' : 'followup';
+  }, []);
+
+  const buildCurrentTranscript = useCallback(
+    () => messages.map((message) => ({ type: message.type, content: message.content })),
+    [messages],
+  );
+
+  const buildDraftDescription = useCallback(() => {
+    const userMessages = messages
+      .filter((message) => message.type === 'user')
+      .map((message) => message.content)
+      .filter(Boolean);
+
+    const draftParts = [...userMessages];
+    if (userInput.trim().length > 0) {
+      draftParts.push(userInput.trim());
+    }
+
+    if (draftParts.length === 0 && initialDescription) {
+      return initialDescription;
+    }
+
+    return draftParts.join('\n\n').trim();
+  }, [initialDescription, messages, userInput]);
+
   const handleSendMessage = useCallback(async () => {
-    if (!userInput.trim() && uploadedFiles.length === 0) return;
+    if (!userInput.trim()) return;
 
     const submittedInput = userInput;
 
@@ -101,10 +230,19 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
         if (fallbackData.classification) {
           setCurrentClassification(fallbackData.classification);
         }
+        if (fallbackData.strategicBriefing) {
+          setStrategicBriefing(fallbackData.strategicBriefing);
+        }
         setReviewState(fallbackData.reviewState);
         setImportReadiness(Boolean(fallbackData.importReadiness));
 
-        if (fallbackData.isComplete || fallbackData.confidence >= 75) {
+        const nextStage = resolveStageFromIntakeState({
+          isComplete: fallbackData.isComplete,
+          reviewState: fallbackData.reviewState,
+          importReadiness: fallbackData.importReadiness,
+        });
+
+        if (nextStage === 'complete') {
           setStage('complete');
           setMessages((prev) => [
             ...prev,
@@ -142,6 +280,9 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
         if (eventType === 'meta') {
           if (payload?.classification) {
             setCurrentClassification(payload.classification);
+          }
+          if (payload?.strategicBriefing) {
+            setStrategicBriefing(payload.strategicBriefing);
           }
           if (payload?.reviewState) {
             setReviewState(payload.reviewState);
@@ -195,6 +336,9 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
       if (finalData.classification) {
         setCurrentClassification(finalData.classification);
       }
+      if (finalData.strategicBriefing) {
+        setStrategicBriefing(finalData.strategicBriefing);
+      }
       setReviewState(finalData.reviewState);
       setImportReadiness(Boolean(finalData.importReadiness));
 
@@ -208,11 +352,11 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
         };
       }));
 
-      if (finalData.isComplete || finalData.confidence >= 75) {
-        setStage('complete');
-      } else {
-        setStage('followup');
-      }
+      setStage(resolveStageFromIntakeState({
+        isComplete: finalData.isComplete,
+        reviewState: finalData.reviewState,
+        importReadiness: finalData.importReadiness,
+      }));
     } catch (error) {
       const errorMessage: Message = {
         id: Date.now().toString(),
@@ -223,7 +367,7 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [userInput, messages, uploadedFiles]);
+  }, [userInput, messages, uploadedFiles, resolveStageFromIntakeState]);
 
   const handleFollowUpSelect = (followUp: string) => {
     setUserInput(followUp);
@@ -239,10 +383,7 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
   };
 
   const handleComplete = () => {
-    const fullDescription = messages
-      .filter((m) => m.type === 'user')
-      .map((m) => m.content)
-      .join('\n\n');
+    const fullDescription = buildDraftDescription();
 
     onComplete({
       description: fullDescription,
@@ -250,6 +391,27 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
       jurisdiction: currentClassification.jurisdiction,
       urgency: currentClassification.urgency,
       evidenceFiles: uploadedFiles,
+      strategicBriefing,
+      transcript: buildCurrentTranscript(),
+      source: initialDraft?.source || 'conversational-intake',
+      likelyTrack: initialDraft?.likelyTrack,
+      evidenceChecklist: initialDraft?.evidenceChecklist,
+    });
+  };
+
+  const handleOpenNuance = () => {
+    if (!onOpenNuance) return;
+
+    onOpenNuance({
+      description: buildDraftDescription(),
+      domain: currentClassification.domain,
+      jurisdiction: currentClassification.jurisdiction,
+      urgency: currentClassification.urgency,
+      strategicBriefing,
+      transcript: buildCurrentTranscript(),
+      source: initialDraft?.source || 'conversational-intake',
+      likelyTrack: initialDraft?.likelyTrack,
+      evidenceChecklist: initialDraft?.evidenceChecklist,
     });
   };
 
@@ -273,7 +435,7 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {messages.map((message) => (
           <div key={message.id}>
             {message.type === 'system' || message.type === 'assistant' ? (
@@ -285,8 +447,7 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
                       <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
                         <div className="flex-1 bg-gray-200 rounded-full h-1.5">
                           <div
-                            className="bg-blue-500 h-1.5 rounded-full transition-all"
-                            style={{ width: `${message.confidence}%` }}
+                            className={`bg-blue-500 h-1.5 rounded-full transition-all ${widthByFive[Math.max(0, Math.min(100, Math.round(message.confidence / 5) * 5))]}`}
                           />
                         </div>
                         <span>{Math.round(message.confidence || 0)}% confident</span>
@@ -325,15 +486,14 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Classification status */}
       {currentClassification.domain && (
         <div className="border-t px-6 py-3 bg-green-50 border-green-200">
           <p className="text-xs font-medium text-green-800">
-            {currentClassification.domain} {currentClassification.jurisdiction && `• ${currentClassification.jurisdiction}`}
-            {currentClassification.urgency && ` • ${currentClassification.urgency}`}
+            {currentClassification.domain} {currentClassification.jurisdiction && `| ${currentClassification.jurisdiction}`}
+            {currentClassification.urgency && ` | ${currentClassification.urgency}`}
           </p>
           <p className="text-xs text-green-700 mt-1">
             {reviewState === 'needs-clarification' && 'Review state: clarification needed before import.'}
@@ -344,96 +504,116 @@ export const ConversationalIntake: React.FC<ConversationalIntakeProps> = ({
 
       {/* File uploads */}
       <div className="border-t px-6 py-4 bg-gray-50">
-        <label className="flex items-center gap-2 cursor-pointer mb-2">
-          <Upload className="w-4 h-4 text-gray-600" />
-          <span className="text-sm text-gray-700">Add evidence (photos, documents)</span>
-          <input
-            type="file"
-            multiple
-            onChange={handleFileSelect}
-            accept="image/*,.pdf"
-            className="hidden"
-          />
-        </label>
-        {uploadedFiles.length > 0 && (
-          <div className="space-y-2">
-            {uploadedFiles.map((file) => (
-              <div key={file.name} className="flex items-center justify-between bg-white px-3 py-2 rounded border border-gray-200 text-sm">
-                <span className="text-gray-700">{file.name}</span>
-                <button
-                  onClick={() => handleFileRemove(file.name)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+        {stage === 'complete' ? (
+          <>
+            <div className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3">
+              <p className="text-sm font-medium text-green-900">Matter qualified</p>
+              <p className="mt-1 text-sm text-green-800">
+                Now you can attach supporting photos, documents, and PDFs before moving into the matter workspace.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <Upload className="w-4 h-4 text-gray-600" />
+              <span className="text-sm text-gray-700">Add supporting evidence</span>
+              <input
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                accept="image/*,.pdf"
+                className="hidden"
+              />
+            </label>
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                {uploadedFiles.map((file) => (
+                  <div key={file.name} className="flex items-center justify-between bg-white px-3 py-2 rounded border border-gray-200 text-sm">
+                    <span className="text-gray-700">{file.name}</span>
+                    <button
+                      onClick={() => handleFileRemove(file.name)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+          </>
+        ) : (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-medium text-amber-900">Evidence comes after qualification</p>
+            <p className="mt-1 text-sm text-amber-800">
+              First use the chat to qualify the matter and confirm the route. Once the intake is ready for import, this section unlocks for documents, photos, and other supporting files.
+            </p>
           </div>
         )}
       </div>
 
       {/* Input area */}
       <div className="border-t px-6 py-4 bg-white">
-        {stage !== 'complete' ? (
-          <div className="space-y-3">
-            <textarea
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your response or select one of the options above..."
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              disabled={isLoading}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading || (!userInput.trim() && uploadedFiles.length === 0)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onCancel}
-                disabled={isLoading}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
+        <div className="space-y-3">
+          {stage === 'complete' && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
               <div>
                 <p className="font-medium text-green-900">Ready to proceed</p>
                 <p className="text-sm text-green-800 mt-1">
-                  I understand your situation. Let's explore what options are available to you.
+                  You can still type more details below, or move forward to your options now.
                 </p>
               </div>
             </div>
-            <div className="flex gap-3">
+          )}
+
+          <textarea
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your response in your own words..."
+            rows={3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            disabled={isLoading}
+          />
+
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={handleSendMessage}
+              disabled={isLoading || !userInput.trim()}
+              className="flex-1 min-w-[180px] bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              Continue
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {stage === 'complete' && (
               <button
                 onClick={handleComplete}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 min-w-[180px] bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 See my options
                 <ChevronRight className="w-4 h-4" />
               </button>
+            )}
+
+            <button
+              onClick={onCancel}
+              disabled={isLoading}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+
+            {onOpenNuance && (
               <button
-                onClick={() => {
-                  setStage('followup');
-                  setUserInput('');
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={handleOpenNuance}
+                disabled={isLoading}
+                className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors disabled:border-gray-200 disabled:text-gray-400"
               >
-                Add more details
+                Open deeper reason/cause chat
               </button>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

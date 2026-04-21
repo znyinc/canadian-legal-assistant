@@ -1013,6 +1013,83 @@ type AgentType = 'intake' | 'analysis' | 'document' | 'guidance';
 type KitStage = 'intake' | 'analysis' | 'document' | 'guidance' | 'complete';
 ```
 
+## Product Surface Alignment Extensions
+
+### Persistent Matter Workspace Handoff
+
+The conversational intake flow should no longer terminate in a detached narrative screen. Instead, it should act as a front door into the existing matter workspace so the user's first successful interaction produces a durable legal record.
+
+**Target flow:**
+
+1. User enters `/matters/new`
+2. `ConversationalIntake` captures free-form narrative and optional files
+3. `ConversationalGuidancePage` normalizes inferred domain and jurisdiction into the existing matter API contract
+4. `POST /api/matters` creates a persistent matter and triggers existing classification persistence
+5. Optional evidence uploads are attached to the newly created matter
+6. User is redirected to `/matters/:id` where the action-first overview, forum routing, deadlines, documents, and future workflow surfaces already exist
+
+**Design rationale:**
+
+- Reuse the current matter workspace rather than maintaining a second parallel guidance surface
+- Preserve conversational empathy at intake while moving the user into the audited, persistent system of record
+- Reduce repeated classification and duplicated state between the conversational route and matter detail pages
+- Make downstream capabilities such as evidence, documents, workflow, export, and audit naturally discoverable from the same record
+
+### Surface Alignment Priorities
+
+The product surface should be aligned in this order:
+
+1. Persistent matter creation from conversational intake
+2. First-class workflow exposure from the matter workspace
+3. Evidence strategy presentation alongside upload and timeline views
+4. Trust signals for export, audit, and data integrity within the workspace
+5. Clear bilingual scope messaging until full translation parity exists
+
+### Context-Sensitive Criminal Guidance
+
+Criminal guidance should not be generated from domain alone. The system needs a criminal context mode before `ActionPlanGenerator` or overview surfaces choose wording, role text, or next actions.
+
+**Proposed context modes:**
+
+- `accused`
+- `reporting-or-complainant`
+- `victim-support`
+- `civil-parallel-criminal`
+- `unknown`
+
+The mode should shape:
+
+1. acknowledgment language,
+2. immediate actions,
+3. role explanation,
+4. optional criminal pathways,
+5. warnings and next-step offers.
+
+`peace bond`, `victim services`, `occurrence number`, and `complainant role` content should only appear when the facts support those branches. In `civil-parallel-criminal` mode, the product should lead with evidence preservation, civil-response steps, and optional reporting criteria rather than charged-person or Crown-witness framing.
+
+If the mode is `unknown`, the system should ask a single role-defining clarification question before committing to criminal-role language.
+
+### Progressive Workflow Gating
+
+The step-by-step plan should be treated as a contextual execution surface, not a universal first action.
+
+The matter workspace should derive a `workflowReadiness` signal from:
+
+- explicit self-representation intent,
+- active filing or hearing preparation,
+- repeated requests for procedural guidance,
+- workflow-specific entry actions.
+
+Until `workflowReadiness` is true, the overview should prioritize:
+
+1. immediate actions,
+2. evidence strategy,
+3. forum and pathway explanation,
+4. document or review actions,
+5. workflow entry as a secondary option.
+
+When workflow is promoted, the interface should explain why the user is now being shown the step-by-step plan.
+
 ### Enhanced Component Data Models
 
 ```typescript

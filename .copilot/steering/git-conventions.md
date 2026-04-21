@@ -195,7 +195,7 @@ Relates to #456
 
 ### PR Review Process
 1. Create PR with clear title/description
-2. Wait for CI checks (unit tests, E2E, Snyk scan)
+2. Wait for CI checks (unit tests, E2E, and any optional security checks)
 3. Address review comments
 4. Squash commits if needed
 5. Merge when approved and CI green

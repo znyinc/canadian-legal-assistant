@@ -1,0 +1,1 @@
+D:/code/legal/.context/core/tech-stack.ctx.md

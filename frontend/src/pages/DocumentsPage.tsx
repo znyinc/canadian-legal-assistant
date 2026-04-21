@@ -124,22 +124,18 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
 
   const handleDownload = async (packageId: string, createdAt: string) => {
     try {
-      const response = await fetch(`/api/export/package/${packageId}`);
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const date = new Date(createdAt).toISOString().split('T')[0];
-      link.download = `legal-documents-${date}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const safePackageId = encodeURIComponent(packageId);
+      const safeCreatedAt = new Date(createdAt).toISOString();
+      const downloadUrl = `/api/export/package/${safePackageId}?createdAt=${encodeURIComponent(safeCreatedAt)}`;
+      window.location.assign(downloadUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Download failed');
     }
+  };
+
+  const handleDraftDownload = (packageId: string, format: 'pdf' | 'word', draftIndex = 0) => {
+    const downloadUrl = api.getDraftDownloadUrl(packageId, format, draftIndex);
+    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -209,6 +205,23 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                   </button>
                 </div>
 
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDraftDownload(doc.packageId, 'pdf', 0)}
+                    className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800 hover:bg-blue-100"
+                  >
+                    Download Draft As PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDraftDownload(doc.packageId, 'word', 0)}
+                    className="rounded-md border border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-800 hover:bg-green-100"
+                  >
+                    Download Draft As Word
+                  </button>
+                </div>
+
                 {packageData.drafts && packageData.drafts.length > 0 && (
                   <div className="mb-4">
                     <p className="text-gray-700">
@@ -238,6 +251,25 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
                     }}
                     isDownloading={downloadingPackageId === doc.packageId}
                   />
+                )}
+
+                {packageData.downloads?.fallbackRequired && Array.isArray(packageData.downloads?.officialFormLinks) && (
+                  <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 p-3">
+                    <p className="text-sm font-semibold text-indigo-900">Official Form Downloads</p>
+                    <p className="mt-1 text-xs text-indigo-800">
+                      A concrete local template was not found for at least one requested form. Use these official sources.
+                    </p>
+                    <ul className="mt-2 space-y-1 text-sm text-indigo-900">
+                      {packageData.downloads.officialFormLinks.map((link: any, index: number) => (
+                        <li key={`${link.formId}-${index}`}>
+                          <a href={String(link.url)} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                            {safeText(String(link.title || link.formId || 'Authorized form source'))}
+                          </a>
+                          <span className="ml-2 text-xs text-indigo-700">{safeText(String(link.source || 'Official source'))}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {packageData.warnings && packageData.warnings.length > 0 && (
@@ -283,11 +315,13 @@ export default function DocumentsPage({ matterId }: DocumentsPageProps) {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-2">Confirm facts & select templates</h3>
             <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700">User confirmed facts (optional)</label>
+              <label htmlFor="userConfirmedFacts" className="block text-sm font-medium text-gray-700">User confirmed facts (optional)</label>
               <textarea
+                id="userConfirmedFacts"
                 name="userConfirmedFacts"
                 rows={3}
                 className="mt-1 block w-full rounded border-gray-300"
+                aria-label="User confirmed facts"
                 onChange={(e) => setUserConfirmedFacts(e.target.value ? [e.target.value] : [])}
               />
             </div>

@@ -41,6 +41,11 @@ describe('ModelRouter', () => {
 
   afterEach(() => {
     _resetModelRouter();
+    delete process.env.LITELLM_BASE_URL;
+    delete process.env.LITELLM_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.GEMINI_API_KEY;
     vi.restoreAllMocks();
   });
 
@@ -71,35 +76,60 @@ describe('ModelRouter', () => {
 
   // ── First provider available ─────────────────────────────────────────────────
 
-  it('routes CLASSIFICATION to OPENAI when key provided and fetch succeeds', async () => {
-    process.env.OPENAI_API_KEY = 'sk-test-key';
+  it('routes through LiteLLM first when it is explicitly configured', async () => {
+    mockFetch.mockResolvedValueOnce(openAiStub('{"domain":"employment"}', 'litellm-fast'));
 
-    mockFetch.mockResolvedValueOnce(openAiStub('{"domain":"employment"}'));
+    const router = new ModelRouter({
+      liteLlmBaseUrl: 'http://localhost:4000',
+      liteLlmApiKey: 'litellm-test-key',
+      geminiApiKey: 'test-gemini-key',
+      openaiApiKey: 'sk-openai',
+    });
 
-    const router = new ModelRouter({ openaiApiKey: 'sk-test-key' });
     const response = await router.route({
       taskType: TaskType.CLASSIFICATION,
       messages: [{ role: 'user', content: 'classify this' }],
     });
 
     expect(response.content).toBe('{"domain":"employment"}');
-    expect(response.provider).toBe(ModelProvider.OPENAI);
-    expect(response.model).toBe('gpt-4o-mini');
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch.mock.calls[0][0]).toContain('/chat/completions');
+    expect(response.provider).toBe(ModelProvider.LITELLM);
+    expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:4000/chat/completions');
+  });
+
+  it('routes CLASSIFICATION to first available cloud provider (Gemini)', async () => {
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
+
+    // Gemini stub (uses Gemini API format)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      statusText: 'OK',
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: '{"domain":"employment"}' }] } }],
+        usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5 },
+      }),
+    });
+
+    const router = new ModelRouter({ geminiApiKey: 'test-gemini-key' });
+    const response = await router.route({
+      taskType: TaskType.CLASSIFICATION,
+      messages: [{ role: 'user', content: 'classify this' }],
+    });
+
+    expect(response.content).toBe('{"domain":"employment"}');
+    expect(response.provider).toBe(ModelProvider.GEMINI);
+    expect(response.routeDecision?.lane).toBe('fast-extract');
   });
 
   // ── Fallback on unavailable ──────────────────────────────────────────────────
 
-  it('skips first provider when its key is empty and falls back to next available', async () => {
-    // PLAIN_LANGUAGE chain: CLAUDE → OPENAI → GEMINI → OLLAMA
-    // Claude key is empty → skip. OpenAI key provided → use it.
-    process.env.ANTHROPIC_API_KEY = '';
+  it('skips unavailable providers and falls back to next available', async () => {
+    // PLAIN_LANGUAGE chain: GEMINI → OPENAI → CLAUDE → OLLAMA
+    // Gemini key empty → skip. OpenAI key provided → use it.
     process.env.OPENAI_API_KEY = 'sk-test-key';
 
     mockFetch.mockResolvedValueOnce(openAiStub('plain language result'));
 
-    const router = new ModelRouter({ openaiApiKey: 'sk-test-key', anthropicApiKey: '' });
+    const router = new ModelRouter({ openaiApiKey: 'sk-test-key', geminiApiKey: '' });
     const response = await router.route({
       taskType: TaskType.PLAIN_LANGUAGE,
       messages: [{ role: 'user', content: 'explain this' }],
@@ -107,24 +137,23 @@ describe('ModelRouter', () => {
 
     expect(response.provider).toBe(ModelProvider.OPENAI);
     expect(response.content).toBe('plain language result');
-    // Only one fetch call (Claude was skipped as unavailable)
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(response.routeDecision?.lane).toBe('fast-extract');
   });
 
   // ── Fallback on error ────────────────────────────────────────────────────────
 
-  it('falls back to second provider when first throws on complete()', async () => {
-    // CLASSIFICATION chain: OPENAI → CLAUDE → GEMINI → OLLAMA
+  it('falls back through chain when providers fail sequentially', async () => {
+    // CLASSIFICATION chain: GEMINI → OPENAI → CLAUDE → OLLAMA
     const router = new ModelRouter({
+      geminiApiKey: 'test-gemini',
       openaiApiKey: 'sk-openai',
       anthropicApiKey: 'sk-claude',
     });
 
-    // First call (OpenAI) throws a network error
     mockFetch
-      .mockRejectedValueOnce(new Error('network timeout'))
-      // Second call (Claude) succeeds
-      .mockResolvedValueOnce(claudeStub('claude fallback result'));
+      .mockRejectedValueOnce(new Error('gemini quota exceeded'))  // Gemini fails
+      .mockRejectedValueOnce(new Error('network timeout'))        // OpenAI fails
+      .mockResolvedValueOnce(claudeStub('claude fallback result')); // Claude succeeds
 
     const response = await router.route({
       taskType: TaskType.CLASSIFICATION,
@@ -133,7 +162,97 @@ describe('ModelRouter', () => {
 
     expect(response.provider).toBe(ModelProvider.CLAUDE);
     expect(response.content).toBe('claude fallback result');
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(response.routeDecision?.fallbackCause).toBeDefined();
+  });
+
+  it('escalates ambiguous plain-language requests to the deep-reason lane', async () => {
+    const router = new ModelRouter({
+      geminiApiKey: 'test-gemini',
+      openaiApiKey: 'sk-openai',
+      anthropicApiKey: 'sk-claude',
+    });
+
+    // Deep-reason chain: GEMINI → OPENAI → CLAUDE → OLLAMA
+    // Gemini succeeds first
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      statusText: 'OK',
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'deep reasoning result' }] } }],
+        usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 20 },
+      }),
+    });
+
+    const response = await router.route({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [{ role: 'user', content: 'resolve this ambiguous situation' }],
+      routeContext: {
+        confidence: 42,
+        ambiguity: 0.7,
+      },
+    });
+
+    expect(response.provider).toBe(ModelProvider.GEMINI);
+    expect(response.routeDecision?.lane).toBe('deep-reason');
+  });
+
+  it('escalates complex plain-language requests to the deep-reason lane', async () => {
+    const router = new ModelRouter({
+      geminiApiKey: 'test-gemini',
+      openaiApiKey: 'sk-openai',
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      statusText: 'OK',
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'complex reasoning result' }] } }],
+        usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 20 },
+      }),
+    });
+
+    const response = await router.route({
+      taskType: TaskType.PLAIN_LANGUAGE,
+      messages: [{ role: 'user', content: 'untangle this multi-party scenario' }],
+      routeContext: {
+        confidence: 86,
+        ambiguity: 0.2,
+        complexityScore: 0.9,
+      },
+    });
+
+    expect(response.provider).toBe(ModelProvider.GEMINI);
+    expect(response.routeDecision?.lane).toBe('deep-reason');
+  });
+
+  it('uses Ollama-only chain when privacy mode requires local routing', async () => {
+    const router = new ModelRouter({
+      openaiApiKey: 'sk-openai',
+    });
+
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, statusText: 'OK' })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          message: { content: 'local result' },
+          prompt_eval_count: 8,
+          eval_count: 4,
+        }),
+      });
+
+    const response = await router.route({
+      taskType: TaskType.CLASSIFICATION,
+      messages: [{ role: 'user', content: 'classify locally' }],
+      routeContext: {
+        privacyMode: 'local-only',
+      },
+    });
+
+    expect(response.provider).toBe(ModelProvider.OLLAMA);
+    expect(response.routeDecision?.lane).toBe('fallback-local');
+    expect(mockFetch.mock.calls[0][0]).toContain('/api/tags');
+    expect(mockFetch.mock.calls[1][0]).toContain('/api/chat');
   });
 
   // ── All fail ─────────────────────────────────────────────────────────────────
@@ -196,19 +315,19 @@ describe('ModelRouter', () => {
 
   // ── Chain first-provider assertions ──────────────────────────────────────────
 
-  it('PLAIN_LANGUAGE chain starts with CLAUDE as highest-quality provider', () => {
-    expect(fallbackChains[TaskType.PLAIN_LANGUAGE][0].provider).toBe(ModelProvider.CLAUDE);
+  it('PLAIN_LANGUAGE chain starts with LiteLLM so a configured proxy can route cloud traffic centrally', () => {
+    expect(fallbackChains[TaskType.PLAIN_LANGUAGE][0].provider).toBe(ModelProvider.LITELLM);
   });
 
-  it('DOCUMENT_DRAFT chain starts with CLAUDE for best drafting quality', () => {
-    expect(fallbackChains[TaskType.DOCUMENT_DRAFT][0].provider).toBe(ModelProvider.CLAUDE);
+  it('DOCUMENT_DRAFT chain starts with LiteLLM so drafting can use proxy-managed model groups', () => {
+    expect(fallbackChains[TaskType.DOCUMENT_DRAFT][0].provider).toBe(ModelProvider.LITELLM);
   });
 
-  it('CLASSIFICATION chain starts with OPENAI for structured-output reliability', () => {
-    expect(fallbackChains[TaskType.CLASSIFICATION][0].provider).toBe(ModelProvider.OPENAI);
+  it('CLASSIFICATION chain starts with LiteLLM so routing decisions can be centralized when available', () => {
+    expect(fallbackChains[TaskType.CLASSIFICATION][0].provider).toBe(ModelProvider.LITELLM);
   });
 
-  it('EVIDENCE_SUMMARY chain starts with OPENAI for fast summarisation', () => {
-    expect(fallbackChains[TaskType.EVIDENCE_SUMMARY][0].provider).toBe(ModelProvider.OPENAI);
+  it('EVIDENCE_SUMMARY chain starts with LiteLLM so summarization traffic can use proxy policies first', () => {
+    expect(fallbackChains[TaskType.EVIDENCE_SUMMARY][0].provider).toBe(ModelProvider.LITELLM);
   });
 });

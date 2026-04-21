@@ -21,6 +21,29 @@ interface FinancialRiskIndicatorProps {
  */
 export function FinancialRiskIndicator({ assessment }: FinancialRiskIndicatorProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {
@@ -95,8 +118,7 @@ export function FinancialRiskIndicator({ assessment }: FinancialRiskIndicatorPro
       <div className="mb-4">
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className={`h-3 rounded-full transition-all duration-500 ${config.progressColor}`}
-            style={{ width: `${progressPercent}%` }}
+            className={`h-3 rounded-full transition-all duration-500 ${config.progressColor} ${widthByFive[Math.max(0, Math.min(100, Math.round(progressPercent / 5) * 5))]}`}
           />
         </div>
       </div>

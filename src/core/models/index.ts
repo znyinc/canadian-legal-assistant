@@ -37,6 +37,88 @@ export interface MatterClassification {
   notes?: string[];
 }
 
+export interface TriageOption {
+  title: string;
+  whenItFits: string;
+  tradeoff: string;
+}
+
+export interface TriageEnvelope {
+  assumption: string;
+  whatMattersLegally: string[];
+  issueBuckets: string[];
+  pivotalQuestion: string;
+  practicalOptions: TriageOption[];
+  nextSteps24to72h: string[];
+  uncertainty: string[];
+}
+
+export interface ConversationalClassificationSummary {
+  domain: Domain | string;
+  jurisdiction: Jurisdiction;
+  urgency: 'low' | 'medium' | 'high';
+  confidence: number;
+  pillarMatches?: string[];
+}
+
+export interface ConversationAlternativeDomain {
+  domain: Domain | string;
+  confidence: number;
+}
+
+export type ConversationReviewState =
+  | 'needs-clarification'
+  | 'ready-for-import'
+  | 'needs-human-review';
+
+export type ConversationSessionStatus =
+  | 'active'
+  | 'readyToImport'
+  | 'imported'
+  | 'needsReview'
+  | 'closed';
+
+export interface ConversationTurnResult {
+  classification: ConversationalClassificationSummary;
+  followUpQuestions: string[];
+  confidence: number;
+  confidenceHint?: string;
+  confidenceProgressLabel?: string;
+  isComplete: boolean;
+  reviewState: ConversationReviewState;
+  importReadiness: boolean;
+  strategicBriefing: TriageEnvelope;
+  unresolvedSignals?: string[];
+  classificationAlternatives?: ConversationAlternativeDomain[];
+}
+
+export interface ConversationTranscriptTurn {
+  id: string;
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ConversationImportArtifactSummary {
+  id: string;
+  source: 'llm' | 'fallback' | 'manual';
+  readyToImport: boolean;
+  createdAt: string;
+}
+
+export interface ConversationSessionState extends ConversationTurnResult {
+  sessionId: string;
+  status: ConversationSessionStatus;
+  turnCount: number;
+  maxTurns: number;
+  latestAssistantMessage?: string;
+  transcript: ConversationTranscriptTurn[];
+  importArtifact?: ConversationImportArtifactSummary;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AuthorityRef {
   id: string;
   name: string;
@@ -242,4 +324,123 @@ export interface RetentionPolicy {
   legalHold: boolean;
   legalHoldReason?: string;
   updatedAt: string; // ISO date
+}
+
+export type WorkflowTrack =
+  | 'ontario-small-claims'
+  | 'ontario-superior-simplified'
+  | 'ontario-superior-ordinary';
+
+export type WorkflowStatus = 'not-started' | 'in-progress' | 'completed' | 'paused' | 'blocked';
+
+export interface WorkflowStep {
+  id: string;
+  phaseId: string;
+  title: string;
+  description: string;
+  artifactType: string;
+  recommended: boolean;
+  tracks?: WorkflowTrack[];
+}
+
+export interface WorkflowPhase {
+  id: string;
+  title: string;
+  description: string;
+  status: 'not-started' | 'in-progress' | 'completed';
+  steps: WorkflowStep[];
+}
+
+export interface DecisionGate {
+  id: string;
+  title: string;
+  triggerPhaseId: string;
+  questions: string[];
+}
+
+export interface WorkflowDefinition {
+  id: string;
+  version: string;
+  jurisdiction: string;
+  title: string;
+  summary: string;
+  phases: WorkflowPhase[];
+  gates: DecisionGate[];
+}
+
+export interface WorkflowStepState {
+  stepId: string;
+  status: 'not-started' | 'in-progress' | 'completed';
+  artifactIds: string[];
+  lastGeneratedAt?: string;
+}
+
+export interface WorkflowVerifiedResource {
+  id: string;
+  title: string;
+  kind: 'file' | 'link';
+  url: string;
+  retrievalDate: string;
+  sourceLabel: string;
+  note?: string;
+  localPath?: string;
+}
+
+export interface WorkflowArtifact {
+  id: string;
+  stepId: string;
+  title: string;
+  artifactType: string;
+  summary: string;
+  content: string;
+  citations: Citation[];
+  verifiedResources: WorkflowVerifiedResource[];
+  generatedAt: string;
+  source: 'llm' | 'fallback';
+}
+
+export interface GateScorecardItem {
+  label: string;
+  score: number;
+  weight: number;
+  detail?: string;
+}
+
+export interface GateScorecard {
+  overall: number;
+  items: GateScorecardItem[];
+  summary: string;
+}
+
+export interface DecisionGateResult {
+  gateId: string;
+  outcome: 'proceed' | 'pause' | 'stop';
+  answers: Record<string, string>;
+  rationale: string;
+  assessedAt: string;
+  scorecard?: GateScorecard;
+}
+
+export interface WorkflowRun {
+  definitionId: string;
+  version: string;
+  matterId: string;
+  status: WorkflowStatus;
+  track: WorkflowTrack;
+  currentPhaseId: string;
+  stepStates: WorkflowStepState[];
+  artifacts: WorkflowArtifact[];
+  gateResults: DecisionGateResult[];
+  riskNotice: string;
+  escalationFlags: string[];
+  deadlineSummary: string[];
+  costExposureSummary: string[];
+  communicationLogItems: string[];
+  startedAt: string;
+  updatedAt: string;
+}
+
+export interface AuthorityCitationBundle {
+  entries: SourceEntry[];
+  notes?: string[];
 }

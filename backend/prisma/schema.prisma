@@ -103,3 +103,48 @@ model AuditEvent {
   @@index([matterId])
   @@index([action])
 }
+
+model ConversationSession {
+  id                       String                       @id @default(cuid())
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime                     @updatedAt
+  status                   String                       @default("active")
+  seedDraftJson            String?
+  latestClassificationJson String?
+  latestContextJson        String?
+  latestReviewDecisionJson String?
+  importedMatterId         String?
+
+  turns                    ConversationTurn[]
+  importArtifacts          ConversationImportArtifact[]
+
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model ConversationTurn {
+  id           String              @id @default(cuid())
+  sessionId    String
+  session      ConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role         String
+  content      String
+  metadataJson String?
+  createdAt    DateTime            @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model ConversationImportArtifact {
+  id                   String              @id @default(cuid())
+  sessionId            String
+  session              ConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  source               String
+  importPayloadJson    String?
+  evidenceChecklistJson String?
+  readyToImport        Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}

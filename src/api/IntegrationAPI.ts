@@ -47,8 +47,10 @@ import {
   EvidenceManifest,
   DocumentPackage,
   DocumentDraft,
-  AccessMethod
+  AccessMethod,
+  WorkflowRun
 } from '../core/models';
+import { WorkflowEngine, WorkflowLlmClient } from '../core/workflow/WorkflowEngine';
 
 export interface IntakeRequest {
   classification: Partial<MatterClassification>;
@@ -119,6 +121,34 @@ export interface DocumentResponse {
   };
 }
 
+export interface IntegrationAPIOptions {
+  classifier?: MatterClassifier;
+  router?: ForumRouter;
+  assessor?: TimelineAssessor;
+  pillar?: PillarClassifier;
+  explainer?: PillarExplainer;
+  journey?: JourneyTracker;
+  authorities?: AuthorityRegistry;
+  validator?: typeof validateFile;
+  redactor?: typeof redactPII;
+  indexer?: EvidenceIndexer;
+  timeline?: TimelineGenerator;
+  drafting?: DocumentDraftingEngine;
+  packager?: DocumentPackager;
+  registry?: DomainModuleRegistry;
+  audit?: AuditLogger;
+  manifests?: ManifestBuilder;
+  lifecycle?: DataLifecycleManager;
+  ocppValidator?: OCPPValidator;
+  limitationEngine?: LimitationPeriodsEngine;
+  actionPlanGenerator?: ActionPlanGenerator;
+  upl?: DisclaimerService;
+  sandbox?: A2ISandboxFramework;
+  kitRegistry?: KitRegistry;
+  kitOrchestrator?: KitOrchestrator;
+  workflowLlmClient?: WorkflowLlmClient;
+}
+
 export interface KitExecutionRequest {
   kitId: string;
   sessionId?: string;
@@ -180,33 +210,9 @@ export class IntegrationAPI {
   private kitRegistry: KitRegistry;
   private kitOrchestrator: KitOrchestrator;
   private kitResults: Map<string, StoredKitResult[]>;
+  private workflowEngine: WorkflowEngine;
 
-  constructor(options?: {
-    classifier?: MatterClassifier;
-    router?: ForumRouter;
-    assessor?: TimelineAssessor;
-    pillar?: PillarClassifier;
-    explainer?: PillarExplainer;
-    journey?: JourneyTracker;
-    authorities?: AuthorityRegistry;
-    validator?: typeof validateFile;
-    redactor?: typeof redactPII;
-    indexer?: EvidenceIndexer;
-    timeline?: TimelineGenerator;
-    drafting?: DocumentDraftingEngine;
-    packager?: DocumentPackager;
-    registry?: DomainModuleRegistry;
-    audit?: AuditLogger;
-    manifests?: ManifestBuilder;
-    lifecycle?: DataLifecycleManager;
-    ocppValidator?: OCPPValidator;
-    limitationEngine?: LimitationPeriodsEngine;
-    actionPlanGenerator?: ActionPlanGenerator;
-    upl?: DisclaimerService;
-    sandbox?: A2ISandboxFramework;
-    kitRegistry?: KitRegistry;
-    kitOrchestrator?: KitOrchestrator;
-  }) {
+  constructor(options?: IntegrationAPIOptions) {
     this.authorities = options?.authorities ?? this.seedAuthorities();
     this.classifier = options?.classifier ?? new MatterClassifier();
     this.router = options?.router ?? new ForumRouter(this.authorities);
@@ -234,6 +240,7 @@ export class IntegrationAPI {
     this.kitRegistry = options?.kitRegistry ?? new KitRegistry();
     this.kitOrchestrator = options?.kitOrchestrator ?? new KitOrchestrator();
     this.kitResults = new Map();
+    this.workflowEngine = new WorkflowEngine(options?.workflowLlmClient);
 
     // Wire kit orchestration events into audit log
     this.kitOrchestrator.onExecutionEvent((event: KitExecutionEvent) => {
@@ -668,6 +675,124 @@ export class IntegrationAPI {
    */
   getKitResults(sessionId: string): StoredKitResult[] | undefined {
     return this.kitResults.get(sessionId);
+  }
+
+  listWorkflowDefinitions() {
+    return this.workflowEngine.getDefinitions();
+  }
+
+  getWorkflowState(req: {
+    matterId: string;
+    description: string;
+    province: string;
+    domain: string;
+    disputeAmount?: number | null;
+    classification?: MatterClassification | null;
+    forumMap?: any;
+    evidence?: Array<{ filename: string; mimeType?: string; metadata?: string | null }>;
+    documents?: Array<{ packageId: string; packageData?: string | null }>;
+    workflow?: WorkflowRun | null;
+  }) {
+    return this.workflowEngine.getWorkflow(
+      {
+        matterId: req.matterId,
+        description: req.description,
+        province: req.province,
+        domain: req.domain,
+        disputeAmount: req.disputeAmount,
+        classification: req.classification,
+        forumMap: req.forumMap,
+        evidence: req.evidence,
+        documents: req.documents
+      },
+      req.workflow
+    );
+  }
+
+  async generateWorkflowArtifact(req: {
+    matterId: string;
+    description: string;
+    province: string;
+    domain: string;
+    disputeAmount?: number | null;
+    classification?: MatterClassification | null;
+    forumMap?: any;
+    evidence?: Array<{ filename: string; mimeType?: string; metadata?: string | null }>;
+    documents?: Array<{ packageId: string; packageData?: string | null }>;
+    workflow?: WorkflowRun | null;
+    stepId: string;
+  }) {
+    const workflow = req.workflow || this.getWorkflowState(req).run;
+    return this.workflowEngine.generateArtifact(
+      {
+        matterId: req.matterId,
+        description: req.description,
+        province: req.province,
+        domain: req.domain,
+        disputeAmount: req.disputeAmount,
+        classification: req.classification,
+        forumMap: req.forumMap,
+        evidence: req.evidence,
+        documents: req.documents
+      },
+      workflow,
+      req.stepId
+    );
+  }
+
+  assessWorkflowGate(req: {
+    matterId: string;
+    description: string;
+    province: string;
+    domain: string;
+    disputeAmount?: number | null;
+    classification?: MatterClassification | null;
+    forumMap?: any;
+    evidence?: Array<{ filename: string; mimeType?: string; metadata?: string | null }>;
+    documents?: Array<{ packageId: string; packageData?: string | null }>;
+    workflow?: WorkflowRun | null;
+    gateId: string;
+    answers: Record<string, string>;
+  }) {
+    const workflow = req.workflow || this.getWorkflowState(req).run;
+    return this.workflowEngine.assessGate(
+      {
+        matterId: req.matterId,
+        description: req.description,
+        province: req.province,
+        domain: req.domain,
+        disputeAmount: req.disputeAmount,
+        classification: req.classification,
+        forumMap: req.forumMap,
+        evidence: req.evidence,
+        documents: req.documents
+      },
+      workflow,
+      req.gateId,
+      req.answers
+    );
+  }
+
+  runWorkflowResearch(req: {
+    matterId: string;
+    description: string;
+    province: string;
+    domain: string;
+    disputeAmount?: number | null;
+    classification?: MatterClassification | null;
+    query: string;
+  }) {
+    return this.workflowEngine.research({
+      matter: {
+        matterId: req.matterId,
+        description: req.description,
+        province: req.province,
+        domain: req.domain,
+        disputeAmount: req.disputeAmount,
+        classification: req.classification
+      },
+      query: req.query
+    });
   }
 
   private buildEvidenceManifest(index: EvidenceIndex): EvidenceManifest {

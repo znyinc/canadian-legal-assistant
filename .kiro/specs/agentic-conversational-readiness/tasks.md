@@ -26,12 +26,12 @@ This task file tracks extension work only.
 
 - [ ] 3. Refactor conversational routes behind a single orchestrator
   - [x] 3.1 Create a backend conversational orchestration service
-  - [ ] 3.2 Move question generation, confidence scoring, and evidence requirements to the orchestration layer
+  - [x] 3.2 Move question generation, confidence scoring, and evidence requirements to the orchestration layer
   - [x] 3.3 Reuse `IntakeAgent` for intake logic instead of duplicating branching in `backend/src/routes/conversational.ts`
-  - [ ] 3.4 Keep route handlers as thin transport adapters
+  - [x] 3.4 Keep route handlers as thin transport adapters
 
 - [ ] 4. Add persistent conversation memory
-  - [ ] 4.1 Extend Prisma schema with session and turn models
+  - [x] 4.1 Extend Prisma schema with session and turn models
   - [ ] 4.2 Create persistence services for session lookup, turn append, import artifact storage, and resume
   - [ ] 4.3 Restore conversation state on reload and import-back flows
   - [ ] 4.4 Add audit logging for import, review, and session transitions
@@ -100,3 +100,56 @@ This task file tracks extension work only.
 - streaming
 - retrieval-memory refinement
 - distribution-loop planning only
+
+## Phase 4: Domain-Agnostic Triage and Lane Routing
+
+- [ ] 11. Implement strategic triage envelope across all legal domains
+  - [ ] 11.1 Define `TriageEnvelope` schema in backend orchestration contracts
+  - [ ] 11.2 Compose envelope in intake responses regardless of confidence state
+  - [ ] 11.3 Restrict follow-up prompts to pivotal unknowns only
+  - [ ] 11.4 Add integration tests for employment, landlord/tenant, criminal, insurance, and consumer scenarios
+
+- [ ] 12. Implement explicit lane selection metadata for nuance extraction
+  - [ ] 12.1 Add lane selection API to model router (`fast-extract`, `deep-reason`, `fallback-local`)
+  - [ ] 12.2 Return route decision metadata with provider/model/rationale
+  - [ ] 12.3 Persist route decision details to audit events
+  - [ ] 12.4 Add fallback-path tests when remote models are disabled/unavailable
+
+- [ ] 13. Enforce citation/source validation on legal claims
+  - [ ] 13.1 Integrate `CitationEnforcer` in nuance and guidance response finalization
+  - [ ] 13.2 Downgrade or gate outputs with missing/invalid citations
+  - [ ] 13.3 Add tests for statute/deadline outputs failing citation checks
+  - [ ] 13.4 Surface citation-gate status in API payloads and logs
+
+## Phase 5: UX Segmentation and Downloadable Reports
+
+- [ ] 14. Upgrade conversational intake UI to infographic segmentation
+  - [ ] 14.1 Render triage envelope as ordered visual cards
+  - [ ] 14.2 Preserve quick follow-up interaction for unresolved pivotal facts
+  - [ ] 14.3 Validate readability and mobile behavior for segmented cards
+
+- [ ] 15. Add strategic report and action-checklist exports
+  - [ ] 15.1 Generate downloadable strategic briefing from triage envelope
+  - [ ] 15.2 Include disclaimers and citation/review status in exported artifacts
+  - [ ] 15.3 Add tests for report content completeness and schema consistency
+
+## Phase 6: Response Discipline and Practical Guidance
+
+- [ ] 16. Add a delta-first conversational response contract
+  - [ ] 16.1 Extend nuance and orchestration payloads with `directAnswer`, `immediateActions`, `escalationCriteria`, `singleNextQuestion`, and `conciseDisclaimer`
+  - [ ] 16.2 Limit immediate actions to the next 24 to 72 hours and cap them at 4 items
+  - [ ] 16.3 Ensure disclaimers remain concise but mandatory when legal thresholds or consequences are discussed
+
+- [ ] 17. Add repetition guards and action-first rendering
+  - [ ] 17.1 Persist prior assistant response state in conversational sessions for overlap comparison
+  - [ ] 17.2 Suppress unchanged recap when overlap exceeds the configured threshold
+  - [ ] 17.3 Update `NuanceChatPage` to render direct answer and immediate actions before summary panels
+  - [ ] 17.4 Add tests proving repeated user turns do not produce repeated assistant summaries
+
+## Expanded Verification Gates
+
+- [ ] F. Triage envelope is present and valid for all major legal domains
+- [ ] G. Lane routing metadata is emitted and auditable for nuance calls
+- [ ] H. Citation gate blocks or downgrades uncited legal claims
+- [ ] I. Infographic intake view and strategic report export function end-to-end
+- [ ] J. Conversational refinement replies are delta-first, action-first, and non-repetitive across multi-turn sessions

@@ -25,6 +25,12 @@ export interface PDFSummaryOptions {
   
   /** Optional: Include full filing guide (default: true) */
   includeFilingGuide?: boolean;
+
+  /** Optional: Include filing checklist and deadline status (default: false) */
+  includeChecklist?: boolean;
+
+  /** Optional: Filing deadline (YYYY-MM-DD) used for checklist urgency */
+  checklistDeadline?: string;
   
   /** Optional: Custom header/footer text */
   customHeader?: string;
@@ -97,6 +103,16 @@ export class PDFSummaryGenerator {
     if (options.includeFilingGuide !== false) {
       const filingGuide = this.registry.generateFilingGuide(options.formId, options.variables);
       content += `\n---\n\n${filingGuide}`;
+    }
+
+    if (options.includeChecklist) {
+      const checklist = this.registry.generateFilingChecklist(options.formId, {
+        filingDeadline: options.checklistDeadline,
+      });
+
+      if (checklist) {
+        content += this.generateChecklistSection(checklist);
+      }
     }
 
     // Footer
@@ -214,6 +230,32 @@ export class PDFSummaryGenerator {
     footer += `- Low-income legal aid: [Legal Aid Ontario](https://www.legalaid.on.ca/) - 1-800-668-8258\n\n`;
 
     return footer;
+  }
+
+  private generateChecklistSection(checklist: {
+    deadline?: string;
+    daysUntilDeadline: number | null;
+    urgency: 'none' | 'caution' | 'warning' | 'critical';
+    items: Array<{ label: string; completed: boolean }>;
+  }): string {
+    let section = `\n---\n\n## Filing Checklist\n\n`;
+
+    if (checklist.deadline) {
+      section += `**Deadline:** ${checklist.deadline}  \n`;
+      section += `**Urgency:** ${checklist.urgency.toUpperCase()}  \n`;
+      if (checklist.daysUntilDeadline !== null) {
+        section += `**Days Remaining:** ${checklist.daysUntilDeadline}  \n`;
+      }
+      section += `\n`;
+    }
+
+    checklist.items.forEach(item => {
+      const marker = item.completed ? '[x]' : '[ ]';
+      section += `- ${marker} ${item.label}\n`;
+    });
+
+    section += `\n`;
+    return section;
   }
 
   /**

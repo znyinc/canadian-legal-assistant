@@ -80,6 +80,48 @@ export interface FormVersionValidation {
   reviewNotes: string[];
 }
 
+export interface FormPreparationStep {
+  id: string;
+  title: string;
+  description: string;
+  requiredFields: string[];
+  missingFields: string[];
+  status: 'ready' | 'needs-input';
+}
+
+export interface FormPreparationWizard {
+  formId: string;
+  formName: string;
+  officialUrl: string;
+  authority: string;
+  completionPercent: number;
+  steps: FormPreparationStep[];
+}
+
+export interface FilingChecklistOptions {
+  filingDeadline?: string;
+  completedItems?: string[];
+}
+
+export interface FilingChecklistItem {
+  id: string;
+  label: string;
+  required: boolean;
+  completed: boolean;
+}
+
+export interface FilingChecklistSummary {
+  formId: string;
+  formName: string;
+  authority: string;
+  generatedOn: string;
+  deadline?: string;
+  daysUntilDeadline: number | null;
+  urgency: 'none' | 'caution' | 'warning' | 'critical';
+  items: FilingChecklistItem[];
+  warnings: string[];
+}
+
 const FORM_VERSION_STALE_DAYS = 180;
 const TRUSTED_FORM_HOSTS = [
   'ontariocourtforms.on.ca',
@@ -178,6 +220,94 @@ export class FormMappingRegistry {
       .map(formId => this.validateFormVersion(formId, asOfDate))
       .filter((status): status is FormVersionValidation => status !== undefined)
       .filter(status => status.isStale || !status.trustedSource || status.reviewNotes.length > 0);
+  }
+
+  /**
+   * Build a section-by-section preparation wizard with completion tracking.
+   */
+  generatePreparationWizard(
+    formId: string,
+    userVariables: Record<string, any> = {}
+  ): FormPreparationWizard | undefined {
+    const mapping = this.mappings.get(formId);
+    if (!mapping) {
+      return undefined;
+    }
+
+    const steps = mapping.sections.map((section, idx) => {
+      const requiredFields = section.fields.map(field => field.variableName);
+      const missingFields = requiredFields.filter(fieldName => this.isMissingValue(userVariables[fieldName]));
+
+      return {
+        id: `${formId}-step-${idx + 1}`,
+        title: section.title,
+        description: `Complete ${section.title} on the official form.`,
+        requiredFields,
+        missingFields,
+        status: missingFields.length === 0 ? 'ready' : 'needs-input',
+      } as FormPreparationStep;
+    });
+
+    const totalFields = mapping.sections.flatMap(section => section.fields).length;
+    const filledFields = mapping.sections
+      .flatMap(section => section.fields)
+      .filter(field => !this.isMissingValue(userVariables[field.variableName]))
+      .length;
+
+    const completionPercent = totalFields === 0 ? 100 : Math.round((filledFields / totalFields) * 100);
+
+    return {
+      formId: mapping.formId,
+      formName: mapping.formName,
+      officialUrl: mapping.officialUrl,
+      authority: mapping.authority,
+      completionPercent,
+      steps,
+    };
+  }
+
+  /**
+   * Generate a filing checklist with optional deadline-based urgency guidance.
+   */
+  generateFilingChecklist(
+    formId: string,
+    options: FilingChecklistOptions = {}
+  ): FilingChecklistSummary | undefined {
+    const mapping = this.mappings.get(formId);
+    if (!mapping) {
+      return undefined;
+    }
+
+    const completedItems = new Set(options.completedItems ?? []);
+    const instructionItems: FilingChecklistItem[] = mapping.filingInstructions.map((instruction, idx) => ({
+      id: `instruction-${idx + 1}`,
+      label: instruction,
+      required: true,
+      completed: completedItems.has(`instruction-${idx + 1}`),
+    }));
+
+    const deadlineDate = options.filingDeadline ? new Date(options.filingDeadline) : undefined;
+    const daysUntilDeadline = deadlineDate && !Number.isNaN(deadlineDate.getTime())
+      ? this.calculateDaysUntil(deadlineDate, new Date())
+      : null;
+    const urgency = this.calculateDeadlineUrgency(daysUntilDeadline);
+
+    const warnings = [...(mapping.warnings ?? [])];
+    if (daysUntilDeadline !== null) {
+      warnings.push(`Filing deadline is in ${daysUntilDeadline} day(s).`);
+    }
+
+    return {
+      formId: mapping.formId,
+      formName: mapping.formName,
+      authority: mapping.authority,
+      generatedOn: new Date().toISOString().split('T')[0],
+      deadline: options.filingDeadline,
+      daysUntilDeadline,
+      urgency,
+      items: instructionItems,
+      warnings,
+    };
   }
 
   /**
@@ -294,6 +424,47 @@ export class FormMappingRegistry {
     if (typeof value === 'number') return value.toString();
     if (Array.isArray(value)) return value.join(', ');
     return JSON.stringify(value);
+  }
+
+  private isMissingValue(value: any): boolean {
+    if (value === null || value === undefined) {
+      return true;
+    }
+
+    if (typeof value === 'string') {
+      return value.trim().length === 0;
+    }
+
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+
+    return false;
+  }
+
+  private calculateDaysUntil(targetDate: Date, now: Date): number {
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.ceil((targetDate.getTime() - now.getTime()) / msPerDay);
+  }
+
+  private calculateDeadlineUrgency(daysUntilDeadline: number | null): 'none' | 'caution' | 'warning' | 'critical' {
+    if (daysUntilDeadline === null) {
+      return 'none';
+    }
+
+    if (daysUntilDeadline <= 10) {
+      return 'critical';
+    }
+
+    if (daysUntilDeadline <= 30) {
+      return 'warning';
+    }
+
+    if (daysUntilDeadline <= 90) {
+      return 'caution';
+    }
+
+    return 'none';
   }
 
   private getDaysSinceVerification(lastVerified: string | undefined, asOfDate: Date): number | null {

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, AlertCircle, Calendar } from 'lucide-react';
-import { api } from '../services/api';
+import { api, type MatterPreflightResponse } from '../services/api';
 import { 
   ROLE_OPTIONS, 
   LEGAL_TAXONOMY, 
@@ -22,10 +22,46 @@ interface WizardState {
   backstory: string;
 }
 
+interface PendingMatterReview {
+  preflight: MatterPreflightResponse;
+  payload: {
+    description: string;
+    province: string;
+    domain: string;
+    disputeAmount?: number;
+    structuredAnswers?: any[];
+    variables?: Record<string, string | number | boolean>;
+  };
+}
+
 export default function IntakeWizard({ province }: { province: string }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingReview, setPendingReview] = useState<PendingMatterReview | null>(null);
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
   
   const [state, setState] = useState<WizardState>({
     currentStep: 1,
@@ -109,9 +145,20 @@ export default function IntakeWizard({ province }: { province: string }) {
 
   const handlePrev = () => {
     setError('');
+
+    if (pendingReview) {
+      setPendingReview(null);
+      return;
+    }
+
     if (state.currentStep > 1) {
       setState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
     }
+  };
+
+  const createMatterWorkspace = async (payload: PendingMatterReview['payload']) => {
+    const result = await api.createMatter(payload);
+    navigate(`/matters/${result.id}`);
   };
 
   const handleSubmit = async () => {
@@ -137,14 +184,67 @@ ${state.amount ? `Amount at stake: $${state.amount}` : ''}
 Background:
 ${state.backstory}`;
 
-      const result = await api.createMatter({
+      let preflight = null;
+      try {
+        preflight = await api.preflightMatter({
+          description,
+          province,
+          domain: selectedScenario?.domain || 'other',
+          disputeAmount: state.amount ? parseFloat(state.amount) : undefined,
+        });
+      } catch (preflightError) {
+        console.warn('Matter preflight failed; continuing with direct creation.', preflightError);
+      }
+
+      const variables: Record<string, string | number | boolean> = {
+        intakeMode: 'wizard',
+        originalDomainHint: selectedScenario?.domain || 'other',
+      };
+
+      const structuredAnswers = [] as Array<Record<string, unknown>>;
+      if (preflight) {
+        variables.preflightUsed = true;
+        variables.preflightSource = preflight.source;
+        variables.preflightModel = preflight.model || 'none';
+        variables.preflightLane = preflight.routeDecision?.lane || 'none';
+        variables.preflightConfidence = Math.round(preflight.confidence);
+        variables.preflightSummary = preflight.summary;
+        variables.preflightReviewRecommended = preflight.reviewRecommended;
+
+        structuredAnswers.push({
+          kind: 'matter-preflight',
+          data: {
+            summary: preflight.summary,
+            directAnswer: preflight.directAnswer,
+            likelyTrack: preflight.likelyTrack,
+            evidenceChecklist: preflight.evidenceChecklist,
+            source: preflight.source,
+            model: preflight.model,
+            routeDecision: preflight.routeDecision,
+            confidence: preflight.confidence,
+            reviewRecommended: preflight.reviewRecommended,
+          },
+        });
+      }
+
+      const payload = {
         description,
         province,
-        domain: selectedScenario?.domain || 'other',
+        domain: preflight?.domain || selectedScenario?.domain || 'other',
         disputeAmount: state.amount ? parseFloat(state.amount) : undefined,
-      });
+        structuredAnswers: structuredAnswers.length > 0 ? structuredAnswers : undefined,
+        variables,
+      };
 
-      navigate(`/matters/${result.id}`);
+      if (preflight?.reviewRecommended) {
+        setPendingReview({
+          preflight,
+          payload,
+        });
+        return;
+      }
+
+      await createMatterWorkspace(payload);
     } catch (err: any) {
       let errorMessage = err.message || 'Failed to create matter';
       let suggestions: string[] = [];
@@ -199,6 +299,29 @@ ${state.backstory}`;
     }
   };
 
+  const handleConfirmReview = async () => {
+    if (!pendingReview) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await createMatterWorkspace({
+        ...pendingReview.payload,
+        variables: {
+          ...(pendingReview.payload.variables || {}),
+          preflightReviewed: true,
+        },
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to create matter');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const progress = (state.currentStep / totalSteps) * 100;
 
   return (
@@ -209,7 +332,7 @@ ${state.backstory}`;
           <span>{Math.round(progress)}% complete</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${progress}%` }} />
+          <div className={`h-full bg-blue-600 transition-all duration-300 ${widthByFive[Math.max(0, Math.min(100, Math.round(progress / 5) * 5))]}`} />
         </div>
       </div>
 
@@ -373,10 +496,11 @@ ${state.backstory}`;
                   </button>
                   {state.urgencyType === option.value && option.requiresDate && (
                     <div className="mt-3 ml-4">
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label htmlFor={option.value === 'court-date' ? 'courtDate' : 'urgencyDate'} className="block text-sm font-medium text-gray-900 mb-2">
                         {option.dateLabel} <span className="text-red-600">*</span>
                       </label>
                       <input
+                        id={option.value === 'court-date' ? 'courtDate' : 'urgencyDate'}
                         type="date"
                         value={option.value === 'court-date' ? state.courtDate : state.urgencyDate}
                         onChange={(e) => setState(prev => ({
@@ -401,10 +525,11 @@ ${state.backstory}`;
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Amount at stake (Optional)</label>
+              <label htmlFor="disputeAmount" className="block text-sm font-medium text-gray-900 mb-2">Amount at stake (Optional)</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">$</span>
                 <input
+                  id="disputeAmount"
                   type="number"
                   value={state.amount}
                   onChange={(e) => setState(prev => ({ ...prev, amount: e.target.value }))}
@@ -421,31 +546,97 @@ ${state.backstory}`;
 
         {/* Step 5: Tell Your Story */}
         {state.currentStep === 5 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Tell us your story</h2>
-              <p className="text-gray-600">Provide the details of your situation so we can give you the best guidance.</p>
+          pendingReview ? (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Review the intake summary</h2>
+                <p className="text-gray-600">
+                  The preflight analysis flagged this as a matter that should be reviewed before the workspace is created.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900 mb-1">
+                  {pendingReview.preflight.routeDecision?.lane === 'deep-reason'
+                    ? 'Escalated to deep reasoning during intake'
+                    : 'Review required before workspace creation'}
+                </p>
+                <p className="text-sm text-amber-800">
+                  {pendingReview.preflight.routeDecision?.decisionReason || 'The intake analysis found enough uncertainty or complexity that you should confirm the summary before opening the matter workspace.'}
+                </p>
+                <p className="text-xs text-amber-700 mt-2">
+                  Confidence: {Math.round(pendingReview.preflight.confidence)}%
+                  {pendingReview.preflight.model ? ` • Model: ${pendingReview.preflight.model}` : ''}
+                  {pendingReview.preflight.routeDecision?.provider ? ` • Provider: ${pendingReview.preflight.routeDecision.provider}` : ''}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Summary</p>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{pendingReview.preflight.summary}</p>
+                </div>
+
+                {pendingReview.preflight.directAnswer && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Why this path fits</p>
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{pendingReview.preflight.directAnswer}</p>
+                  </div>
+                )}
+
+                {pendingReview.preflight.likelyTrack && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Likely track</p>
+                    <p className="text-sm text-gray-900">{pendingReview.preflight.likelyTrack}</p>
+                  </div>
+                )}
+
+                {pendingReview.preflight.evidenceChecklist.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Evidence to gather next</p>
+                    <ul className="list-disc pl-5 text-sm text-gray-900 space-y-1">
+                      {pendingReview.preflight.evidenceChecklist.slice(0, 5).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Use Edit Story if anything looks wrong. Creating the workspace will store this preflight summary with the matter.
+              </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Background <span className="text-red-600">*</span>
-              </label>
-              <textarea
-                value={state.backstory}
-                onChange={(e) => setState(prev => ({ ...prev, backstory: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[200px]"
-                placeholder={contextPrompt}
-              />
-              <p className="text-xs text-gray-500 mt-2">Include dates, amounts, agreements, and what you've tried so far.</p>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Tell us your story</h2>
+                <p className="text-gray-600">Provide the details of your situation so we can give you the best guidance.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Background <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={state.backstory}
+                  onChange={(e) => {
+                    setPendingReview(null);
+                    setState(prev => ({ ...prev, backstory: e.target.value }));
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[200px]"
+                  placeholder={contextPrompt}
+                />
+                <p className="text-xs text-gray-500 mt-2">Include dates, amounts, agreements, and what you've tried so far.</p>
+              </div>
             </div>
-          </div>
+          )
         )}
 
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
           <button onClick={handlePrev} disabled={state.currentStep === 1}
             className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
             <ChevronLeft className="w-5 h-5" />
-            <span>Back</span>
+            <span>{pendingReview ? 'Edit Story' : 'Back'}</span>
           </button>
 
           {state.currentStep < totalSteps ? (
@@ -455,16 +646,16 @@ ${state.backstory}`;
               <ChevronRight className="w-5 h-5" />
             </button>
           ) : (
-            <button onClick={handleSubmit} disabled={loading}
+            <button onClick={pendingReview ? handleConfirmReview : handleSubmit} disabled={loading}
               className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Creating...</span>
+                  <span>{pendingReview ? 'Creating...' : 'Analyzing...'}</span>
                 </>
               ) : (
                 <>
-                  <span>Get Guidance</span>
+                  <span>{pendingReview ? 'Create Matter Workspace' : 'Analyze Scenario'}</span>
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}

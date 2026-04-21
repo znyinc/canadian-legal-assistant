@@ -128,8 +128,45 @@ export default function HomePage() {
             to="/matters/new"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            + New Matter
+            Start Semantic Intake
           </Link>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-blue-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Semantic intake</p>
+            <h2 className="mt-2 text-2xl font-semibold text-gray-900">Start with the semantic analyzer, then open the workspace directly.</h2>
+            <p className="mt-2 text-sm text-gray-700">
+              The primary intake flow sends your facts through the semantic analyzer and LiteLLM-backed model route, then creates the matter workspace from that output. The old structured intake review is no longer part of the main path.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              to="/matters/new"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Start semantic intake
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-900">Trust and governance</p>
+            <p className="mt-1 text-sm text-emerald-900">
+              Every matter keeps an audit trail, evidence integrity hashes, and export portability so records remain reviewable and transferable.
+            </p>
+          </div>
+          <div className="text-sm text-emerald-900">
+            <p>Active matters: <span className="font-semibold">{matters.length}</span></p>
+            <Link to="/settings" className="mt-2 inline-block font-medium text-emerald-800 underline hover:text-emerald-900">
+              Open governance controls in Settings
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -177,7 +214,7 @@ export default function HomePage() {
             to="/matters/new"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
           >
-            Create First Matter
+            Start Semantic Intake
           </Link>
         </div>
       ) : (
@@ -195,6 +232,8 @@ export default function HomePage() {
                       checked={selectedIds.has(matter.id)}
                       onChange={() => toggleSelection(matter.id)}
                       className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      aria-label={`Select matter ${matter.id}`}
+                      title="Select matter"
                       onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex-1">

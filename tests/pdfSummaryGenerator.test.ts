@@ -310,6 +310,20 @@ describe('PDFSummaryGenerator', () => {
       expect(result.markdownContent).toContain('Legal Aid Ontario');
       expect(result.markdownContent).toContain('1-800-668-8258');
     });
+
+    it('should include filing checklist when requested', () => {
+      const generator = new PDFSummaryGenerator();
+      const result = generator.generateSummary({
+        formId: 'ltb-form-t1',
+        variables: {},
+        includeChecklist: true,
+        checklistDeadline: '2026-04-15',
+      });
+
+      expect(result.markdownContent).toContain('Filing Checklist');
+      expect(result.markdownContent).toContain('**Deadline:** 2026-04-15');
+      expect(result.markdownContent).toContain('Urgency:');
+    });
   });
 
   describe('Available Forms', () => {

@@ -1,10 +1,179 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, Matter } from '../services/api';
 import { safeText } from '../utils/sanitize';
 import EvidencePage from './EvidencePage';
 import DocumentsPage from './DocumentsPage';
-import AdvisorResponseView, { CaseProfile, ActionPlan as AdvisorActionPlan } from '../components/AdvisorResponseView';
+import WorkflowPage from './WorkflowPage';
+import OverviewTab from '../components/OverviewTab';
+import GuidanceNarrative from '../components/GuidanceNarrative';
+
+interface StrategicBriefing {
+  assumption: string;
+  whatMattersLegally: string[];
+  issueBuckets: string[];
+  pivotalQuestion: string;
+  practicalOptions: Array<{
+    title: string;
+    whenItFits: string;
+    tradeoff: string;
+  }>;
+  nextSteps24to72h: string[];
+  uncertainty: string[];
+}
+
+interface HandoffContext {
+  source?: string;
+  strategicBriefing?: StrategicBriefing | null;
+  transcript?: Array<{
+    type?: 'system' | 'user' | 'assistant';
+    content?: string;
+  }>;
+  likelyTrack?: string | null;
+  evidenceChecklist?: string[];
+  enabled?: boolean;
+}
+
+interface MatterPreflightContext {
+  summary?: string;
+  directAnswer?: string;
+  likelyTrack?: string | null;
+  evidenceChecklist?: string[];
+  source?: string;
+  model?: string;
+  confidence?: number;
+  reviewRecommended?: boolean;
+  routeDecision?: {
+    lane?: 'fast-extract' | 'deep-reason' | 'fallback-local' | string;
+    provider?: string;
+    model?: string;
+    decisionReason?: string;
+    fallbackCause?: string;
+  };
+}
+
+function parseMatterMetadata(metadata?: string | null): any {
+  if (!metadata) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(metadata);
+  } catch {
+    return null;
+  }
+}
+
+function extractStoredHandoff(metadata: any): HandoffContext | null {
+  const entries = Array.isArray(metadata?.structuredAnswers) ? metadata.structuredAnswers : [];
+  const handoffEntry = entries.find((entry: any) => entry?.kind === 'conversational-handoff');
+  return handoffEntry?.data || null;
+}
+
+function extractStoredPreflight(metadata: any): MatterPreflightContext | null {
+  const entries = Array.isArray(metadata?.structuredAnswers) ? metadata.structuredAnswers : [];
+  const preflightEntry = entries.find((entry: any) => entry?.kind === 'matter-preflight');
+  return preflightEntry?.data || null;
+}
+
+function buildGuidanceSteps(
+  handoff: HandoffContext | null,
+  classification: any,
+  actionPlan: any,
+  forumMap: any,
+) {
+  if (!classification || !actionPlan) {
+    return [];
+  }
+
+  const strategicBriefing = handoff?.strategicBriefing;
+  const primaryAction = actionPlan.immediateActions?.[0];
+  const settlementPathways = actionPlan.settlementPathways || [];
+  const documentOffers = actionPlan.nextStepOffers || [];
+  const primaryUrgencyLevel: 'critical' | 'warning' | 'info' = primaryAction?.priority === 'urgent'
+    ? 'critical'
+    : primaryAction?.priority === 'soon'
+      ? 'warning'
+      : 'info';
+
+  return [
+    {
+      step: 'acknowledge' as const,
+      title: 'What I Understand So Far',
+      content: actionPlan.acknowledgment || strategicBriefing?.assumption || `I’m reading this as a ${classification.domain} matter in ${classification.jurisdiction}.`,
+    },
+    {
+      step: 'orient' as const,
+      title: 'Why This Matters',
+      content: strategicBriefing?.whatMattersLegally?.join(' ') || actionPlan.roleExplanation?.summary || 'The immediate legal path depends on the forum, the urgency, and the evidence you can organize now.',
+      expandable: Boolean(strategicBriefing?.issueBuckets?.length),
+      subItems: (strategicBriefing?.issueBuckets || []).map((item) => ({
+        label: item,
+        detail: 'This is one of the issue buckets affecting the path forward.',
+      })),
+    },
+    {
+      step: 'prioritize' as const,
+      title: 'What To Do First',
+      content: primaryAction
+        ? `${primaryAction.title}. ${primaryAction.description}`
+        : 'Start with the most urgent evidence preservation and deadline-driven steps.',
+      estimatedTime: primaryAction?.timeframe,
+      urgencyLevel: primaryUrgencyLevel,
+      expandable: Boolean(actionPlan.immediateActions?.length),
+      subItems: (actionPlan.immediateActions || []).map((item: any) => ({
+        label: item.title,
+        detail: `${item.description} ${item.timeframe ? `Timeline: ${item.timeframe}.` : ''}`.trim(),
+      })),
+    },
+    {
+      step: 'guide' as const,
+      title: 'Likely Path From Here',
+      content: handoff?.likelyTrack || settlementPathways?.[0]?.description || strategicBriefing?.pivotalQuestion || 'The next legal path depends on whether the facts support settlement, tribunal steps, or court action.',
+      expandable: Boolean(strategicBriefing?.practicalOptions?.length || settlementPathways.length),
+      subItems: [
+        ...(strategicBriefing?.practicalOptions || []).map((option) => ({
+          label: option.title,
+          detail: `${option.whenItFits} Trade-off: ${option.tradeoff}`,
+        })),
+        ...settlementPathways.slice(0, 3).map((pathway: any) => ({
+          label: pathway.title,
+          detail: pathway.description,
+        })),
+      ],
+    },
+    {
+      step: 'prepare' as const,
+      title: 'What To Gather Before You Move',
+      content: handoff?.evidenceChecklist?.length
+        ? 'These records will make the next steps much stronger.'
+        : 'Gather the documents, messages, photos, and records that support your timeline and losses.',
+      expandable: Boolean(handoff?.evidenceChecklist?.length || strategicBriefing?.nextSteps24to72h?.length),
+      subItems: [
+        ...(handoff?.evidenceChecklist || []).map((item) => ({
+          label: item,
+          detail: 'Bring this into your evidence workspace next.',
+        })),
+        ...(strategicBriefing?.nextSteps24to72h || []).map((item) => ({
+          label: item,
+          detail: 'Recommended immediate next-step from the intake briefing.',
+        })),
+      ],
+    },
+    {
+      step: 'offer' as const,
+      title: 'What The App Can Do Next',
+      content: forumMap?.primaryForum?.name
+        ? `Your likely forum is ${forumMap.primaryForum.name}. From here, the workspace can move you into evidence and documents, with guided planning available later if you need a more procedural path.`
+        : 'From here, the workspace can help you organize evidence and generate documents, with guided planning available later if you need a more procedural path.',
+      expandable: Boolean(documentOffers.length),
+      subItems: documentOffers.map((offer: any) => ({
+        label: offer.title,
+        detail: offer.description,
+      })),
+    },
+  ];
+}
 
 export default function MatterDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,13 +194,39 @@ export default function MatterDetailPage() {
   const [classifying, setClassifying] = useState(false);
   const [error, setError] = useState('');
   const [generatingForm7A, setGeneratingForm7A] = useState(false);
+  const [showFirstRunHandoff, setShowFirstRunHandoff] = useState(false);
   const navigate = useNavigate();
+  const metadata = useMemo(() => parseMatterMetadata(matter?.metadata), [matter?.metadata]);
+  const routeHandoff = ((location.state as { handoff?: HandoffContext } | null)?.handoff) || null;
+  const storedHandoff = useMemo(() => extractStoredHandoff(metadata), [metadata]);
+  const storedPreflight = useMemo(() => extractStoredPreflight(metadata), [metadata]);
+  const handoffContext = routeHandoff || storedHandoff;
+
+  const actionPlan = classification?.actionPlan || null;
+  const guidanceSteps = useMemo(
+    () => buildGuidanceSteps(handoffContext, classification, actionPlan, forumMap),
+    [handoffContext, classification, actionPlan, forumMap],
+  );
 
   useEffect(() => {
     if (id) {
       loadMatter();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !handoffContext || guidanceSteps.length === 0) {
+      return;
+    }
+
+    try {
+      if (window.sessionStorage.getItem(`matter-handoff-seen:${id}`) !== '1') {
+        setShowFirstRunHandoff(true);
+      }
+    } catch {
+      setShowFirstRunHandoff(true);
+    }
+  }, [id, handoffContext, guidanceSteps.length]);
 
   const loadMatter = async () => {
     if (!id) return;
@@ -109,6 +304,7 @@ export default function MatterDetailPage() {
   }
 
   const isOverviewPage = location.pathname === `/matters/${id}` || location.pathname === `/matters/${id}/`;
+  const isWorkflowPage = location.pathname.includes('/workflow');
 
   const handleGenerateForm7A = async () => {
     if (!id) return;
@@ -140,93 +336,53 @@ export default function MatterDetailPage() {
     }
   };
 
-  const actionPlan: AdvisorActionPlan | null = classification?.actionPlan || null;
-
-  const buildCaseProfile = (): CaseProfile => {
-    const domain = classification?.domain;
-    
-    // Generate conversational plain-English summary
-    const generatePlainSummary = (): string => {
-      if (domain === 'legalMalpractice') {
-        return "Here's what happened: You hired a lawyer to handle your case, but they missed a critical deadline - the date by which your lawsuit had to be filed. You only discovered this mistake recently when you checked in on your case. Because the deadline passed, you can't pursue the original lawsuit anymore. But here's the thing - you might be able to sue your lawyer for messing up your case. That's called legal malpractice.";
+  const dismissHandoff = () => {
+    if (id) {
+      try {
+        window.sessionStorage.setItem(`matter-handoff-seen:${id}`, '1');
+      } catch {
+        // Ignore storage failures and just hide the handoff in local state.
       }
-      
-      if (domain === 'criminal') {
-        return "You're involved in a criminal matter. This means the police have laid charges, and the Crown Attorney (the government's lawyer) will decide whether to proceed with the case. You're not the one suing - you're a witness helping the Crown prove what happened. The court process has specific timelines and steps, and there are support services available to help you through it.";
-      }
-      
-      if (domain === 'civil-negligence' || domain === 'municipalPropertyDamage') {
-        return "Someone's negligence caused you harm or property damage. You're considering whether to pursue compensation through the courts. Before going to court, you'll typically need to try settling directly - send a demand letter, gather evidence, and give the other party a chance to make things right. If that doesn't work, you can file a lawsuit in Small Claims Court (for claims under $50,000) or Superior Court (for larger claims).";
-      }
-      
-      if (domain === 'landlordTenant') {
-        return "You're having a dispute with your landlord or tenant. The good news: Ontario has the Landlord and Tenant Board (LTB), which is an informal tribunal designed to resolve these issues without needing a lawyer. The LTB hears cases about rent, repairs, evictions, and lease disputes. Most cases settle before a hearing, but if they don't, you'll present your evidence to a tribunal member who will make a decision.";
-      }
-      
-      if (domain === 'employment') {
-        return "You're dealing with an employment issue - maybe you were fired without proper notice, your employer owes you wages, or you're facing workplace discrimination. You have a few options: file a free complaint with the Ministry of Labour for things like unpaid wages or unsafe conditions, or pursue a civil lawsuit for wrongful dismissal. The right path depends on what you're claiming and how much is at stake.";
-      }
-      
-      if (domain === 'consumerProtection') {
-        return "You bought something or hired a service, and it didn't go as promised. Maybe you were misled, charged for things you didn't agree to, or the product/service was defective. Consumer Protection Ontario investigates complaints about unfair business practices, but they don't award compensation - for that, you'd need to go to Small Claims Court or request a chargeback from your credit card company.";
-      }
-      
-      // Generic fallback
-      return "You're dealing with a legal situation that has you wondering what to do next. The good news is that legal issues can be broken down into clear, manageable steps. You'll need to gather your evidence, understand the timelines and deadlines, figure out which forum handles your type of case (court, tribunal, or informal resolution), and decide whether to settle or pursue formal action.";
-    };
-    
-    if (domain === 'legalMalpractice') {
-      return {
-        empathyHook:
-          actionPlan?.acknowledgment ||
-          "You've discovered your lawyer missed a critical deadline. That's a gut-punch, and it's okay to feel frustrated.",
-        plainSummary: generatePlainSummary(),
-        keyInsight:
-          'Missing the deadline may have ended the original case, but it can create a new malpractice claim with clearer liability.',
-        keyInsightCaseLawSearch: 'Grant Thornton discoverability limitation Ontario',
-        keyInsightCaseLawTooltip: 'Grant Thornton LLP v. New Brunswick, 2021 SCC 31 (discoverability rule).',
-        lostVsGained: [
-          { lost: 'Right to sue the original defendant', gained: 'Potential malpractice claim against your lawyer' },
-          { lost: 'Uncertain slip-and-fall negligence case', gained: 'Clear missed-deadline proof' },
-          { lost: 'Defendant who may dispute liability', gained: 'Lawyer with mandatory malpractice insurance (LawPRO)' },
-        ],
-        thingsToKnow: [
-          { title: 'Case within a case', detail: 'You must show the original case likely would have won and the lawyer breached their duty.' },
-          {
-            title: 'New 2-year clock',
-            detail: 'The malpractice limitation runs from discovery — do not let this one slip.',
-            caseLawSearch: 'Grant Thornton discoverability limitation Ontario',
-            tooltip: 'Grant Thornton LLP v. New Brunswick, 2021 SCC 31 clarifies discoverability for the 2-year clock.'
-          },
-          { title: 'Insurance exists', detail: 'Ontario lawyers carry LawPRO coverage, improving collectability.' },
-        ],
-      };
     }
 
-    return {
-      empathyHook:
-        actionPlan?.acknowledgment ||
-        "You’re dealing with a legal issue that can feel heavy, but we can break this into clear, doable steps.",
-      plainSummary: generatePlainSummary(),
-      keyInsight: 'You have options and timelines. Acting in order will reduce risk and stress.',
-      lostVsGained: [
-        { lost: 'Unclear next steps', gained: 'Prioritized actions with timeframes' },
-        { lost: 'Guessing the forum', gained: forumMap?.primaryForum?.name || 'Likely forum guidance' },
-        { lost: 'Scattered documents', gained: 'Targeted documents you can generate' },
-      ],
-      thingsToKnow: [
-        { title: 'Deadlines drive strategy', detail: 'Tackle urgent items first to protect your position.' },
-        { title: 'Evidence matters', detail: 'Collect and organize records early; it makes every step easier.' },
-        { title: 'Pathways differ', detail: 'Tribunal vs court vs settlement each has trade-offs — choose deliberately.' },
-      ],
-    };
+    setShowFirstRunHandoff(false);
   };
 
-  const generateOptions = (actionPlan?.nextStepOffers || []).map((offer: any) => ({
-    label: offer.actionLabel || offer.title,
-    documentType: offer.documentType || offer.id,
-    description: offer.description,
-  }));
+  const handleNarrativeAction = async (action: string) => {
+    dismissHandoff();
+
+    if (!id) {
+      return;
+    }
+
+    if (action === 'generate-document') {
+      const defaultOffer = actionPlan?.nextStepOffers?.[0];
+      if (defaultOffer?.documentType || defaultOffer?.id) {
+        await handleGenerateDocument(defaultOffer.documentType || defaultOffer.id);
+        return;
+      }
+
+      navigate(`/matters/${id}/documents`);
+      return;
+    }
+
+    if (action === 'build-timeline') {
+      navigate(`/matters/${id}/evidence`);
+      return;
+    }
+
+    if (action === 'open-documents') {
+      navigate(`/matters/${id}/documents`);
+      return;
+    }
+
+    if (action === 'open-guided-plan') {
+      navigate(`/matters/${id}/workflow`);
+      return;
+    }
+
+    navigate(`/matters/${id}`);
+  };
 
   return (
     <div>
@@ -263,13 +419,10 @@ export default function MatterDetailPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-6" role="tablist" aria-label="Matter details">
-        <nav className="flex gap-4">
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-4" aria-label="Matter details navigation">
           <Link
             to={`/matters/${id}`}
-            role="tab"
-            aria-selected={isOverviewPage}
-            aria-controls="overview-panel"
             className={`pb-2 px-1 border-b-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
               isOverviewPage
                 ? 'border-blue-600 text-blue-600'
@@ -280,9 +433,6 @@ export default function MatterDetailPage() {
           </Link>
           <Link
             to={`/matters/${id}/evidence`}
-            role="tab"
-            aria-selected={location.pathname.includes('/evidence')}
-            aria-controls="evidence-panel"
             className={`pb-2 px-1 border-b-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
               location.pathname.includes('/evidence')
                 ? 'border-blue-600 text-blue-600'
@@ -293,9 +443,6 @@ export default function MatterDetailPage() {
           </Link>
           <Link
             to={`/matters/${id}/documents`}
-            role="tab"
-            aria-selected={location.pathname.includes('/documents')}
-            aria-controls="documents-panel"
             className={`pb-2 px-1 border-b-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
               location.pathname.includes('/documents')
                 ? 'border-blue-600 text-blue-600'
@@ -303,6 +450,16 @@ export default function MatterDetailPage() {
             }`}
           >
             Documents
+          </Link>
+          <Link
+            to={`/matters/${id}/workflow`}
+            className={`pb-2 px-1 border-b-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
+              isWorkflowPage
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Guided Plan
           </Link>
         </nav>
       </div>
@@ -321,22 +478,140 @@ export default function MatterDetailPage() {
                     disabled={classifying}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    {classifying ? 'Classifying...' : 'Classify with AI'}
+                      {classifying ? 'Classifying...' : 'Classify matter'}
                   </button>
                 </div>
               )}
-              <AdvisorResponseView
-                caseProfile={buildCaseProfile()}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <p className="text-emerald-900 font-medium mb-2">Record integrity and auditability</p>
+                <p className="text-sm text-emerald-800 mb-3">
+                  Evidence files are tracked with hashes and upload metadata, and key actions are logged in the audit trail. You can export a full case package at any time.
+                </p>
+                <Link
+                  to="/settings"
+                  className="inline-flex items-center rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 transition-colors"
+                >
+                  Open Audit and Export Controls
+                </Link>
+              </div>
+              {storedPreflight && (
+                <div className={`rounded-lg border p-4 ${storedPreflight.reviewRecommended || storedPreflight.routeDecision?.lane === 'deep-reason'
+                  ? 'bg-amber-50 border-amber-200'
+                  : 'bg-sky-50 border-sky-200'}`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <p className={`text-sm font-medium mb-1 ${storedPreflight.reviewRecommended || storedPreflight.routeDecision?.lane === 'deep-reason'
+                        ? 'text-amber-800'
+                        : 'text-sky-800'}`}>
+                        Preflight review summary
+                      </p>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        {storedPreflight.routeDecision?.lane === 'deep-reason'
+                          ? 'This matter was escalated before the workspace was created.'
+                          : 'This matter was normalized during intake before the workspace was created.'}
+                      </h2>
+                    </div>
+                    {storedPreflight.routeDecision?.lane && (
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${storedPreflight.routeDecision.lane === 'deep-reason'
+                        ? 'bg-amber-100 text-amber-900'
+                        : 'bg-sky-100 text-sky-900'}`}>
+                        {storedPreflight.routeDecision.lane}
+                      </span>
+                    )}
+                  </div>
+
+                  {storedPreflight.summary && (
+                    <p className="text-sm text-gray-900 mb-3">{safeText(storedPreflight.summary)}</p>
+                  )}
+
+                  <div className="grid gap-3 md:grid-cols-2 mb-3">
+                    <div className="rounded-lg bg-white/70 p-3 border border-white/60">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Why it was escalated</p>
+                      <p className="text-sm text-gray-900">
+                        {storedPreflight.routeDecision?.decisionReason || (
+                          storedPreflight.reviewRecommended
+                            ? 'The intake analysis found enough uncertainty or complexity that the summary needed review before the workspace opened.'
+                            : 'The intake analysis normalized the story before the workspace was created.'
+                        )}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 p-3 border border-white/60">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Routing details</p>
+                      <p className="text-sm text-gray-900">
+                        Confidence: {typeof storedPreflight.confidence === 'number' ? `${Math.round(storedPreflight.confidence)}%` : 'Not captured'}
+                      </p>
+                      {(storedPreflight.routeDecision?.provider || storedPreflight.model) && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {storedPreflight.routeDecision?.provider ? `Provider: ${storedPreflight.routeDecision.provider}` : ''}
+                          {storedPreflight.routeDecision?.provider && storedPreflight.model ? ' • ' : ''}
+                          {storedPreflight.model ? `Model: ${storedPreflight.model}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {storedPreflight.likelyTrack && (
+                    <p className="text-sm text-gray-800 mb-3">
+                      <span className="font-medium">Likely track:</span> {safeText(storedPreflight.likelyTrack)}
+                    </p>
+                  )}
+
+                  {storedPreflight.evidenceChecklist && storedPreflight.evidenceChecklist.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-2">Evidence flagged during intake</p>
+                      <ul className="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                        {storedPreflight.evidenceChecklist.slice(0, 5).map((item) => (
+                          <li key={item}>{safeText(item)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+              {showFirstRunHandoff && guidanceSteps.length > 0 && classification && (
+                <div className="bg-white rounded-lg border border-blue-100 shadow-sm p-6">
+                  <div className="flex items-center justify-between gap-4 mb-6">
+                    <div>
+                      <p className="text-sm font-medium text-blue-700 mb-1">First-run guided handoff</p>
+                      <h2 className="text-xl font-semibold text-gray-900">Start with the conversational summary, then move into the workspace.</h2>
+                    </div>
+                    <button
+                      onClick={dismissHandoff}
+                      className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      Hide handoff
+                    </button>
+                  </div>
+                  <GuidanceNarrative
+                    steps={guidanceSteps}
+                    classification={{
+                      domain: classification.domain,
+                      jurisdiction: classification.jurisdiction,
+                      pillar: classification.pillar || 'general',
+                    }}
+                    onActionClick={handleNarrativeAction}
+                  />
+                </div>
+              )}
+              <OverviewTab
                 classification={classification}
-                actionPlan={actionPlan}
-                onGenerate={handleGenerateDocument}
-                generateOptions={generateOptions}
+                forumMap={forumMap}
+                classifying={classifying}
+                onClassify={handleClassify}
+                pillarExplanation={classification?.pillarExplanation}
+                pillarMatches={classification?.pillarMatches}
+                pillarAmbiguous={classification?.pillarAmbiguous}
+                journey={classification?.journey}
+                deadlineAlerts={classification?.deadlineAlerts}
+                uplBoundaries={classification?.uplBoundaries}
+                onGenerateDocument={handleGenerateDocument}
               />
             </div>
           }
         />
         <Route path="evidence" element={<EvidencePage matterId={id!} />} />
         <Route path="documents" element={<DocumentsPage matterId={id!} />} />
+        <Route path="workflow" element={<WorkflowPage matterId={id!} />} />
       </Routes>
     </div>
   );

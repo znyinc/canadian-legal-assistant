@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { getModelRouter, TaskType } from '../core/router/ModelRouter.js';
+import type { RouteDecision } from '../core/router/ModelRoute.js';
 
 type AllowedDomain =
   | 'insurance'
@@ -7,9 +8,12 @@ type AllowedDomain =
   | 'criminal'
   | 'employment'
   | 'landlordTenant'
+  | 'humanRights'
   | 'legalMalpractice'
   | 'consumerProtection'
   | 'municipalPropertyDamage'
+  | 'ocppFiling'
+  | 'tree-damage'
   | 'estateSuccession'
   | 'other';
 
@@ -24,6 +28,11 @@ export interface NuanceFallbackContext {
   remediationPattern: string;
   missingFacts: string[];
   evidenceChecklist: string[];
+  directAnswer: string;
+  immediateActions: string[];
+  escalationCriteria: string[];
+  singleNextQuestion?: string;
+  conciseDisclaimer: string;
   alternativeDomains: Array<{ domain: string; confidence: number; reasoning: string }>;
 }
 
@@ -34,6 +43,7 @@ export interface NuanceExtractionResult {
   context: NuanceFallbackContext & {
     source: 'llm' | 'fallback';
     model?: string;
+    routeDecision?: RouteDecision;
     readyToImport: boolean;
     importPayload: {
       description: string;
@@ -50,12 +60,23 @@ const allowedDomains = new Set<AllowedDomain>([
   'criminal',
   'employment',
   'landlordTenant',
+  'humanRights',
   'legalMalpractice',
   'consumerProtection',
   'municipalPropertyDamage',
+  'ocppFiling',
+  'tree-damage',
   'estateSuccession',
   'other',
 ]);
+
+function sanitizeString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function sanitizeOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
 
 function normalizeJsonContent(content: unknown): string | null {
   if (typeof content === 'string') {
@@ -133,6 +154,34 @@ function sanitizeAlternativeDomains(
   return cleaned.length > 0 ? cleaned : fallback;
 }
 
+function deriveAmbiguityScore(alternatives: Array<{ confidence: number }>): number {
+  if (alternatives.length === 0) {
+    return 0;
+  }
+
+  const highestAlternative = Math.max(...alternatives.map((item) => item.confidence));
+  return Math.min(1, Math.max(0, highestAlternative / 100));
+}
+
+function deriveComplexityScore(fullText: string, fallback: NuanceFallbackContext): number {
+  const lower = fullText.toLowerCase();
+  let score = 0;
+
+  if (fullText.length >= 450) score += 0.2;
+  if (fullText.length >= 800) score += 0.1;
+  if (fallback.alternativeDomains.length >= 1) score += 0.15;
+  if (fallback.alternativeDomains.length >= 2) score += 0.1;
+  if (fallback.missingFacts.length >= 3) score += 0.1;
+  if ((fullText.match(/\b(and|but|while|because|after|before|then|also)\b/g) || []).length >= 6) score += 0.1;
+  if ((fullText.match(/\b\d{4}-\d{2}-\d{2}\b/g) || []).length >= 2) score += 0.1;
+  if ((fullText.match(/\$/g) || []).length >= 1) score += 0.05;
+  if (['lawyer', 'insurer', 'landlord', 'employer', 'police', 'municipality', 'court', 'tribunal'].filter((token) => lower.includes(token)).length >= 3) {
+    score += 0.1;
+  }
+
+  return Math.min(1, score);
+}
+
 export class NuanceExtractor {
   async extract(fullText: string, fallback: NuanceFallbackContext): Promise<NuanceExtractionResult | null> {
     if (!config.nuanceLlmEnabled) {
@@ -145,6 +194,13 @@ export class NuanceExtractor {
         taskType: TaskType.PLAIN_LANGUAGE,
         temperature: 0.2,
         responseFormat: { type: 'json_object' },
+        routeContext: {
+          confidence: fallback.confidence,
+          ambiguity: deriveAmbiguityScore(fallback.alternativeDomains),
+          complexityScore: deriveComplexityScore(fullText, fallback),
+          urgency: fallback.urgency,
+          latencyBudgetMs: fallback.urgency === 'high' ? 2000 : 4500,
+        },
         messages: [
           {
             role: 'system',
@@ -166,6 +222,11 @@ export class NuanceExtractor {
               '  "remediationPattern": string,',
               '  "missingFacts": string[],',
               '  "evidenceChecklist": string[],',
+              '  "directAnswer": string,',
+              '  "immediateActions": string[],',
+              '  "escalationCriteria": string[],',
+              '  "singleNextQuestion": string,',
+              '  "conciseDisclaimer": string,',
               '  "alternativeDomains": [{ "domain": string, "confidence": number, "reasoning": string }],',
               '  "readyToImport": boolean',
               '}',
@@ -212,7 +273,7 @@ export class NuanceExtractor {
         : fallback.remediationPattern;
       const assistantMessage = typeof parsed.assistantMessage === 'string' && parsed.assistantMessage.trim()
         ? parsed.assistantMessage.trim()
-        : 'I refined the intake summary and likely track based on the details you shared.';
+        : fallback.directAnswer;
 
       return {
         source: 'llm',
@@ -231,8 +292,14 @@ export class NuanceExtractor {
           remediationPattern,
           source: 'llm',
           model: llmResponse.model,
+          routeDecision: llmResponse.routeDecision,
           missingFacts: sanitizeStringArray(parsed.missingFacts, fallback.missingFacts),
           evidenceChecklist: sanitizeStringArray(parsed.evidenceChecklist, fallback.evidenceChecklist),
+          directAnswer: sanitizeString(parsed.directAnswer, fallback.directAnswer),
+          immediateActions: sanitizeStringArray(parsed.immediateActions, fallback.immediateActions),
+          escalationCriteria: sanitizeStringArray(parsed.escalationCriteria, fallback.escalationCriteria),
+          singleNextQuestion: sanitizeOptionalString(parsed.singleNextQuestion) ?? fallback.singleNextQuestion,
+          conciseDisclaimer: sanitizeString(parsed.conciseDisclaimer, fallback.conciseDisclaimer),
           alternativeDomains: sanitizeAlternativeDomains(parsed.alternativeDomains, fallback.alternativeDomains),
           readyToImport: typeof parsed.readyToImport === 'boolean' ? parsed.readyToImport : true,
           importPayload: {

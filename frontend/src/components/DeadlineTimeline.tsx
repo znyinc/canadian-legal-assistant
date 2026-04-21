@@ -50,7 +50,7 @@ export function DeadlineTimeline({ deadlines }: DeadlineTimelineProps) {
               const isExpanded = expandedDeadline === deadline.id;
 
               return (
-                <div key={deadline.id} className="flex flex-col items-center" style={{ flex: 1 }}>
+                <div key={deadline.id} className="flex flex-col items-center flex-1">
                   {/* Marker dot */}
                   <button
                     onClick={() => setExpandedDeadline(isExpanded ? null : deadline.id)}

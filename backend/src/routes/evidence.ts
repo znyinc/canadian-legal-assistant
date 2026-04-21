@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import { prisma } from '../prisma.js';
 import { IntegrationAPI } from '../../../src/api/IntegrationAPI.js';
+import { TimelineGenerator } from '../../../src/core/evidence/TimelineGenerator.js';
 import { config } from '../config.js';
 
 const router = Router();
@@ -13,11 +14,80 @@ function getApi(req: Request) {
   return ((req.app as any).locals.integrationApi as IntegrationAPI) ?? new IntegrationAPI();
 }
 
+function parseStoredEvidenceItem(evidenceRecord: { filename: string; evidenceIndex: string | null }) {
+  if (!evidenceRecord.evidenceIndex) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(evidenceRecord.evidenceIndex);
+    if (Array.isArray(parsed?.items) && parsed.items.length > 0) {
+      return (
+        parsed.items.find((item: { filename?: string }) => item.filename === evidenceRecord.filename) ||
+        parsed.items[parsed.items.length - 1]
+      );
+    }
+
+    if (parsed?.filename || parsed?.id) {
+      return parsed;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function buildTimelineResponse(evidenceRecords: Array<{ filename: string; evidenceIndex: string | null }>) {
+  const timelineGenerator = new TimelineGenerator();
+  const items = evidenceRecords
+    .map((record) => parseStoredEvidenceItem(record))
+    .filter((item): item is NonNullable<ReturnType<typeof parseStoredEvidenceItem>> => Boolean(item));
+
+  const evidenceIndex = {
+    items,
+    generatedAt: new Date().toISOString(),
+    sourceManifest: { entries: [] },
+  } as any;
+
+  const entries = timelineGenerator.generate(evidenceIndex);
+  const gaps = timelineGenerator.detectGaps(entries);
+  const alerts = timelineGenerator.flagMissingEvidence(evidenceIndex, entries);
+  const evidenceTypes = items.reduce<Record<string, number>>((summary, item) => {
+    const key = item.type || 'OTHER';
+    summary[key] = (summary[key] || 0) + 1;
+    return summary;
+  }, {});
+
+  return {
+    events: entries.map((entry) => ({
+      date: entry.date,
+      event: entry.summary || entry.filename,
+      evidenceId: entry.itemId,
+      filename: entry.filename,
+      type: entry.type,
+      summary: entry.summary,
+    })),
+    gaps,
+    alerts,
+    stats: {
+      totalEvidence: items.length,
+      datedEvents: entries.length,
+      undatedEvidence: Math.max(items.length - entries.length, 0),
+      evidenceTypes,
+    },
+  };
+}
+
 // Configure multer for file uploads
 // Simple in-memory rate limiter per IP for upload endpoint
 const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
 const uploadLimiterWindowMs = 15 * 60 * 1000; // 15 minutes
 const uploadLimiterMax = 20; // 20 uploads per window per IP
+let concurrentEvidenceUploads = 0;
+const maxConcurrentEvidenceUploads = 2;
+const maxEvidenceReadBytes = 10 * 1024 * 1024;
+
 function uploadLimiter(req: Request, res: Response, next: Function) {
   const key = req.ip || 'unknown';
   const now = Date.now();
@@ -72,6 +142,14 @@ const upload = multer({
 
 // POST /api/matters/:id/evidence - Upload evidence file
 router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Request, res: Response) => {
+  if (concurrentEvidenceUploads >= maxConcurrentEvidenceUploads) {
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    return res.status(503).json({ error: 'Server busy, try again later' });
+  }
+
+  concurrentEvidenceUploads += 1;
   try {
     const matter = await prisma.matter.findUnique({
       where: { id: req.params.id },
@@ -89,12 +167,20 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
 
     // Read file and compute hash
     // Ensure the file path is within the upload directory to prevent traversal
-    const normalizedPath = path.resolve(req.file.path);
     const safeId = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
     const expectedDir = path.resolve(path.join(config.uploadDir, safeId));
+    const safeStoredFilename = path.basename(req.file.filename).replace(/[\\/\x00]/g, '');
+    const normalizedPath = path.resolve(expectedDir, safeStoredFilename);
     const rel = path.relative(expectedDir, normalizedPath);
     if (rel.startsWith('..') || path.isAbsolute(rel)) {
-      await fs.unlink(req.file.path).catch(() => {});
+      await fs.unlink(normalizedPath).catch(() => {});
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
+
+    try {
+      await fs.access(normalizedPath);
+    } catch {
+      await fs.unlink(normalizedPath).catch(() => {});
       return res.status(400).json({ error: 'Invalid file path' });
     }
 
@@ -122,6 +208,22 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
 
     try {
       (global as any)._concurrentFileReads += 1;
+      const configuredMaxFileSize = Number(config.maxFileSize);
+      const effectiveReadLimit = Number.isFinite(configuredMaxFileSize) && configuredMaxFileSize > 0
+        ? Math.min(configuredMaxFileSize, maxEvidenceReadBytes)
+        : maxEvidenceReadBytes;
+
+      if (req.file.size > effectiveReadLimit) {
+        await fs.unlink(req.file.path).catch(() => {});
+        return res.status(413).json({ error: 'Uploaded file exceeds safe processing limit' });
+      }
+
+      const fileStat = await fs.stat(realPath);
+      if (fileStat.size > effectiveReadLimit) {
+        await fs.unlink(req.file.path).catch(() => {});
+        return res.status(413).json({ error: 'Uploaded file exceeds safe processing limit' });
+      }
+
       const fileBuffer = await fs.readFile(realPath);
       const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
@@ -171,6 +273,8 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
         evidence,
         timeline: result.timeline,
         gaps: result.gaps,
+        alerts: result.missingAlerts,
+        redactedPreview: result.redactedPreview,
       });
     } finally {
       (global as any)._concurrentFileReads -= 1;
@@ -180,7 +284,9 @@ router.post('/:id', uploadLimiter as any, upload.single('file'), async (req: Req
     if (req.file) {
       await fs.unlink(req.file.path).catch(() => {});
     }
-    throw error;
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to upload evidence' });
+  } finally {
+    concurrentEvidenceUploads = Math.max(0, concurrentEvidenceUploads - 1);
   }
 });
 
@@ -201,21 +307,7 @@ router.get('/:id/timeline', async (req: Request, res: Response) => {
     orderBy: { createdAt: 'asc' },
   });
 
-  const indices = evidence.map(e => JSON.parse(e.evidenceIndex || '{}'));
-
-  // Build timeline from evidence (simplified - real implementation would use TimelineAssessor)
-  const timeline = {
-    events: indices
-      .filter(idx => idx.date)
-      .map(idx => ({
-        date: idx.date,
-        event: idx.summary || 'Evidence uploaded',
-        evidenceId: idx.id,
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-  };
-
-  res.json(timeline);
+  res.json(buildTimelineResponse(evidence));
 });
 
 export default router;

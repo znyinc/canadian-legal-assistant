@@ -6,7 +6,7 @@ describe('ActionPlanGenerator', () => {
   const generator = new ActionPlanGenerator();
 
   describe('Criminal Domain', () => {
-    it('generates empathetic acknowledgment for criminal cases', () => {
+    it('keeps the default criminal acknowledgment neutral when the role is unclear', () => {
       const classification: MatterClassification = {
         domain: 'criminal',
         jurisdiction: 'Ontario',
@@ -15,11 +15,11 @@ describe('ActionPlanGenerator', () => {
 
       const plan = generator.generate(classification);
 
-      expect(plan.acknowledgment).toContain('dealing with criminal charges');
-      expect(plan.acknowledgment).toContain('stressful');
+      expect(plan.acknowledgment).toContain('criminal or police-related issue');
+      expect(plan.acknowledgment).not.toContain('criminal charges');
     });
 
-    it('includes critical criminal immediate actions', () => {
+    it('starts with role clarification and record preservation when the criminal role is unclear', () => {
       const classification: MatterClassification = {
         domain: 'criminal',
         jurisdiction: 'Ontario',
@@ -29,93 +29,93 @@ describe('ActionPlanGenerator', () => {
       const plan = generator.generate(classification);
 
       expect(plan.immediateActions).toHaveLength(3);
-      
-      const occurrenceAction = plan.immediateActions.find(a => a.id === 'criminal-occurrence');
-      expect(occurrenceAction).toBeDefined();
-      expect(occurrenceAction?.priority).toBe('urgent');
-      expect(occurrenceAction?.title).toContain('Police Occurrence Number');
-
-      const medicalAction = plan.immediateActions.find(a => a.id === 'criminal-medical');
-      expect(medicalAction).toBeDefined();
-      expect(medicalAction?.priority).toBe('urgent');
-      expect(medicalAction?.title).toContain('Medical Attention');
-
-      const victimServicesAction = plan.immediateActions.find(a => a.id === 'criminal-victim-services');
-      expect(victimServicesAction).toBeDefined();
-      expect(victimServicesAction?.priority).toBe('soon');
-      expect(victimServicesAction?.title).toContain('Victim Services');
+      expect(plan.immediateActions[0]?.id).toBe('criminal-role-clarification');
+      expect(plan.immediateActions[1]?.id).toBe('criminal-core-records');
+      expect(plan.immediateActions.some((action) => action.id === 'criminal-victim-services')).toBe(false);
     });
 
-    it('clarifies complainant role (not prosecutor)', () => {
+    it('switches to a charged-person role explanation when the notes show charges', () => {
       const classification: MatterClassification = {
         domain: 'criminal',
         jurisdiction: 'Ontario',
+        notes: ['I was charged, I have a court date next week, and I need to understand my conditions.'],
       };
 
       const plan = generator.generate(classification);
 
-      expect(plan.roleExplanation.title).toContain('Criminal Complainant');
-      expect(plan.roleExplanation.summary).toContain('witness');
-      expect(plan.roleExplanation.summary).toContain('not the prosecutor');
-      expect(plan.roleExplanation.whatYouAreNot).toContain('You are NOT the prosecutor (the Crown Attorney is)');
-      const dropCharges = plan.roleExplanation.whatYouAreNot.some(s => s.includes('drop charges'));
-      expect(dropCharges).toBe(true);
+      expect(plan.roleExplanation.title).toContain('Criminal Case');
+      expect(plan.roleExplanation.summary).toContain('responding to charges');
+      expect(plan.roleExplanation.whatYouAreNot).toContain('You are NOT responsible for proving the prosecution case');
+      expect(plan.nextStepOffers.some((offer) => offer.id === 'victim-services-guide')).toBe(false);
     });
 
-    it('includes peace bond settlement pathway', () => {
+    it('switches to a reporting-party role and support offers when the notes show a reported incident', () => {
       const classification: MatterClassification = {
         domain: 'criminal',
         jurisdiction: 'Ontario',
+        notes: ['I reported the incident to police, they threatened me, and I am worried about ongoing contact.'],
       };
 
       const plan = generator.generate(classification);
 
-      const peaceBond = plan.settlementPathways.find(p => p.title.includes('Peace Bond'));
-      expect(peaceBond).toBeDefined();
-      expect(peaceBond?.title).toContain('810');
-      expect(peaceBond?.typical).toBe(false);
-    });
-
-    it('includes critical "what to avoid" for criminal cases', () => {
-      const classification: MatterClassification = {
-        domain: 'criminal',
-        jurisdiction: 'Ontario',
-      };
-
-      const plan = generator.generate(classification);
-
-      const noContact = plan.whatToAvoid.find(a => a.action.includes('contact the accused'));
-      expect(noContact).toBeDefined();
-      expect(noContact?.severity).toBe('critical');
-
-      const noSocial = plan.whatToAvoid.find(a => a.action.includes('social media'));
-      expect(noSocial).toBeDefined();
-      expect(noSocial?.severity).toBe('critical');
-
-      const noAlter = plan.whatToAvoid.find(a => a.action.includes('alter evidence'));
-      expect(noAlter).toBeDefined();
-      expect(noAlter?.severity).toBe('critical');
-    });
-
-    it('offers victim services and evidence checklist next steps', () => {
-      const classification: MatterClassification = {
-        domain: 'criminal',
-        jurisdiction: 'Ontario',
-      };
-
-      const plan = generator.generate(classification);
-
-      const victimServicesOffer = plan.nextStepOffers.find(o => o.id === 'victim-services-guide');
-      expect(victimServicesOffer).toBeDefined();
-      expect(victimServicesOffer?.documentType).toBe('victim_services_guide');
+      expect(plan.roleExplanation.title).toContain('After Reporting');
+      expect(plan.roleExplanation.summary).toContain('reporting witness');
 
       const evidenceOffer = plan.nextStepOffers.find(o => o.id === 'evidence-checklist');
       expect(evidenceOffer).toBeDefined();
-      expect(evidenceOffer?.documentType).toBe('criminal_evidence_checklist');
 
-      const roleOffer = plan.nextStepOffers.find(o => o.id === 'complainant-role');
-      expect(roleOffer).toBeDefined();
-      expect(roleOffer?.documentType).toBe('complainant_role_guide');
+      const victimServicesOffer = plan.nextStepOffers.find(o => o.id === 'victim-services-guide');
+      expect(victimServicesOffer).toBeDefined();
+    });
+
+    it('gates the peace bond pathway behind actual safety signals', () => {
+      const classification: MatterClassification = {
+        domain: 'criminal',
+        jurisdiction: 'Ontario',
+      };
+
+      const neutralPlan = generator.generate(classification);
+      expect(neutralPlan.settlementPathways.find(p => p.title.includes('Peace Bond'))).toBeUndefined();
+
+      const reportingPlan = generator.generate({
+        domain: 'criminal',
+        jurisdiction: 'Ontario',
+        notes: ['I reported threats to police and I am afraid of ongoing contact.'],
+      });
+
+      const peaceBond = reportingPlan.settlementPathways.find(p => p.title.includes('Peace Bond'));
+      expect(peaceBond).toBeDefined();
+      expect(peaceBond?.typical).toBe(false);
+    });
+
+    it('uses charged-person warnings when the notes show charges', () => {
+      const classification: MatterClassification = {
+        domain: 'criminal',
+        jurisdiction: 'Ontario',
+        notes: ['I was charged and released on conditions.'],
+      };
+
+      const plan = generator.generate(classification);
+
+      const breachWarning = plan.whatToAvoid.find(a => a.action.includes('breach release or no-contact conditions'));
+      expect(breachWarning).toBeDefined();
+      expect(breachWarning?.severity).toBe('critical');
+    });
+
+    it('prioritizes civil-deadline sequencing when user asks what to do first', () => {
+      const classification: MatterClassification = {
+        domain: 'criminal',
+        jurisdiction: 'Ontario',
+        notes: [
+          'between sending a police report for a criminal complaint and sending documents to opposing counsel in a civil lawsuit, which one should be done first',
+        ],
+      };
+
+      const plan = generator.generate(classification);
+
+      expect(plan.immediateActions[0]?.id).toBe('criminal-civil-sequencing');
+      expect(plan.immediateActions[0]?.priority).toBe('urgent');
+      expect(plan.immediateActions[0]?.title).toContain('Civil Deadlines First');
     });
   });
 
@@ -358,11 +358,11 @@ describe('ActionPlanGenerator', () => {
       const docAction = plan.immediateActions.find(a => a.id === 'employment-documentation');
       expect(docAction).toBeDefined();
       expect(docAction?.priority).toBe('urgent');
-      expect(docAction?.title).toContain('Document Employment Details');
+      expect(docAction?.title).toContain('Document Your Employment Details');
 
       const molAction = plan.immediateActions.find(a => a.id === 'employment-mol');
       expect(molAction).toBeDefined();
-      expect(molAction?.title).toContain('Ministry of Labour');
+      expect(molAction?.title).toContain('MOL');
     });
 
     it('clarifies employment complainant role', () => {
@@ -391,7 +391,7 @@ describe('ActionPlanGenerator', () => {
       const severance = plan.settlementPathways.find(p => p.title.includes('Severance'));
       expect(severance).toBeDefined();
       expect(severance?.typical).toBe(true);
-      expect(severance?.pros).toContain('Quick resolution');
+      expect(severance?.pros).toContain('Fastest path to resolution (days to weeks)');
     });
 
     it('warns against signing releases without review', () => {

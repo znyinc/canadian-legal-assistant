@@ -127,6 +127,19 @@ export class MatterClassifier {
       matches.push({ domain: 'criminal', keywords: criminalKeywords.filter(kw => h.includes(kw)), weight: 90 });
     }
 
+    // Employment keywords
+    const employmentKeywords = ['employment', 'employer', 'terminated', 'termination', 'dismissal', 'fired', 'severance', 'wrongful dismissal', 'without notice'];
+    if (employmentKeywords.some(kw => h.includes(kw))) {
+      matches.push({ domain: 'employment', keywords: employmentKeywords.filter(kw => h.includes(kw)), weight: 88 });
+    }
+
+    // Landlord-tenant keywords should outrank generic damage language, but only when
+    // there is actual tenancy context rather than negated references or generic repairs.
+    const landlordTenantKeywords = this.getLandlordTenantConfidenceKeywords(h);
+    if (landlordTenantKeywords.length > 0) {
+      matches.push({ domain: 'landlordTenant', keywords: landlordTenantKeywords, weight: 87 });
+    }
+
     // Municipal keywords
     const municipalKeywords = ['municipal', 'city', 'road', 'sidewalk'];
     if (municipalKeywords.some(kw => h.includes(kw))) {
@@ -134,7 +147,7 @@ export class MatterClassifier {
     }
 
     // Civil negligence keywords
-    const civilKeywords = ['negligence', 'tort', 'damage', 'injury', 'slip', 'fall'];
+    const civilKeywords = ['negligence', 'tort', 'damage', 'injury', 'slip', 'fall', 'tree', 'fence', 'property damage', 'neighbor', 'neighbour', 'gazebo'];
     if (civilKeywords.some(kw => h.includes(kw))) {
       matches.push({ domain: 'civil-negligence', keywords: civilKeywords.filter(kw => h.includes(kw)), weight: 75 });
     }
@@ -260,25 +273,28 @@ export class MatterClassifier {
         h.includes('uttering') || h.includes('violence') || h.includes('arrested') ||
         h.includes('charged') || h.includes('police') || h.includes('crown')) return 'criminal';
     
-    // Municipal property damage (check before civil-negligence to avoid "damage" keyword overlap)
-    if (h.includes('municipal') || h.includes('city') || h.includes('road') ||
-        h.includes('sidewalk') || h.includes('notice')) return 'municipalPropertyDamage';
-    
-    // Civil negligence and property damage
-    if (h === 'civil-negligence' || h.includes('negligence') || h.includes('tort') ||
-        h.includes('tree') || h.includes('damage') || h.includes('injury') ||
-        h.includes('slip') || h.includes('fall')) return 'civil-negligence';
+    // Employment
+    if (h.includes('employment') || h.includes('employer') || h.includes('work') ||
+        h.includes('termination') || h.includes('terminated') || h.includes('fired') ||
+        h.includes('severance') || h.includes('dismissal') || h.includes('without notice')) return 'employment';
+
+    // Municipal property damage (avoid generic "notice" false positives)
+    const municipalSignal = h.includes('municipal') || h.includes('city') || h.includes('town') ||
+      h.includes('road') || h.includes('sidewalk') || h.includes('pothole');
+    const municipalDamageSignal = h.includes('damage') || h.includes('injury') || h.includes('tree') ||
+      h.includes('notice of claim') || h.includes('municipal notice');
+    if (municipalSignal && municipalDamageSignal) return 'municipalPropertyDamage';
     
     // Landlord-tenant
-    if (h.includes('tenant') || h.includes('ltb') || h.includes('landlord') ||
-        h.includes('eviction') || h.includes('rent')) return 'landlordTenant';
+    if (this.hasLandlordTenantSignals(h)) return 'landlordTenant';
+
+    // Civil negligence and property damage
+    if (h === 'civil-negligence' || h.includes('negligence') || h.includes('tort') ||
+      h.includes('tree') || h.includes('damage') || h.includes('injury') ||
+      h.includes('slip') || h.includes('fall')) return 'civil-negligence';
     
     // Insurance
     if (h.includes('insurance') || h.includes('claim') || h.includes('policy')) return 'insurance';
-    
-    // Employment
-    if (h.includes('employment') || h.includes('work') || h.includes('termination') ||
-        h.includes('severance') || h.includes('dismissal')) return 'employment';
     
     // Human rights
     if (h.includes('human rights') || h.includes('hrto') || h.includes('discrimination') ||
@@ -289,6 +305,62 @@ export class MatterClassifier {
         h.includes('service') || h.includes('unfair') || h.includes('chargeback')) return 'consumerProtection';
     
     return 'other';
+  }
+
+  private hasLandlordTenantSignals(hint: string): boolean {
+    return this.getLandlordTenantConfidenceKeywords(hint).length > 0;
+  }
+
+  private getLandlordTenantConfidenceKeywords(hint: string): string[] {
+    const normalizedHint = hint.toLowerCase();
+    const positiveSignals = [
+      'landlord',
+      'ltb',
+      'n4',
+      'n5',
+      'n12',
+      'eviction',
+      'rent',
+      'lease',
+      'tenancy',
+      'renter',
+      'rental unit',
+      'apartment',
+      'property manager',
+      'superintendent',
+    ].filter((signal) => normalizedHint.includes(signal));
+
+    const hasPositiveTenantReference =
+      /\btenant\b/.test(normalizedHint) &&
+      !/\b(?:not|isn['’]t|aint|aren['’]t|never)\s+(?:a\s+|the\s+)?tenant\b/.test(normalizedHint) &&
+      !/\bno\s+tenant\b/.test(normalizedHint);
+
+    if (hasPositiveTenantReference) {
+      positiveSignals.push('tenant');
+    }
+
+    const genericHousingRepairSignals = ['repair', 'repairs', 'maintenance'].filter((signal) => normalizedHint.includes(signal));
+    const housingContextSignals = [
+      'unit',
+      'apartment',
+      'rental',
+      'lease',
+      'landlord',
+      'tenancy',
+      'building',
+      'superintendent',
+      'property manager',
+    ].filter((signal) => normalizedHint.includes(signal));
+
+    if (hasPositiveTenantReference) {
+      housingContextSignals.push('tenant');
+    }
+
+    if (housingContextSignals.length > 0 && genericHousingRepairSignals.length > 0) {
+      positiveSignals.push(...genericHousingRepairSignals);
+    }
+
+    return Array.from(new Set(positiveSignals));
   }
 
   private resolveJurisdiction(hint?: string): Jurisdiction {

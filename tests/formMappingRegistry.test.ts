@@ -368,4 +368,65 @@ describe('FormMappingRegistry', () => {
       expect(reviewItems.some(item => item.formId === 'form-7a-small-claims')).toBe(true);
     });
   });
+
+  describe('Form Preparation Wizard', () => {
+    it('should generate wizard with completion tracking', () => {
+      const registry = new FormMappingRegistry();
+      const wizard = registry.generatePreparationWizard('form-7a-small-claims', {
+        claimantName: 'Jane Smith',
+        claimantAddress: '123 Main St',
+      });
+
+      expect(wizard).toBeDefined();
+      expect(wizard?.steps.length).toBeGreaterThan(0);
+      expect(wizard?.completionPercent).toBeGreaterThan(0);
+      expect(wizard?.completionPercent).toBeLessThan(100);
+      expect(wizard?.steps.some(step => step.status === 'needs-input')).toBe(true);
+    });
+
+    it('should mark all steps ready when all fields are provided', () => {
+      const registry = new FormMappingRegistry();
+      const wizard = registry.generatePreparationWizard('form-7a-small-claims', {
+        claimantName: 'Jane Smith',
+        claimantAddress: '123 Main St',
+        claimantPhone: '4165551111',
+        respondentName: 'ABC Corp',
+        respondentAddress: '500 King St',
+        amountClaimed: '5000',
+        courtLocation: 'Toronto',
+        incidentDate: '2026-01-01',
+        particulars: 'Damage to property',
+      });
+
+      expect(wizard?.completionPercent).toBe(100);
+      expect(wizard?.steps.every(step => step.status === 'ready')).toBe(true);
+    });
+  });
+
+  describe('Filing Checklist and Deadline Tracking', () => {
+    it('should generate checklist items from filing instructions', () => {
+      const registry = new FormMappingRegistry();
+      const checklist = registry.generateFilingChecklist('ltb-form-t1');
+
+      expect(checklist).toBeDefined();
+      expect(checklist?.items.length).toBeGreaterThan(0);
+      expect(checklist?.urgency).toBe('none');
+      expect(checklist?.daysUntilDeadline).toBeNull();
+    });
+
+    it('should flag critical urgency for near deadlines', () => {
+      const registry = new FormMappingRegistry();
+      const nearDeadline = new Date();
+      nearDeadline.setDate(nearDeadline.getDate() + 5);
+
+      const checklist = registry.generateFilingChecklist('hrto-form-1', {
+        filingDeadline: nearDeadline.toISOString().split('T')[0],
+      });
+
+      expect(checklist).toBeDefined();
+      expect(checklist?.daysUntilDeadline).not.toBeNull();
+      expect(checklist?.urgency).toBe('critical');
+      expect(checklist?.warnings.some(w => w.includes('Filing deadline is in'))).toBe(true);
+    });
+  });
 });

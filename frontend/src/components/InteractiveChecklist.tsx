@@ -47,7 +47,6 @@ const getCategoryColor = (category: string) => {
 export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
   items,
   onItemToggle,
-  onItemUpdate,
   onAddItem,
   onRemoveItem,
   title = 'Action Items',
@@ -56,6 +55,29 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItemText, setNewItemText] = useState('');
+  const widthByFive: Record<number, string> = {
+    0: 'w-0',
+    5: 'w-[5%]',
+    10: 'w-[10%]',
+    15: 'w-[15%]',
+    20: 'w-[20%]',
+    25: 'w-1/4',
+    30: 'w-[30%]',
+    35: 'w-[35%]',
+    40: 'w-[40%]',
+    45: 'w-[45%]',
+    50: 'w-1/2',
+    55: 'w-[55%]',
+    60: 'w-3/5',
+    65: 'w-[65%]',
+    70: 'w-[70%]',
+    75: 'w-3/4',
+    80: 'w-4/5',
+    85: 'w-[85%]',
+    90: 'w-[90%]',
+    95: 'w-[95%]',
+    100: 'w-full',
+  };
 
   // Group items by category
   const groupedItems = items.reduce((acc, item) => {
@@ -109,8 +131,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
+                className={`bg-blue-600 h-2 rounded-full transition-all duration-300 ${widthByFive[Math.max(0, Math.min(100, Math.round(progressPercent / 5) * 5))]}`}
               />
             </div>
           </div>
@@ -240,6 +261,8 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                       <button
                         onClick={() => onRemoveItem(item.id)}
                         className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        aria-label={`Remove checklist item ${item.title}`}
+                        title={`Remove checklist item ${item.title}`}
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

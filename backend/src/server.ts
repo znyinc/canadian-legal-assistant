@@ -4,6 +4,7 @@ import { prisma } from './prisma.js';
 import { config } from './config.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { getModelRouter, TaskType } from './core/router/ModelRouter.js';
 import mattersRouter from './routes/matters.js';
 import evidenceRouter from './routes/evidence.js';
 import documentsRouter from './routes/documents.js';
@@ -12,11 +13,20 @@ import caselawRouter from './routes/caselaw.js';
 import exportRouter from './routes/export.js';
 import kitsRouter from './routes/kits.js';
 import conversationalRouter from './routes/conversational.js';
+import workflowsRouter from './routes/workflows.js';
+import settingsRouter from './routes/settings.js';
 
 const app = express();
 
 // Middleware
 app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  next();
+});
 app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json());
 app.use(apiKeyAuth);
@@ -48,8 +58,48 @@ function createApp() {
   registry.register(new LegalMalpracticeDomainModule());
   registry.register(new EstateSuccessionDomainModule());
 
+  const workflowLlmClient = {
+    enabled: config.nuanceLlmEnabled,
+    async generateResearchNarrative(request: {
+      matter: { description: string; domain: string; province: string; disputeAmount?: number | null };
+      query: string;
+      authorityBundle: unknown;
+    }) {
+      const router = getModelRouter();
+      const response = await router.route({
+        taskType: TaskType.PLAIN_LANGUAGE,
+        preferredLane: 'deep-reason',
+        temperature: 0.2,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'You are assisting a Canadian legal information workflow.',
+              'Use only the supplied authority bundle as the legal authority base.',
+              'Do not invent authorities.',
+              'Respond with concise narrative text only.',
+            ].join('\n'),
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              matter: request.matter,
+              query: request.query,
+              authorityBundle: request.authorityBundle,
+            }),
+          },
+        ],
+      });
+
+      return {
+        content: response.content,
+        model: response.model,
+      };
+    },
+  };
+
   // Create shared IntegrationAPI instance with registry
-  const integrationApi = new IntegrationAPI({ registry });
+  const integrationApi = new IntegrationAPI({ registry, workflowLlmClient });
 
   // Attach to app locals for route handlers to use
   (app as any).locals.integrationApi = integrationApi;
@@ -63,6 +113,8 @@ function createApp() {
   app.use('/api/export', exportRouter);
   app.use('/api/kits', kitsRouter);
   app.use('/api/conversational', conversationalRouter);
+  app.use('/api/workflows', workflowsRouter);
+  app.use('/api/settings', settingsRouter);
 
   // Error handling
   app.use(errorHandler);

@@ -7,7 +7,7 @@
       "frontend": "React 18.3 + Vite + TypeScript + Tailwind CSS",
       "backend": "Express + Prisma + SQLite + TypeScript",
       "testing": "Vitest (unit) + Playwright (E2E)",
-      "security": "Snyk"
+      "security": "Aikido"
     }
   },
   "steering": {

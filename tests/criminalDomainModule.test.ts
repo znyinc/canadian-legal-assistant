@@ -283,6 +283,7 @@ describe('Criminal Domain Templates', () => {
     const classification = {
       domain: 'criminal',
       subCategory: 'assault',
+      notes: ['victim', 'reported'],
     };
 
     const evidenceManifest = {
@@ -314,6 +315,7 @@ describe('Criminal Domain Templates', () => {
     const classification = {
       domain: 'criminal',
       subCategory: 'assault',
+      notes: ['victim', 'reported'],
     };
 
     const evidenceManifest = {
@@ -333,7 +335,7 @@ describe('Criminal Domain Templates', () => {
 
     const evidenceChecklistDraft = drafts.find((d) => d.title.includes('Evidence Checklist'));
     expect(evidenceChecklistDraft).toBeDefined();
-    expect(evidenceChecklistDraft!.title).toContain('Criminal Complainant');
+    expect(evidenceChecklistDraft!.title).toContain('Evidence Checklist');
     const content = evidenceChecklistDraft!.sections[0].content;
     expect(content).toContain('Medical Documentation');
     expect(content).toContain('occurrence number');
@@ -346,6 +348,7 @@ describe('Criminal Domain Templates', () => {
     const classification = {
       domain: 'criminal',
       subCategory: 'assault',
+      notes: ['victim', 'complainant', 'reported'],
     };
 
     const evidenceManifest = {
@@ -413,7 +416,7 @@ describe('Criminal Domain Templates', () => {
       id: 'assault-case',
       domain: 'criminal',
       jurisdiction: 'Ontario',
-      notes: ['Assault', 'Neighbor dispute'],
+      notes: ['Assault', 'Neighbor dispute', 'victim', 'reported'],
       timeline: { start: '2025-12-21' },
     };
 

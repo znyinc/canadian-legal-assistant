@@ -36,7 +36,7 @@
 ## Testing Requirements
 - **Unit tests:** Required for all new features (Vitest)
 - **E2E tests:** Required for user-facing flows (Playwright)
-- **Security scans:** Snyk before commits
+- **Security scans:** Run on demand or in CI when explicitly configured
 - **Zero regressions:** All tests must pass before merge
 
 ## Documentation Requirements

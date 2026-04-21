@@ -755,6 +755,73 @@ All requirements reference the original specification document in `.kiro/specs/c
   - [ ] 36.6 Create form version checking and validation
   - [ ] 36.7 Build comprehensive filing checklists and deadline tracking
 
+- [ ] 37. Product Surface Alignment and Persistent Matter Workspace
+  - [x] 37.1 Convert conversational New Matter into persistent matter creation
+    - ✅ Update `ConversationalGuidancePage.tsx` to create a matter record through the existing matters API
+    - ✅ Preserve conversational intake metadata (domain, jurisdiction, urgency, intake mode) with the created matter
+    - ✅ Attempt evidence upload handoff for intake files after matter creation
+    - ✅ Redirect successful conversational intake to `/matters/:id` instead of terminating in detached guidance
+    - ✅ Keep failure handling explicit so matter creation problems are visible to the user
+  - [x] 37.2 Expose guided workflow from the matter workspace
+    - ✅ Add nested workflow route wiring through the matter workspace
+    - ✅ Surface workflow entry points from matter detail view
+    - ✅ Reframe workflow labels into user-facing "step-by-step plan" language
+  - [x] 37.3 Upgrade evidence from storage to strategy view
+    - ✅ Surface missing-evidence and chronology-gap guidance in the evidence page
+    - ✅ Show domain-aware evidence prompts and completeness feedback
+  - [x] 37.4 Promote audit, export, and integrity signals in the main workspace
+    - ✅ Add trust and governance indicators to home and matter detail pages
+    - ✅ Reframe Settings copy around auditability and portability
+  - [x] 37.5 Clarify bilingual scope and parity
+    - ✅ Expand i18n coverage beyond shell navigation or explicitly mark French as partial
+    - ✅ Align product copy with actual translation depth
+
+- [ ] 38. Canonical Flow Consolidation
+  - [ ] 38.1 Define canonical route map and surface ownership
+    - Review all major user-facing routes and assign one clear product purpose to each
+    - Decide which component owns first-run guidance versus ongoing overview
+    - Remove ambiguity between conversational, narrative, workflow, and kit-led entry points
+  - [ ] 38.2 Replace the current matter overview renderer with the action-first overview model
+    - Promote `OverviewTab` concepts into the main matter detail experience
+    - Retire `AdvisorResponseView` as the primary overview surface
+    - Keep supporting information progressively disclosed
+  - [ ] 38.3 Restore a guided first-run handoff after conversational intake
+    - Ensure "See my options" leads to an actual guided options state
+    - Carry conversational context, urgency, and unresolved questions into the persistent matter workspace
+    - Reuse `GuidanceNarrative` or equivalent first-run guidance inside the canonical flow
+  - [ ] 38.4 Fold nuance extraction into intake instead of keeping it as a separate product island
+    - Re-home `NuanceChatPage` as an optional deepen-before-import path
+    - Ensure nuance-import flows are fully wired into matter creation and review
+  - [ ] 38.5 Re-home decision-support kits under workflow ownership
+    - Audit each kit for unique value versus workflow duplication
+    - Convert useful kit logic into plan accelerators, workflow steps, or targeted templates
+    - Remove or demote kit UI that implies a separate primary product mode
+  - [ ] 38.6 Tighten navigation around progression rather than tool browsing
+    - Make one primary next action visible at each major matter state
+    - Reorder or reframe tabs to support likely user sequence
+    - Keep trust and governance contextual rather than competitive with the main flow
+  - [ ] 38.7 Add review instrumentation for the consolidated flow
+    - Track intake completion, handoff completion, workflow start, evidence follow-through, and document generation
+    - Measure drop-off between intake completion and first meaningful action
+    - Use telemetry to validate whether the new flow reduces fragmentation
+
+- [ ] 39. Guidance Context Hardening and Workflow Gating
+  - [ ] 39.1 Add criminal context modes to action-plan generation and overview rendering
+    - Infer `accused`, `reporting-or-complainant`, `victim-support`, `civil-parallel-criminal`, or `unknown` from narrative and metadata
+    - Stop default charged-person and Crown-witness language when unsupported by the facts
+    - Gate peace bond, victim services, occurrence-number, restitution, and complainant-role outputs behind explicit signals
+  - [ ] 39.2 Add targeted clarification for unresolved criminal posture
+    - Ask one role-defining question before generating criminal role language when posture is unclear
+    - Update action-plan and overview tests to cover accused, complainant, and civil-parallel scenarios
+  - [ ] 39.3 Gate the step-by-step plan by representation posture
+    - Demote the step-by-step plan call to action until the user indicates self-representation, filing readiness, or asks for guided procedure help
+    - Prioritize immediate actions, evidence strategy, and forum options on first-run overview states
+    - Explain why workflow is relevant when it becomes the recommended next action
+  - [ ] 39.4 Validate behavior end-to-end
+    - Add regression coverage for civil-first narratives with possible criminal misconduct
+    - Verify unsupported peace bond and victim-services guidance does not appear in those scenarios
+    - Verify workflow remains secondary until readiness signals are present
+
 ---
 
 ## References
@@ -801,7 +868,7 @@ All requirements reference the original specification document in `.kiro/specs/c
 - Backend build: ✅ 0 TypeScript errors (kit integration temporarily disabled)
 - Security status: 0 high-severity Snyk issues (6 medium DOM XSS flags pre-existing)
 - Production readiness: Core library READY FOR PRODUCTION, Phase 3 agent layer needs Task 26.7 fixes
-- Latest completed task: Task 26.6 (Kit Integration - Implementation Complete, Disabled Pending Task 26.7)
-- Current work: Task 26.7 preparation - documenting interface mismatches for systematic fixes
-- Next priority: Task 26.7 (Agent/Kit Interface Alignment & Testing)
-- Note: IntegrationAPI kit methods (~135 lines) and backend routes (~165 lines) implemented and validated but temporarily disabled pending agent/kit interface alignment (see AGENTS.md for details)
+- Latest completed task: Task 37.5 (Bilingual Scope And Parity)
+- Current work: Task 38 review draft created; Task 26.7 still pending interface alignment and test recovery
+- Next priority: Review and approve Task 38 canonical flow consolidation plan, then sequence implementation against Task 26.7 recovery work
+- Note: Product-surface alignment work under Task 37 exposed a broader consolidation need, now captured as Task 38
